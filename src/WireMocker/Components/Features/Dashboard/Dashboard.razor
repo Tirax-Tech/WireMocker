@@ -1,0 +1,43 @@
+﻿@page "/"
+@rendermode InteractiveServer
+
+@using System.Reactive.Disposables
+@using Tirax.Application.WireMocker.Services
+
+@inherits ReactiveComponentBase<DashboardViewModel>
+
+@inject IMockServer MockServer
+
+<MudText Typo="Typo.h3">Dashboard</MudText>
+
+@foreach (var entry in ViewModel!.LogEntries){
+    <MudGrid @key="entry.Guid">
+        <MudItem md="6" Class="pa-8">
+            <RequestPanel Entry="entry"/>
+        </MudItem>
+
+        <MudItem md="6" Class="pa-8">
+            <ResponsePanel Entry="entry"/>
+        </MudItem>
+    </MudGrid>
+}
+
+@code {
+
+    public Dashboard()
+    {
+        ViewModel = new DashboardViewModel();
+
+        this.WhenActivated(disposable => {
+            ViewModel.InitLogEntries(MockServer.AllLogEntries);
+
+            MockServer.LogEntries
+                      .Subscribe(logEntry => ViewModel.AddLogEntry(logEntry))
+                      .DisposeWith(disposable);
+
+            ViewModel!.WhenAnyValue(v => v.LogEntries)
+                      .Subscribe(_ => StateHasChanged())
+                      .DisposeWith(disposable);
+        });
+    }
+}

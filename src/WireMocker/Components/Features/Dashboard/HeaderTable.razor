@@ -1,0 +1,23 @@
+﻿@using WireMock.Types
+
+<MudSimpleTable Dense="true">
+    <thead>
+    <tr>
+        <th>Header</th><th>Value</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var header in Headers)
+    {
+        <tr @key="header.Key">
+            <td>@header.Key</td>
+            <td>@header.Value</td>
+        </tr>
+    }
+    </tbody>
+</MudSimpleTable>
+
+@code {
+    [Parameter]
+    public required IDictionary<string, WireMockList<string>> Headers { get; set; }
+}

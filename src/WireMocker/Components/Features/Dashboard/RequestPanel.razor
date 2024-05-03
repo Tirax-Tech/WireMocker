@@ -1,0 +1,27 @@
+﻿@using WireMock.Logging
+
+<MudStack>
+    <MudStack Row="true" AlignItems="AlignItems.Baseline">
+        <MudChip Color="Color.Primary" Class="mr-2">@Entry.RequestMessage.Method</MudChip>
+        <MudText Typo="Typo.body1">@Entry.RequestMessage.Path</MudText>
+        <MudSpacer />
+        <MudText Typo="Typo.body2">
+            @{ var d = Entry.RequestMessage.DateTime.ToLocalTime(); }
+            @d.ToLongDateString()
+            @d.ToLongTimeString()
+        </MudText>
+    </MudStack>
+
+    <HeaderTable Headers="Entry.RequestMessage.Headers" />
+
+    @if (Entry.RequestMessage.Body is not null){
+        <div class="pa-4 code-panel">
+            @Entry.RequestMessage.Body
+        </div>
+    }
+</MudStack>
+
+@code {
+    [Parameter]
+    public required ILogEntry Entry { get; set; }
+}

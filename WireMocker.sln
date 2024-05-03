@@ -1,0 +1,33 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{8A6D1DDF-7B95-477F-8B2C-137B83487309}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tirax.Application.WireMocker", "src\WireMocker\Tirax.Application.WireMocker.csproj", "{7350C96E-CA46-4877-88C9-E69C560414CF}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{86434E01-3030-4297-A906-71E43F5EED2D}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{7350C96E-CA46-4877-88C9-E69C560414CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7350C96E-CA46-4877-88C9-E69C560414CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7350C96E-CA46-4877-88C9-E69C560414CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7350C96E-CA46-4877-88C9-E69C560414CF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{7350C96E-CA46-4877-88C9-E69C560414CF} = {8A6D1DDF-7B95-477F-8B2C-137B83487309}
+	EndGlobalSection
+EndGlobal
