@@ -3,6 +3,7 @@ global using static LanguageExt.Prelude;
 global using ReactiveUI.Blazor;
 using MudBlazor.Services;
 using Tirax.Application.WireMocker.Components;
+using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Services;
 using WireMock.Net.StandAlone;
 using WireMock.Settings;
@@ -15,6 +16,7 @@ var server = StandAloneApp.Start(settings);
 
 var builder = WebApplication.CreateBuilder([]);
 
+builder.Services.AddSingleton<ShellViewModel>();
 builder.Services.AddSingleton<IMockServer>(new MockServer(server));
 builder.Services.AddMudServices();
 

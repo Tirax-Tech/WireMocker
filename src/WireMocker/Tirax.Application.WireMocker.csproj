@@ -15,12 +15,4 @@
     <PackageReference Include="WireMock.Net.StandAlone" Version="1.5.52" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Components\Features\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="Components\Features\Dashboard\Dashboard.razor" />
-  </ItemGroup>
-
 </Project>
