@@ -1,0 +1,34 @@
+﻿@page "/XPort"
+@using Tirax.Application.WireMocker.Services
+
+@inject IMockServer MockServer
+
+<MudGrid Spacing="0" Class="pa-4">
+    <MudItem md="6" Style="height: 90vh">
+        <MudText Typo="Typo.h5">Mappings</MudText>
+        <MudText Typo="Typo.body1">Mapping count = @MockServer.Mappings.Length</MudText>
+
+        <MudText Typo="Typo.h5">Load</MudText>
+
+    </MudItem>
+    <MudItem md="6">
+        <MudPaper Class="pa-8 rounded-xl" Style="height: 90vh">
+            <MudStack>
+                <MudTextField T="string" MaxLength="15000"
+                              Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="mappings" />
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@LoadMappings">Load</MudButton>
+            </MudStack>
+        </MudPaper>
+    </MudItem>
+</MudGrid>
+
+@code {
+
+    string mappings = string.Empty;
+
+    void LoadMappings() {
+        if (!string.IsNullOrWhiteSpace(mappings))
+            MockServer.LoadMappings(mappings);
+    }
+
+}
