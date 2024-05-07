@@ -12,6 +12,10 @@
         </MudText>
     </MudStack>
 
+    @if (Entry.RequestMessage.Query?.Any() == true){
+        <HeaderTable Title="Query" Headers="Entry.RequestMessage.Query" />
+    }
+
     <HeaderTable Headers="Entry.RequestMessage.Headers" />
 
     @if (Entry.RequestMessage.Body is not null){
@@ -22,6 +26,5 @@
 </MudStack>
 
 @code {
-    [Parameter]
-    public required ILogEntry Entry { get; set; }
+    [Parameter] public required ILogEntry Entry { get; set; }
 }

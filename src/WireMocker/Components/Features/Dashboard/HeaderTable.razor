@@ -1,14 +1,14 @@
 ﻿@using WireMock.Types
 
 <MudSimpleTable Dense="true">
+    @{ var title = Title ?? "Headers"; }
     <thead>
     <tr>
-        <th>Header</th><th>Value</th>
+        <th>@title</th><th>Value</th>
     </tr>
     </thead>
     <tbody>
-    @foreach (var header in Headers)
-    {
+    @foreach (var header in Headers){
         <tr @key="header.Key">
             <td>@header.Key</td>
             <td>@header.Value</td>
@@ -18,6 +18,9 @@
 </MudSimpleTable>
 
 @code {
+    [Parameter]
+    public string? Title { get; set; }
+
     [Parameter]
     public required IDictionary<string, WireMockList<string>> Headers { get; set; }
 }

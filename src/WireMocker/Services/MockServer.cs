@@ -20,6 +20,7 @@ public class MockServer(WireMockServer server) : IMockServer
     public Seq<IMapping> Mappings => server.Mappings.Where(map => !map.IsAdminInterface).ToSeq();
 
     public void LoadMappings(string mappings) {
+        server.ResetMappings();
         server.WithMapping(mappings);
     }
 }

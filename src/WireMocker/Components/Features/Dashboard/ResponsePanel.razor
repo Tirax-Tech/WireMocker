@@ -51,7 +51,9 @@
             StatusModel status => JsonConvert.SerializeObject(status, Formatting.Indented),
 
             JObject o => o.ToString(Formatting.Indented),
+            JArray a  => a.ToString(Formatting.Indented),
 
             _ => $"Unexpected JSON type {json.GetType().FullName}"
         };
+
 }

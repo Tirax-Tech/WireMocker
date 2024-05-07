@@ -8,6 +8,10 @@
 
 @inject IMockServer MockServer
 
+<MudScrollToTop>
+    <MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ArrowUpward" />
+</MudScrollToTop>
+
 <MudText Typo="Typo.h3">Dashboard</MudText>
 
 @foreach (var entry in ViewModel!.LogEntries){
