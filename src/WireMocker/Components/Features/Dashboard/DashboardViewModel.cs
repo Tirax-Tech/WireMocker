@@ -3,7 +3,7 @@ using WireMock.Logging;
 
 namespace Tirax.Application.WireMocker.Components.Features.Dashboard;
 
-public sealed class DashboardViewModel : ReactiveObject
+public sealed class DashboardViewModel : ViewModel
 {
     public LinkedList<ILogEntry> LogEntries { get; } = new();
 
