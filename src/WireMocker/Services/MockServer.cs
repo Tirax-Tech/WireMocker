@@ -19,9 +19,9 @@ public class MockServer(WireMockServer server) : IMockServer
 
     public Seq<IMapping> Mappings => server.Mappings.Where(map => !map.IsAdminInterface).ToSeq();
 
-    public void LoadMappings(string mappings) {
+    public OutcomeT<Synchronous, Unit> LoadMappings(string mappings) {
         server.ResetMappings();
-        server.WithMapping(mappings);
+        return TryCatch(() => server.WithMapping(mappings)).Map(_ => unit).As();
     }
 }
 
@@ -33,5 +33,5 @@ public interface IMockServer
 
     Seq<IMapping> Mappings { get; }
 
-    void LoadMappings(string mappings);
+    OutcomeT<Synchronous, Unit> LoadMappings(string mappings);
 }

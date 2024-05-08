@@ -1,0 +1,13 @@
+﻿@page "/Services"
+
+@inject ShellViewModel Shell
+
+<h3>Services</h3>
+
+@code {
+
+    protected override void OnInitialized() {
+        Shell.SetHeader("Manage services");
+    }
+
+}

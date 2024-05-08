@@ -1,14 +1,32 @@
-﻿@inject ShellViewModel Shell
+﻿@using System.Reactive.Disposables
+@using Microsoft.AspNetCore.Components.Rendering
+@inherits ReactiveComponentBase<ShellViewModel>
+@inject ShellViewModel Shell
 
-<MudAppBar Elevation="1" @rendermode="InteractiveServer">
+<MudAppBar Elevation="1">
     <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-    <MudText Typo="Typo.h5">WireMock Log Viewer</MudText>
+    <MudText Typo="Typo.h5">@Header</MudText>
 </MudAppBar>
 
 @code {
+
+    RenderFragment Header => Shell.Header ?? DefaultHeader;
+
+    public MainAppBar() {
+        this.WhenActivated(disposable => {
+            ViewModel.WhenAnyValue(x => x.Header).Subscribe(_ => StateHasChanged()).DisposeWith(disposable);
+        });
+    }
+
+    protected override void OnParametersSet() {
+        ViewModel = Shell;
+        base.OnParametersSet();
+    }
 
     void ToggleDrawer() {
         Shell.IsDrawerOpen = !Shell.IsDrawerOpen;
     }
 
+    static void DefaultHeader(RenderTreeBuilder builder) =>
+        builder.AddContent(0, "WireMock Log Viewer");
 }

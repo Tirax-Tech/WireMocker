@@ -1,6 +1,12 @@
 ﻿@page "/XPort"
+@using System.Reactive.Disposables
+@using System.Reactive.Linq
+@using LanguageExt.UnitsOfMeasure
 @using Tirax.Application.WireMocker.Services
 
+@inherits ReactiveInjectableComponentBase<XPortViewModel>
+
+@inject ISnackbar Snackbar
 @inject IMockServer MockServer
 
 <MudGrid Spacing="0" Class="pa-4">
@@ -15,20 +21,31 @@
         <MudPaper Class="pa-8 rounded-xl" Style="height: 90vh">
             <MudStack>
                 <MudTextField T="string" MaxLength="15000"
-                              Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="mappings" />
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@LoadMappings">Load</MudButton>
+                              Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="ViewModel!.Mappings" />
+                <MudButton Disabled="!canLoad" Variant="Variant.Filled" Color="Color.Primary" OnClick="@Load">Load</MudButton>
             </MudStack>
         </MudPaper>
     </MudItem>
 </MudGrid>
 
 @code {
+    bool canLoad;
 
-    string mappings = string.Empty;
+    public XPort() {
+        this.WhenActivated(disposables => {
+            this.WhenAnyValue(x => x.ViewModel!.HasMappings)
+                .Subscribe(hasMappings => canLoad = hasMappings)
+                .DisposeWith(disposables);
 
-    void LoadMappings() {
-        if (!string.IsNullOrWhiteSpace(mappings))
-            MockServer.LoadMappings(mappings);
+            ViewModel!.Notifications.Subscribe(notification => Snackbar.Add(notification.Message, notification.Severity));
+
+            ViewModel!.Changed.Throttle(50.Milliseconds())
+                      .Subscribe(_ => InvokeAsync(StateHasChanged))
+                      .DisposeWith(disposables);
+        });
     }
 
+    async Task Load() {
+        await ViewModel!.LoadMappings.Execute();
+    }
 }
