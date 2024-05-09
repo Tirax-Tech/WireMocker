@@ -3,7 +3,7 @@ global using static LanguageExt.Prelude;
 global using static RZ.Foundation.Prelude;
 global using RZ.Foundation.Functional;
 global using ReactiveUI.Blazor;
-
+using System.Reactive.Concurrency;
 using MudBlazor.Services;
 using ReactiveUI;
 using Splat;
@@ -27,6 +27,7 @@ builder.Services
        .AddSingleton<ShellViewModel>()
        .AddTransient<XPortViewModel>()
        .AddSingleton<IMockServer>(new MockServer(server))
+       .AddScoped<IScheduler>(_ => new SynchronizationContextScheduler(SynchronizationContext.Current!))
        .UseMicrosoftDependencyResolver();
 builder.Services.AddMudServices();
 

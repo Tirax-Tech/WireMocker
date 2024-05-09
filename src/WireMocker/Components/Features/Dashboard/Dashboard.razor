@@ -1,14 +1,20 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 
+@using System.Reactive.Concurrency
 @using System.Reactive.Disposables
+@using System.Reactive.Linq
 @using Tirax.Application.WireMocker.Services
 
 @inherits ReactiveComponentBase<DashboardViewModel>
 
+@inject IScheduler AppScheduler
 @inject IMockServer MockServer
 
 <AppBarTitle Title="Log Entries"/>
+<SectionContent SectionName="appbar-actions">
+    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Secondary" Edge="Edge.End" />
+</SectionContent>
 
 <MudScrollToTop>
     <MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ArrowUpward" />
@@ -42,6 +48,7 @@
                       .DisposeWith(disposable);
 
             ViewModel!.WhenAnyValue(v => v.LogEntries)
+                      .Throttle(AppSettings.UpdateThrottle, AppScheduler)
                       .Subscribe(_ => StateHasChanged())
                       .DisposeWith(disposable);
         });

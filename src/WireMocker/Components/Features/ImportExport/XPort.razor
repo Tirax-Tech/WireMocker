@@ -1,11 +1,12 @@
 ﻿@page "/XPort"
+@using System.Reactive.Concurrency
 @using System.Reactive.Disposables
 @using System.Reactive.Linq
-@using LanguageExt.UnitsOfMeasure
 @using Tirax.Application.WireMocker.Services
 
 @inherits ReactiveInjectableComponentBase<XPortViewModel>
 
+@inject IScheduler AppScheduler
 @inject ISnackbar Snackbar
 @inject IMockServer MockServer
 
@@ -39,8 +40,9 @@
 
             ViewModel!.Notifications.Subscribe(notification => Snackbar.Add(notification.Message, notification.Severity));
 
-            ViewModel!.Changed.Throttle(50.Milliseconds())
-                      .Subscribe(_ => InvokeAsync(StateHasChanged))
+            ViewModel!.Changed
+                      .Throttle(AppSettings.UpdateThrottle, AppScheduler)
+                      .Subscribe(_ => StateHasChanged())
                       .DisposeWith(disposables);
         });
     }
