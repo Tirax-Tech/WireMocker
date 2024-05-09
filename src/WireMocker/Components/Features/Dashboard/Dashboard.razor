@@ -4,12 +4,10 @@
 @using System.Reactive.Concurrency
 @using System.Reactive.Disposables
 @using System.Reactive.Linq
-@using Tirax.Application.WireMocker.Services
 
-@inherits ReactiveComponentBase<DashboardViewModel>
+@inherits ReactiveInjectableComponentBase<DashboardViewModel>
 
 @inject IScheduler AppScheduler
-@inject IMockServer MockServer
 
 <AppBarTitle Title="Log Entries"/>
 <SectionContent SectionName="appbar-actions">
@@ -38,16 +36,8 @@
 
     public Dashboard()
     {
-        ViewModel = new DashboardViewModel();
-
         this.WhenActivated(disposable => {
-            ViewModel.InitLogEntries(MockServer.AllLogEntries);
-
-            MockServer.LogEntries
-                      .Subscribe(logEntry => ViewModel.AddLogEntry(logEntry))
-                      .DisposeWith(disposable);
-
-            ViewModel!.WhenAnyValue(v => v.LogEntries)
+            ViewModel!.Changed
                       .Throttle(AppSettings.UpdateThrottle, AppScheduler)
                       .Subscribe(_ => StateHasChanged())
                       .DisposeWith(disposable);

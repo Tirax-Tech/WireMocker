@@ -9,6 +9,7 @@ using ReactiveUI;
 using Splat;
 using Splat.Microsoft.Extensions.DependencyInjection;
 using Tirax.Application.WireMocker.Components;
+using Tirax.Application.WireMocker.Components.Features.Dashboard;
 using Tirax.Application.WireMocker.Components.Features.ImportExport;
 using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Services;
@@ -26,6 +27,7 @@ var builder = WebApplication.CreateBuilder([]);
 builder.Services
        .AddSingleton<ShellViewModel>()
        .AddTransient<XPortViewModel>()
+       .AddTransient<DashboardViewModel>()
        .AddSingleton<IMockServer>(new MockServer(server))
        .AddScoped<IScheduler>(_ => new SynchronizationContextScheduler(SynchronizationContext.Current!))
        .UseMicrosoftDependencyResolver();
