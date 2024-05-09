@@ -1,12 +1,10 @@
 ﻿@page "/XPort"
-@using System.Reactive.Concurrency
 @using System.Reactive.Disposables
 @using System.Reactive.Linq
 @using Tirax.Application.WireMocker.Services
 
 @inherits ReactiveInjectableComponentBase<XPortViewModel>
 
-@inject IScheduler AppScheduler
 @inject ISnackbar Snackbar
 @inject IMockServer MockServer
 
@@ -35,15 +33,11 @@
     public XPort() {
         this.WhenActivated(disposables => {
             this.WhenAnyValue(x => x.ViewModel!.HasMappings)
-                .Subscribe(hasMappings => canLoad = hasMappings)
+                .CombineLatest(ViewModel!.LoadMappings.IsExecuting, (hasMappings, isExecuting) => !isExecuting && hasMappings)
+                .Subscribe(loadable => canLoad = loadable)
                 .DisposeWith(disposables);
 
             ViewModel!.Notifications.Subscribe(notification => Snackbar.Add(notification.Message, notification.Severity));
-
-            ViewModel!.Changed
-                      .Throttle(AppSettings.UpdateThrottle, AppScheduler)
-                      .Subscribe(_ => StateHasChanged())
-                      .DisposeWith(disposables);
         });
     }
 
