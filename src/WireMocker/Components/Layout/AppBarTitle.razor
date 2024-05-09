@@ -1,0 +1,31 @@
+﻿@using System.Runtime.CompilerServices
+@using Microsoft.AspNetCore.Components.Rendering
+<SectionContent SectionName="appbar-title">
+@title
+</SectionContent>
+
+@code {
+    [Parameter]
+    public string? Title { get; set; }
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    RenderFragment title = default!;
+
+    protected override void OnParametersSet() {
+        title = ChildContent ?? Build;
+        base.OnParametersSet();
+    }
+
+    void Build(RenderTreeBuilder builder) {
+        builder.OpenComponent<MudText>(0);
+        builder.AddAttribute(1, "Typo", Typo.h5);
+        builder.AddAttribute(2, "ChildContent", BuildContent(Title ?? "WireMock Log Viewer"));
+        builder.CloseComponent();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    RenderFragment BuildContent(string text) => builder => builder.AddContent(0, text);
+
+}

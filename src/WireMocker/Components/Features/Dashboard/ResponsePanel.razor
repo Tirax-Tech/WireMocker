@@ -52,6 +52,7 @@
 
             JObject o => o.ToString(Formatting.Indented),
             JArray a  => a.ToString(Formatting.Indented),
+            bool b    => b.ToString(),
 
             _ => $"Unexpected JSON type {json.GetType().FullName}"
         };

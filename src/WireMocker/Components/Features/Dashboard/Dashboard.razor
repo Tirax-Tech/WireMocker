@@ -6,8 +6,9 @@
 
 @inherits ReactiveComponentBase<DashboardViewModel>
 
-@inject ShellViewModel Shell
 @inject IMockServer MockServer
+
+<AppBarTitle Title="Log Entries"/>
 
 <MudScrollToTop>
     <MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Filled.ArrowUpward" />
@@ -45,10 +46,4 @@
                       .DisposeWith(disposable);
         });
     }
-
-    protected override void OnInitialized() {
-        Shell.SetHeader("Log Entries");
-        base.OnInitialized();
-    }
-
 }
