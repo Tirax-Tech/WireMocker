@@ -14,10 +14,19 @@ public sealed class DashboardViewModel : ViewModel, IDisposable
     public DashboardViewModel(IMockServer mockServer) {
         InitLogEntries(mockServer.AllLogEntries);
 
+        ClearLogEntries = ReactiveCommand.Create<Unit, Unit>(_ => {
+            this.RaisePropertyChanging(nameof(LogEntries));
+            LogEntries.Clear();
+            this.RaisePropertyChanged(nameof(LogEntries));
+            return unit;
+        }).DisposeWith(disposable);
+
         mockServer.LogEntries.Subscribe(AddLogEntry).DisposeWith(disposable);
     }
 
     public LinkedList<ILogEntry> LogEntries { get; } = new();
+
+    public ReactiveCommand<Unit, Unit> ClearLogEntries { get; }
 
     void AddLogEntry(Seq<ILogEntry> entry)
     {
