@@ -14,8 +14,8 @@ public sealed class SearchPanelViewModel : ViewModel
 
         var canNew = normalized.Select(s => s is not null);
 
-        NewService = ReactiveCommand.CreateFromObservable<Unit, Unit>(
-            _ => normalized.Take(1).Select(s => s is null? unit : NewServiceImpl(s)),
+        NewService = ReactiveCommand.CreateFromObservable<Unit, string>(
+            _ => normalized.Take(1).Select(s => s ?? throw new ApplicationException("Race condition!")),
             canNew);
     }
 
@@ -25,10 +25,5 @@ public sealed class SearchPanelViewModel : ViewModel
         set => this.RaiseAndSetIfChanged(ref serviceSearchText, value);
     }
 
-    public ReactiveCommand<Unit,Unit> NewService { get; }
-
-    Unit NewServiceImpl(string serviceName) {
-        Console.WriteLine("Clicked! {0}", serviceName);
-        return unit;
-    }
+    public ReactiveCommand<Unit, string> NewService { get; }
 }

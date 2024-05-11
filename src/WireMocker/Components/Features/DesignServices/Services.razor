@@ -1,11 +1,32 @@
 ﻿@page "/Services"
 
+@using System.Reactive.Disposables
 @inherits ReactiveInjectableComponentBase<ServicesViewModel>
 
 <AppBarTitle Title="Manage services" />
 
-<DualPanel>
+<DualPanel RightPanel="rightPanel">
     <ChildContent>
         <View ViewModel="@ViewModel!.MainPanel" />
     </ChildContent>
 </DualPanel>
+
+@code {
+
+    RenderFragment? rightPanel;
+
+    public Services() {
+        this.WhenActivated(disposables => {
+            this.WhenAnyValue(x => x.ViewModel!.DetailPanel)
+                .Subscribe(detailPanel => {
+                     rightPanel = detailPanel is not null? builder => {
+                         builder.OpenComponent(0, typeof(View));
+                         builder.AddAttribute(1, "ViewModel", detailPanel);
+                         builder.CloseComponent();
+                     } : null;
+                 })
+                .DisposeWith(disposables);
+        });
+    }
+
+}

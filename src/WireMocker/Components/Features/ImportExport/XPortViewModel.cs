@@ -9,9 +9,8 @@ using Tirax.Application.WireMocker.Services;
 
 namespace Tirax.Application.WireMocker.Components.Features.ImportExport;
 
-public sealed class XPortViewModel : ViewModel, IDisposable
+public sealed class XPortViewModel : ViewModelDisposable
 {
-    readonly CompositeDisposable disposables = new();
     readonly ObservableAsPropertyHelper<bool> hasMappings;
     readonly Subject<(Severity Severity, string Message)> notifications = new();
 
@@ -21,7 +20,7 @@ public sealed class XPortViewModel : ViewModel, IDisposable
         hasMappings = this.WhenAnyValue(vm => vm.Mappings)
                           .Select(m => !string.IsNullOrWhiteSpace(m))
                           .ToProperty(this, vm => vm.HasMappings)
-                          .DisposeWith(disposables);
+                          .DisposeWith(Disposables);
 
         LoadMappings = ReactiveCommand.Create<Unit, Outcome<Unit>>(
             _ => mockServer.LoadMappings(Mappings).RunIO(),
@@ -33,7 +32,7 @@ public sealed class XPortViewModel : ViewModel, IDisposable
             notifications.OnNext(outcome.IfFail(out var error, out _)
                                      ? (Severity.Error, error.Message)
                                      : (Severity.Info, "Mappings loaded successfully"));
-        }).DisposeWith(disposables);
+        }).DisposeWith(Disposables);
     }
 
     public bool HasMappings => hasMappings.Value;
@@ -51,8 +50,4 @@ public sealed class XPortViewModel : ViewModel, IDisposable
     public ReactiveCommand<Unit, Outcome<Unit>> LoadMappings { get; }
 
     #endregion
-
-    public void Dispose() {
-        disposables.Dispose();
-    }
 }
