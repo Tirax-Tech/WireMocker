@@ -1,0 +1,71 @@
+﻿@switch (state){
+    case ViewState.Empty:
+        break;
+
+    case ViewState.InvalidModel:
+        <MudText Typo="Typo.body2">Model @ViewModel.GetType().Name does not have a correct naming convention.</MudText>
+        break;
+
+    case ViewState.ViewTypeNotFound s:
+        <MudText Typo="Typo.body2">View type @s.ViewTypeName not found.</MudText>
+        break;
+
+    case ViewState.View view:
+        @view.Content
+        break;
+
+    default:
+        <MudAlert Severity="Severity.Error">Unknown state</MudAlert>
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public required ViewModel ViewModel { get; set; }
+
+    ViewState state = ViewState.Empty.Instance;
+
+    protected override void OnParametersSet() {
+        state = ParseState(ViewModel.GetType());
+        base.OnParametersSet();
+    }
+
+    ViewState ParseState(Type modelType) {
+        if (!modelType.Name.EndsWith("ViewModel"))
+            return ViewState.InvalidModel.Instance;
+
+        var viewTypeName = modelType.Name[..^9]; // 9 = "ViewModel".Length
+
+        // get view type from the same namespace of the model
+        var viewTypeFullName = $"{modelType.Namespace}.{viewTypeName}";
+        var viewType = modelType.Assembly.GetType(viewTypeFullName);
+
+        if (viewType is null)
+            return new ViewState.ViewTypeNotFound(viewTypeFullName);
+
+        return new ViewState.View(ForType(viewType));
+
+        RenderFragment ForType(Type vType) => builder => {
+            builder.OpenComponent(0, vType);
+            builder.AddAttribute(1, "ViewModel", ViewModel);
+            builder.CloseComponent();
+        };
+    }
+
+    abstract record ViewState
+    {
+        public sealed record Empty : ViewState
+        {
+            public static readonly ViewState Instance = new Empty();
+        }
+
+        public sealed record InvalidModel : ViewState
+        {
+            public static readonly ViewState Instance = new InvalidModel();
+        }
+
+        public sealed record ViewTypeNotFound(string ViewTypeName) : ViewState;
+
+        public sealed record View(RenderFragment Content) : ViewState;
+    }
+}

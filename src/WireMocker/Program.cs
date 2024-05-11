@@ -5,9 +5,6 @@ global using RZ.Foundation.Functional;
 global using ReactiveUI.Blazor;
 using System.Reactive.Concurrency;
 using MudBlazor.Services;
-using ReactiveUI;
-using Splat;
-using Splat.Microsoft.Extensions.DependencyInjection;
 using Tirax.Application.WireMocker.Components;
 using Tirax.Application.WireMocker.Components.Features.Dashboard;
 using Tirax.Application.WireMocker.Components.Features.DesignServices;
@@ -31,15 +28,8 @@ builder.Services
        .AddTransient<ServicesViewModel>()
        .AddTransient<DashboardViewModel>()
        .AddSingleton<IMockServer>(new MockServer(server))
-       .AddScoped<IScheduler>(_ => new SynchronizationContextScheduler(SynchronizationContext.Current!))
-       .UseMicrosoftDependencyResolver();
+       .AddScoped<IScheduler>(_ => new SynchronizationContextScheduler(SynchronizationContext.Current!));
 builder.Services.AddMudServices();
-
-var resolver = Locator.CurrentMutable;
-resolver.InitializeSplat();
-resolver.InitializeReactiveUI();
-
-resolver.Register(() => new XPort(), typeof(IViewFor<XPortViewModel>));
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

@@ -9,11 +9,11 @@
 
   <ItemGroup>
     <PackageReference Include="MudBlazor" Version="6.19.1" />
-    <PackageReference Include="ReactiveUI.Blazor" Version="19.6.12" />
+    <PackageReference Include="ReactiveUI.Blazor" Version="20.0.1" />
     <PackageReference Include="RZ.Foundation" Version="6.5.0-beta.1" />
     <PackageReference Include="Splat.Microsoft.Extensions.DependencyInjection" Version="15.0.1" />
     <PackageReference Include="System.Reactive.Linq" Version="6.0.1-preview.1" />
-    <PackageReference Include="WireMock.Net.StandAlone" Version="1.5.52" />
+    <PackageReference Include="WireMock.Net.StandAlone" Version="1.5.53" />
   </ItemGroup>
 
 </Project>

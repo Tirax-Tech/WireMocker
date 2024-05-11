@@ -1,0 +1,40 @@
+﻿@using System.Reactive.Concurrency
+@using System.Reactive.Disposables
+@inherits ReactiveComponentBase<SearchPanelViewModel>
+
+@inject IScheduler AppScheduler
+
+<MudStack>
+    <MudTextField T="string" @bind-Text="ViewModel!.ServiceSearchText" Immediate="true"
+                  Variant="Variant.Outlined" Placeholder="Type a service name" Label="Search service" />
+
+    @if (canNew){
+        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
+                   OnClick="@NewService">
+            New service
+        </MudButton>
+    }
+
+    <MudExpansionPanels>
+
+    </MudExpansionPanels>
+</MudStack>
+
+@code {
+    bool canNew;
+
+    public SearchPanel() {
+        this.WhenActivated(disposables => {
+            ViewModel!.NewService.CanExecute.ObserveOn(AppScheduler)
+                      .Subscribe(searchable => {
+                           canNew = searchable;
+                           StateHasChanged();
+                       }).DisposeWith(disposables);
+        });
+    }
+
+    async Task NewService() {
+        await ViewModel!.NewService.Execute();
+    }
+
+}
