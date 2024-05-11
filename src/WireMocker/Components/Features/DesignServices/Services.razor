@@ -1,21 +1,49 @@
 ﻿@page "/Services"
 
+@using System.Reactive.Concurrency
+@using System.Reactive.Disposables
+@inherits ReactiveInjectableComponentBase<ServicesViewModel>
+
+@inject IScheduler AppScheduler
+
 <AppBarTitle Title="Manage services" />
 
 <DualPanel>
     <ChildContent>
         <MudStack>
-            <MudTextField T="string" Variant="Variant.Outlined" Placeholder="Type a service name" Label="Search service" />
+            <MudTextField T="string" @bind-Text="ViewModel!.ServiceSearchText" Immediate="true"
+                          Variant="Variant.Outlined" Placeholder="Type a service name" Label="Search service" />
 
-            <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">New service</MudButton>
+            @if (canNew){
+                <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="@NewService">
+                    New service
+                </MudButton>
+            }
 
             <MudExpansionPanels>
-                
+
             </MudExpansionPanels>
         </MudStack>
     </ChildContent>
 </DualPanel>
 
 @code {
+
+    bool canNew;
+
+    public Services() {
+        this.WhenActivated(disposables => {
+            ViewModel!.NewService.CanExecute.ObserveOn(AppScheduler)
+                      .Subscribe(searchable => {
+                           canNew = searchable;
+                           StateHasChanged();
+                       }).DisposeWith(disposables);
+        });
+    }
+
+    async Task NewService() {
+        await ViewModel!.NewService.Execute();
+    }
 
 }
