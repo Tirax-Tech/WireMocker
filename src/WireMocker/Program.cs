@@ -28,6 +28,7 @@ builder.Services
        .AddTransient<ServicesViewModel>()
        .AddTransient<DashboardViewModel>()
        .AddSingleton<IMockServer>(new MockServer(server))
+       .AddSingleton<IViewLocator, ViewLocator>()
        .AddScoped<IScheduler>(_ => new SynchronizationContextScheduler(SynchronizationContext.Current!));
 builder.Services.AddMudServices();
 
