@@ -14,9 +14,32 @@
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveServer" />
+    <MudThemeProvider Theme="theme" />
+    <MudDialogProvider />
+    <MudSnackbarProvider />
+
+    <CascadingValue Value="theme">
+        <Routes @rendermode="InteractiveServer" />
+    </CascadingValue>
+
     <script src="_framework/blazor.web.js"></script>
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 </body>
 
 </html>
+
+@code {
+
+    readonly MudTheme theme = new() {
+        Palette = new PaletteLight {
+            Primary = "#fd7d43",
+            Secondary = "#0096ef",
+            Tertiary = "#9e914d",
+            Background = "#fff8f6",
+            Surface = "#fae4dc",
+
+            AppbarBackground = "#fd7d43"
+        }
+    };
+
+}

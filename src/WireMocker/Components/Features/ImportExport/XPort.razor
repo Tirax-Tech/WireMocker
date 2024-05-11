@@ -8,24 +8,22 @@
 @inject ISnackbar Snackbar
 @inject IMockServer MockServer
 
-<MudGrid Spacing="0" Class="pa-4">
-    <MudItem md="6" Style="height: 90vh">
+<DualPanel>
+    <ChildContent>
         <MudText Typo="Typo.h5">Mappings</MudText>
         <MudText Typo="Typo.body1">Mapping count = @MockServer.Mappings.Length</MudText>
 
         <MudText Typo="Typo.h5">Load</MudText>
+    </ChildContent>
 
-    </MudItem>
-    <MudItem md="6">
-        <MudPaper Class="pa-8 rounded-xl" Style="height: 90vh">
-            <MudStack>
-                <MudTextField T="string" MaxLength="15000"
-                              Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="ViewModel!.Mappings" />
-                <MudButton Disabled="!canLoad" Variant="Variant.Filled" Color="Color.Primary" OnClick="@Load">Load</MudButton>
-            </MudStack>
-        </MudPaper>
-    </MudItem>
-</MudGrid>
+    <RightPanel>
+        <MudStack>
+            <MudTextField T="string" MaxLength="15000"
+                          Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="ViewModel!.Mappings" />
+            <MudButton Disabled="!canLoad" Variant="Variant.Filled" Color="Color.Primary" OnClick="@Load">Load</MudButton>
+        </MudStack>
+    </RightPanel>
+</DualPanel>
 
 @code {
     bool canLoad;

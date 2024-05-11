@@ -2,7 +2,19 @@
 
 <AppBarTitle Title="Manage services" />
 
-<h3>Services</h3>
+<DualPanel>
+    <ChildContent>
+        <MudStack>
+            <MudTextField T="string" Variant="Variant.Outlined" Placeholder="Type a service name" Label="Search service" />
+
+            <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">New service</MudButton>
+
+            <MudExpansionPanels>
+                
+            </MudExpansionPanels>
+        </MudStack>
+    </ChildContent>
+</DualPanel>
 
 @code {
 
