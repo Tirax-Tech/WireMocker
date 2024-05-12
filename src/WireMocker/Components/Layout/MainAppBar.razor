@@ -1,10 +1,18 @@
-﻿@inherits ReactiveComponentBase<ShellViewModel>
-@inject ShellViewModel Shell
+﻿@inherits ReactiveInjectableComponentBase<ShellViewModel>
 
 <MudAppBar Elevation="1">
-    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer"/>
+    @switch (ViewModel!.AppMode){
+        case AppMode.Page:
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ViewModel!.ToggleDrawer"/>
+            break;
+
+        case AppMode.Modal m:
+            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Inherit" Edge="Edge.Start"
+                           OnClick="@(async () => await m.OnClose.Execute())"/>
+            break;
+    }
     <SectionOutlet SectionName="appbar-title"/>
-    <MudSpacer />
+    <MudSpacer/>
     <MudStack Row="true">
         <SectionOutlet SectionName="appbar-actions"/>
     </MudStack>
@@ -14,14 +22,3 @@
     <MudText Typo="Typo.h5">WireMock Log Viewer</MudText>
 </SectionContent>
 
-@code {
-
-    protected override void OnParametersSet() {
-        ViewModel = Shell;
-        base.OnParametersSet();
-    }
-
-    void ToggleDrawer() {
-        Shell.IsDrawerOpen = !Shell.IsDrawerOpen;
-    }
-}

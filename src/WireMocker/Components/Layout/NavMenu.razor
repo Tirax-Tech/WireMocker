@@ -1,8 +1,6 @@
 ﻿@using System.Reactive.Disposables
 
-@inherits ReactiveComponentBase<ShellViewModel>
-
-@inject ShellViewModel Shell
+@inherits ReactiveInjectableComponentBase<ShellViewModel>
 
 <MudDrawer Elevation="0" @bind-Open="ViewModel!.IsDrawerOpen">
     <MudNavMenu>
@@ -19,10 +17,4 @@
             ViewModel.WhenAnyValue(x => x.IsDrawerOpen).Subscribe(_ => StateHasChanged()).DisposeWith(disposables);
         });
     }
-
-    protected override void OnParametersSet() {
-        ViewModel = Shell;
-        base.OnParametersSet();
-    }
-
 }

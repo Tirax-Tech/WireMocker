@@ -23,7 +23,7 @@ var server = StandAloneApp.Start(settings);
 var builder = WebApplication.CreateBuilder([]);
 
 builder.Services
-       .AddSingleton<ShellViewModel>()
+       .AddScoped<ShellViewModel>()
        .AddTransient<XPortViewModel>()
        .AddTransient<ServicesViewModel>()
        .AddTransient<DashboardViewModel>()

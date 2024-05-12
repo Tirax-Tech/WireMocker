@@ -1,5 +1,7 @@
 ﻿@inherits LayoutComponentBase
 
+@inject ShellViewModel Shell
+
 <MudLayout>
     <MainAppBar />
     <NavMenu />
@@ -7,3 +9,11 @@
         @Body
     </MudMainContent>
 </MudLayout>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Shell.ResetAppMode();
+        base.OnInitialized();
+    }
+}
