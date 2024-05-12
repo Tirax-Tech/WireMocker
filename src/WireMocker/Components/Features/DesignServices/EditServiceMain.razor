@@ -1,6 +1,24 @@
 ﻿@inherits ReactiveComponentBase<EditServiceMainViewModel>
 
-<MudText Typo="Typo.h5">@ViewModel!.ServiceName</MudText>
+<SectionContent SectionName="appbar-actions">
+    <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Tertiary" />
+</SectionContent>
+
+<MudStack>
+
+    <MudText Typo="Typo.h4">Service: @ViewModel!.ServiceName</MudText>
+
+    <MudText Typo="Typo.h5">Proxy</MudText>
+
+    <MudTextField T="string" Label="Proxy URL" Variant="Variant.Outlined" Placeholder="e.g. http://host/path" />
+
+    <MudText Typo="Typo.h5">Endpoints</MudText>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+        Add Endpoint
+    </MudButton>
+
+</MudStack>
 
 @code {
 
