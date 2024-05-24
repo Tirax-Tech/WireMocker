@@ -11,11 +11,13 @@ public interface IHasDetailPanel
 
 public sealed class ServicesViewModel : ViewModelDisposable
 {
+    readonly IServiceProvider serviceProvider;
     readonly ShellViewModel shell;
     readonly SearchPanelViewModel searchPanel = new();
     ViewModel mainPanel;
 
-    public ServicesViewModel(ShellViewModel shell) {
+    public ServicesViewModel(IServiceProvider serviceProvider, ShellViewModel shell) {
+        this.serviceProvider = serviceProvider;
         this.shell = shell;
         mainPanel = searchPanel;
 
@@ -37,7 +39,7 @@ public sealed class ServicesViewModel : ViewModelDisposable
     }
 
     void OnNewService(string name) {
-        var editVm = new EditServiceMainViewModel(name);
+        var editVm = ActivatorUtilities.CreateInstance<EditServiceMainViewModel>(serviceProvider, name);
         MainPanel = editVm;
         var onClose = shell.ToModalAppMode();
         onClose.Subscribe(_ => MainPanel = searchPanel);

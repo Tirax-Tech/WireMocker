@@ -15,12 +15,32 @@
             <MudSwitch T="bool" Label="Ignore Case" LabelPosition="LabelPosition.End" Color="Color.Primary"
                        @bind-Value="ViewModel!.IgnoreCase" />
             <MudTextField T="string" Variant="Variant.Filled" Label="Pattern" Placeholder="e.g. /path/*"
-                          @bind-Text="ViewModel!.Pattern" />
+                          Immediate="true" @bind-Text="ViewModel!.Pattern" />
         </MudStack>
     </MudPaper>
 
     <MudStack Row="true" Justify="Justify.FlexEnd">
-        <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">Save</MudButton>
-        <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+        @if (ViewModel!.IsNew){
+            <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                       Disabled="!canSave">Add</MudButton>
+        }
+        else{
+            <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
+                       Disabled="!canSave">Save</MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+        }
     </MudStack>
 </MudStack>
+
+@code {
+    bool canSave;
+
+    public EditServiceDetail() {
+        this.WhenActivated(disposables => {
+            ViewModel!.Save.CanExecute.Subscribe(v => {
+                canSave = v;
+                StateHasChanged();
+            }).DisposeWith(disposables);
+        });
+    }
+}

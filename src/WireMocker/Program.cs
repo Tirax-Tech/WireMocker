@@ -10,6 +10,7 @@ using Tirax.Application.WireMocker.Components.Features.Dashboard;
 using Tirax.Application.WireMocker.Components.Features.DesignServices;
 using Tirax.Application.WireMocker.Components.Features.ImportExport;
 using Tirax.Application.WireMocker.Components.Features.Shell;
+using Tirax.Application.WireMocker.RZ;
 using Tirax.Application.WireMocker.Services;
 using WireMock.Net.StandAlone;
 using WireMock.Settings;
@@ -23,6 +24,8 @@ var server = StandAloneApp.Start(settings);
 var builder = WebApplication.CreateBuilder([]);
 
 builder.Services
+       .AddSingleton<IChaotic, Chaotic>()
+
        .AddScoped<ShellViewModel>()
        .AddTransient<XPortViewModel>()
        .AddTransient<ServicesViewModel>()

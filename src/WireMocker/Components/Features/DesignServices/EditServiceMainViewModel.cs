@@ -7,15 +7,14 @@ namespace Tirax.Application.WireMocker.Components.Features.DesignServices;
 
 public sealed class EditServiceMainViewModel : ViewModel, IHasDetailPanel
 {
-    readonly string name;
     readonly ObservableAsPropertyHelper<bool> showAddEndpoint;
 
     string proxy = string.Empty;
     EditServiceDetailViewModel? detail;
 
-    public EditServiceMainViewModel(string name) {
-        this.name = name;
-        detail = new EditServiceDetailViewModel();
+    public EditServiceMainViewModel(IServiceProvider serviceProvider, string name) {
+        ServiceName = name;
+        detail = ActivatorUtilities.CreateInstance<EditServiceDetailViewModel>(serviceProvider, Option<Endpoint>.None);
 
         showAddEndpoint = Endpoints.WhenAnyValue(x => x.Count).Select(c => c > 0).ToProperty(this, x => x.ShowAddEndpoint);
         AddEndpoint = ReactiveCommand.Create<Unit, Unit>(_ => {
@@ -25,7 +24,7 @@ public sealed class EditServiceMainViewModel : ViewModel, IHasDetailPanel
 
     public ViewModel? DetailPanel => detail;
 
-    public string ServiceName => name;
+    public string ServiceName { get; }
 
     public string Proxy
     {
