@@ -14,9 +14,11 @@
 
     <MudText Typo="Typo.h5">Endpoints</MudText>
 
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
-        Add Endpoint
-    </MudButton>
+    @if (ViewModel!.ShowAddEndpoint){
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+            Add Endpoint
+        </MudButton>
+    }
 
 </MudStack>
 

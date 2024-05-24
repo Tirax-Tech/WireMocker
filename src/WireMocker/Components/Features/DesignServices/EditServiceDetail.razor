@@ -1,7 +1,26 @@
-﻿@inherits ReactiveComponentBase<EditServiceDetailViewModel>
+﻿@using Tirax.Application.WireMocker.Domain
+@inherits ReactiveComponentBase<EditServiceDetailViewModel>
 
-details...
+<MudStack>
+    <MudPaper Class="white pa-8">
+        <MudStack>
+            <MudTextField T="string" Variant="Variant.Filled" Label="(Optional) Endpoint name" @bind-Text="ViewModel!.EndpointName" />
+            <MudStack Row="true" AlignItems="AlignItems.Baseline">
+                <MudText Typo="Typo.h6">Match type</MudText>
+                <MudRadioGroup T="PathMatchType" @bind-Value="ViewModel!.MatchType">
+                    <MudRadio Value="@(PathMatchType.Exact)">Exact</MudRadio>
+                    <MudRadio Value="@(PathMatchType.Wildcard)">Wildcard</MudRadio>
+                </MudRadioGroup>
+            </MudStack>
+            <MudSwitch T="bool" Label="Ignore Case" LabelPosition="LabelPosition.End" Color="Color.Primary"
+                       @bind-Value="ViewModel!.IgnoreCase" />
+            <MudTextField T="string" Variant="Variant.Filled" Label="Pattern" Placeholder="e.g. /path/*"
+                          @bind-Text="ViewModel!.Pattern" />
+        </MudStack>
+    </MudPaper>
 
-@code {
-
-}
+    <MudStack Row="true" Justify="Justify.FlexEnd">
+        <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">Save</MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+    </MudStack>
+</MudStack>

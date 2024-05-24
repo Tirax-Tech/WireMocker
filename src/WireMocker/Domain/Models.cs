@@ -23,7 +23,12 @@ public abstract record EndpointResponse
 
 public record ProxySetting(string Url);
 
-public record Endpoint(Guid Id, string? Name = default);
+public enum PathMatchType
+{
+    Exact, Wildcard
+}
+
+public record Endpoint(Guid Id, PathMatchType MatchType, bool IgnoreCase = true, string? Name = default);
 
 #region Just Ideas
 

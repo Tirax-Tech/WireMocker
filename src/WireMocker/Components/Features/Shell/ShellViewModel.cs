@@ -6,7 +6,7 @@ public abstract record AppMode
 {
     public sealed record Page : AppMode
     {
-        public bool IsDrawerOpen { get; set; }
+        public bool IsDrawerOpen { get; set; } = true;
     }
 
     public sealed record Modal(ReactiveCommand<Unit, Unit> OnClose) : AppMode;
