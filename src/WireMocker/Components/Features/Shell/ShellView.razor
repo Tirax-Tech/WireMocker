@@ -1,0 +1,39 @@
+﻿@inherits ReactiveInjectableComponentBase<ShellViewModel>
+@inject IServiceProvider ServiceProvider
+
+@switch (ViewModel!.AppMode.ContentMode){
+    case ContentMode.SingleView view:
+            <View ViewModel="view.Content"/>
+        break;
+
+    case ContentMode.DualView view:
+        <DualPanel>
+            <LeftPanel>
+                <View ViewModel="view.Content"/>
+            </LeftPanel>
+            <RightPanel>
+                @if (view.DetailPanel is not null){
+                    <View ViewModel="view.DetailPanel"/>
+                }
+            </RightPanel>
+        </DualPanel>
+        break;
+
+    case ContentMode.None:
+        break;
+}
+
+@code {
+
+    [Parameter, EditorRequired]
+    public required ViewModel InitialViewModel { get; set; }
+
+    [Parameter]
+    public bool IsDual { get; set; }
+
+    protected override void OnParametersSet() {
+        ViewModel!.InitView(InitialViewModel, IsDual);
+        base.OnParametersSet();
+    }
+
+}

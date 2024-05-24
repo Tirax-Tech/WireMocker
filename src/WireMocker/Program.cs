@@ -28,7 +28,7 @@ builder.Services
 
        .AddScoped<ShellViewModel>()
        .AddTransient<XPortViewModel>()
-       .AddTransient<ServicesViewModel>()
+       .AddTransient<SearchPanelViewModel>()
        .AddTransient<DashboardViewModel>()
        .AddSingleton<IMockServer>(new MockServer(server))
        .AddSingleton<IViewLocator, ViewLocator>()

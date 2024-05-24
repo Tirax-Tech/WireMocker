@@ -5,7 +5,7 @@ using Endpoint = Tirax.Application.WireMocker.Domain.Endpoint;
 
 namespace Tirax.Application.WireMocker.Components.Features.DesignServices;
 
-public sealed class EditServiceMainViewModel : ViewModel, IHasDetailPanel
+public sealed class EditServiceMainViewModel : ViewModel
 {
     readonly ObservableAsPropertyHelper<bool> showAddEndpoint;
 
