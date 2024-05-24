@@ -1,7 +1,7 @@
 ﻿<MudGrid Spacing="2" Class="pa-4">
     <MudItem md="6">
         <MudPaper Class="pa-8 rounded-xl" Style="@paperStyle">
-            @ChildContent
+            @LeftPanel
         </MudPaper>
     </MudItem>
 
@@ -17,7 +17,7 @@
 @code {
 
     [Parameter, EditorRequired]
-    public required RenderFragment ChildContent { get; set; }
+    public required RenderFragment LeftPanel { get; set; }
 
     [Parameter]
     public RenderFragment? RightPanel { get; set; }

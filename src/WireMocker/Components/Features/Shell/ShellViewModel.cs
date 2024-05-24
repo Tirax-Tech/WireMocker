@@ -10,6 +10,13 @@ public abstract record AppMode
     }
 
     public sealed record Modal(ReactiveCommand<Unit, Unit> OnClose) : AppMode;
+
+    /// <summary>
+    /// Is dual mode enabled?
+    /// </summary>
+    public bool IsDual { get; set; }
+
+    public ViewModel? DetailPanel { get; set; }
 }
 
 public sealed class ShellViewModel : ViewModel
@@ -57,6 +64,14 @@ public sealed class ShellViewModel : ViewModel
         appMode.Clear();
         appMode.Push(new AppMode.Page());
         this.RaisePropertyChanged(nameof(AppMode));
+    }
+
+    public bool RequestDualMode() {
+        const bool enabled = true;
+        this.RaisePropertyChanging(nameof(AppMode));
+        AppMode.IsDual = enabled;
+        this.RaisePropertyChanged(nameof(AppMode));
+        return enabled;
     }
 
     public void ToggleDrawer() => IsDrawerOpen = !IsDrawerOpen;

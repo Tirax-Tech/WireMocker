@@ -6,7 +6,18 @@
     <MainAppBar />
     <NavMenu />
     <MudMainContent>
-        @Body
+        @if (Shell.AppMode.IsDual){
+            <DualPanel LeftPanel="Body">
+                <RightPanel>
+                    @if (Shell.AppMode.DetailPanel is not null){
+                        <View ViewModel="Shell.AppMode.DetailPanel"/>
+                    }
+                </RightPanel>
+            </DualPanel>
+        }
+        else{
+            @Body
+        }
     </MudMainContent>
 </MudLayout>
 
