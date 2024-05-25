@@ -7,9 +7,9 @@ using System.Reactive.Concurrency;
 using MudBlazor.Services;
 using Tirax.Application.WireMocker.Components;
 using Tirax.Application.WireMocker.Components.Features.Dashboard;
-using Tirax.Application.WireMocker.Components.Features.DesignServices;
 using Tirax.Application.WireMocker.Components.Features.ImportExport;
 using Tirax.Application.WireMocker.Components.Features.Shell;
+using Tirax.Application.WireMocker.Components.Layout;
 using Tirax.Application.WireMocker.RZ;
 using Tirax.Application.WireMocker.Services;
 using WireMock.Net.StandAlone;
@@ -26,9 +26,9 @@ var builder = WebApplication.CreateBuilder([]);
 builder.Services
        .AddSingleton<IChaotic, Chaotic>()
 
+       .AddScoped<MainLayoutViewModel>()
        .AddScoped<ShellViewModel>()
        .AddTransient<XPortViewModel>()
-       .AddTransient<SearchPanelViewModel>()
        .AddTransient<DashboardViewModel>()
        .AddSingleton<IMockServer>(new MockServer(server))
        .AddSingleton<IViewLocator, ViewLocator>()

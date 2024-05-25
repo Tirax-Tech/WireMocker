@@ -4,18 +4,18 @@
 @inject IViewLocator ViewLocator
 
 @switch (state){
-    case ViewState.Empty:
+    case ViewResolution.Empty:
         break;
 
-    case ViewState.InvalidModel:
+    case ViewResolution.InvalidModel:
         <MudText Typo="Typo.body2">Model @ViewModel.GetType().Name does not have a correct naming convention.</MudText>
         break;
 
-    case ViewState.ViewTypeNotFound s:
+    case ViewResolution.ViewTypeNotFound s:
         <MudText Typo="Typo.body2">View type @s.ViewTypeName not found.</MudText>
         break;
 
-    case ViewState.View view:
+    case ViewResolution.View view:
         @view.Content
         break;
 
@@ -28,7 +28,7 @@
     [Parameter, EditorRequired]
     public required ViewModel ViewModel { get; set; }
 
-    ViewState state = ViewState.Empty.Instance;
+    ViewResolution state = ViewResolution.Empty.Instance;
 
     protected override void OnParametersSet() {
         state = ViewLocator.Locate(ViewModel);
