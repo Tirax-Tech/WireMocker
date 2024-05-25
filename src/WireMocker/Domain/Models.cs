@@ -3,7 +3,7 @@ using Seq = LanguageExt.Seq;
 
 namespace Tirax.Application.WireMocker.Domain;
 
-public sealed record Service(string Name)
+public sealed record Service(Guid Id, string Name)
 {
     public ProxySetting? Proxy { get; init; }
     public Map<Guid, Endpoint> Endpoints { get; init; } = Map.empty<Guid, Endpoint>();

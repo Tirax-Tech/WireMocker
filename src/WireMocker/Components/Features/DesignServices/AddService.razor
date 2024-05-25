@@ -6,9 +6,9 @@
 
     <MudText Typo="Typo.h5">Proxy</MudText>
 
-    <MudTextField T="string" Label="Proxy URL" Variant="Variant.Outlined" Placeholder="e.g. http://host/path" />
+    <MudTextField T="string" Label="Proxy URL" Variant="Variant.Outlined" Placeholder="e.g. http://host/path" Immediate="true" />
 
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@OnSave">
         Add Service
     </MudButton>
 
@@ -16,4 +16,7 @@
 
 @code {
 
+    async Task OnSave() {
+        await ViewModel!.Save.Execute();
+    }
 }

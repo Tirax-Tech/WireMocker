@@ -25,6 +25,7 @@ var builder = WebApplication.CreateBuilder([]);
 
 builder.Services
        .AddSingleton<IChaotic, Chaotic>()
+       .AddSingleton<IViewModelFactory, ViewModelFactory>()
 
        .AddScoped<MainLayoutViewModel>()
        .AddScoped<ShellViewModel>()

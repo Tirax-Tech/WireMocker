@@ -18,16 +18,18 @@ public sealed class ShellViewModel(MainLayoutViewModel mainVm) : ViewModel
         content.Push(new(mainVm.AppMode, viewModel, view));
     }
 
+    public Unit CloseCurrentView() {
+        this.RaisePropertyChanging(nameof(Content));
+        this.RaisePropertyChanging(nameof(ViewMode));
+        content.Pop();
+        mainVm.AppMode = content.Peek().AppMode;
+        this.RaisePropertyChanged(nameof(ViewMode));
+        this.RaisePropertyChanged(nameof(Content));
+        return unit;
+    }
+
     public void PushModal(ViewModel viewModel) {
-        var onClose = ReactiveCommand.Create<Unit, Unit>(_ => {
-            this.RaisePropertyChanging(nameof(Content));
-            this.RaisePropertyChanging(nameof(ViewMode));
-            content.Pop();
-            mainVm.AppMode = content.Peek().AppMode;
-            this.RaisePropertyChanged(nameof(ViewMode));
-            this.RaisePropertyChanged(nameof(Content));
-            return unit;
-        });
+        var onClose = ReactiveCommand.Create<Unit, Unit>(_ => CloseCurrentView());
         this.RaisePropertyChanging(nameof(Content));
         this.RaisePropertyChanging(nameof(ViewMode));
         var appMode = new AppMode.Modal(onClose);
