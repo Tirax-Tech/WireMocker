@@ -1,27 +1,28 @@
-﻿@page "/XPort"
-@using Tirax.Application.WireMocker.Services
+﻿@using Tirax.Application.WireMocker.Services
 
-@inherits ReactiveInjectableComponentBase<XPortViewModel>
+@inherits ReactiveComponentBase<XPortViewModel>
 
+@inject IJSRuntime JS
 @inject ISnackbar Snackbar
 @inject IMockServer MockServer
 
-<DualPanel>
-    <LeftPanel>
-        <MudText Typo="Typo.h5">Mappings</MudText>
-        <MudText Typo="Typo.body1">Mapping count = @MockServer.Mappings.Length</MudText>
+<MudStack>
+    <MudText Typo="Typo.h4">Load</MudText>
+    <MudButton StartIcon="@Icons.Material.Filled.Upload" Variant="Variant.Filled" Color="Color.Primary">Load</MudButton>
 
-        <MudText Typo="Typo.h5">Load</MudText>
-    </LeftPanel>
+    <MudText Typo="Typo.h4">Save</MudText>
+    <MudButton StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary" OnClick="@Save">Save</MudButton>
 
-    <RightPanel>
-        <MudStack>
-            <MudTextField T="string" MaxLength="15000"
-                          Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="ViewModel!.Mappings" />
-            <MudButton Disabled="!canLoad" Variant="Variant.Filled" Color="Color.Primary" OnClick="@Load">Load</MudButton>
-        </MudStack>
-    </RightPanel>
-</DualPanel>
+    <MudText Typo="Typo.h4">Mappings</MudText>
+    <MudText Typo="Typo.body1">Mapping count = @MockServer.Mappings.Length</MudText>
+
+    <MudText Typo="Typo.h5">Load</MudText>
+    <MudStack>
+        <MudTextField T="string" MaxLength="15000"
+                      Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="ViewModel!.Mappings" />
+        <MudButton Disabled="!canLoad" Variant="Variant.Filled" Color="Color.Primary" OnClick="@LoadMappings">Load</MudButton>
+    </MudStack>
+</MudStack>
 
 @code {
     bool canLoad;
@@ -37,7 +38,13 @@
         });
     }
 
-    async Task Load() {
+    async Task Save() {
+        var content = await ViewModel!.SaveData.Execute();
+        using var streamRef = new DotNetStreamReference(content);
+        await JS.InvokeVoidAsync("downloadFileFromStream", "wire-mocker.data", streamRef);
+    }
+
+    async Task LoadMappings() {
         await ViewModel!.LoadMappings.Execute();
     }
 }
