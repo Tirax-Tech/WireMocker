@@ -1,8 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using System.Text;
 using System.Text.Json;
-using RZ.Foundation;
 using RZ.Foundation.Extensions;
+using RZ.Foundation.Json;
 using Tirax.Application.WireMocker.Domain;
 
 namespace Tirax.Application.WireMocker.Services;
@@ -15,7 +15,7 @@ public interface IDataStore
     OutcomeT<Asynchronous, Seq<Service>> Search(string name);
 
     Stream        SnapshotData(Unit _);
-    Outcome<Unit> LoadFromSnapshot(Stream snapshot);
+    OutcomeT<Asynchronous, Unit> LoadFromSnapshot(Stream snapshot);
 }
 
 public sealed class InMemoryDataStore : IDataStore
@@ -40,22 +40,25 @@ public sealed class InMemoryDataStore : IDataStore
 
     public Stream SnapshotData(Unit _) {
         var snapshot = new Snapshot(services.Values.ToArray(), serviceSettings.Values.ToArray());
-        var json = JsonSerializer.Serialize(snapshot);
+        var json = JsonSerializer.Serialize(snapshot, JsonOptions);
         return new MemoryStream(Encoding.UTF8.GetBytes(json));
     }
 
-    public Outcome<Unit> LoadFromSnapshot(Stream snapshotData) {
-        try{
-            var json = new StreamReader(snapshotData).ReadToEnd();
-            var snapshot = JsonSerializer.Deserialize<Snapshot>(json);
+    public OutcomeT<Asynchronous, Unit> LoadFromSnapshot(Stream snapshotData) {
+        return from json in TryCatch(() => new StreamReader(snapshotData).ReadToEndAsync())
+               from ____ in TryCatch(() => JsonSerializer.Deserialize<Snapshot>(json, JsonOptions))
+                          | @do<Snapshot>(Load)
+               select unit;
+
+        void Load(Snapshot snapshot) {
             services = new(snapshot.Services.Map(s => KeyValuePair.Create(s.Id, s)));
             serviceSettings = new(snapshot.ServiceSettings.Map(s => KeyValuePair.Create(s.Id, s)));
-            return unitOutcome;
-        }
-        catch (Exception e){
-            return Failure<Unit>(e).RunIO();
         }
     }
 
     readonly record struct Snapshot(Service[] Services, ServiceSetting[] ServiceSettings);
+
+    static readonly JsonSerializerOptions JsonOptions = new() {
+        Converters = { MapJsonConverter.Default, SeqJsonConverter.Default, OptionJsonConverter.Default }
+    };
 }

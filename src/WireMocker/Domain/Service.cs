@@ -1,12 +1,11 @@
 using FluentValidation;
-using Map = LanguageExt.Map;
 
 namespace Tirax.Application.WireMocker.Domain;
 
 public sealed record Service(Guid Id, string Name)
 {
     public ProxySetting? Proxy { get; init; }
-    public Map<Guid, Endpoint> Endpoints { get; init; } = Map.empty<Guid, Endpoint>();
+    public Dictionary<Guid, Endpoint> Endpoints { get; init; } = new();
 
     public static readonly AbstractValidator<Service> Validator = new ValidatorType();
     sealed class ValidatorType : AbstractValidator<Service>

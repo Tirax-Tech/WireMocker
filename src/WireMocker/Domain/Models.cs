@@ -5,7 +5,7 @@ namespace Tirax.Application.WireMocker.Domain;
 
 public sealed record ServiceSetting(Guid Id, string Name)
 {
-    public Map<Guid, EndpointResponse> EndpointMappings { get; init; } = Map.empty<Guid, EndpointResponse>();
+    public Dictionary<Guid, EndpointResponse> EndpointMappings { get; init; } = new();
 }
 
 public abstract record EndpointResponse

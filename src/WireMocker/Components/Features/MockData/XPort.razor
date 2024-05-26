@@ -8,7 +8,14 @@
 
 <MudStack>
     <MudText Typo="Typo.h4">Load</MudText>
-    <MudButton StartIcon="@Icons.Material.Filled.Upload" Variant="Variant.Filled" Color="Color.Primary">Load</MudButton>
+    <MudFileUpload T="IBrowserFile" FilesChanged="@LoadFile">
+        <ButtonTemplate>
+            <MudButton HtmlTag="label" for="@context.Id"
+                       StartIcon="@Icons.Material.Filled.Upload" Variant="Variant.Filled" Color="Color.Primary">
+                Load
+            </MudButton>
+        </ButtonTemplate>
+    </MudFileUpload>
 
     <MudText Typo="Typo.h4">Save</MudText>
     <MudButton StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary" OnClick="@Save">Save</MudButton>
@@ -36,6 +43,15 @@
 
             ViewModel!.Notifications.Subscribe(notification => Snackbar.Add(notification.Message, notification.Severity));
         });
+    }
+
+    async Task LoadFile(IBrowserFile? file) {
+        if (file is null){
+            Console.WriteLine("File is null?");
+            return;
+        }
+        await using var stream = file.OpenReadStream();
+        await ViewModel!.LoadData.Execute(stream);
     }
 
     async Task Save() {

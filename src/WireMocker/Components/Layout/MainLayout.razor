@@ -23,10 +23,13 @@
 
     protected override void OnParametersSet() {
         ViewModel.Notifications
-                 .Subscribe(m => Snackbar.Add(m.Message, m.Severity))
+                 .Subscribe(m => Snackbar.Add(m.Message, m.Severity,
+                      m.Severity is Severity.Error or Severity.Warning ? RequireInteraction : null))
                  .DisposeWith(disposables);
         base.OnParametersSet();
     }
+
+    void RequireInteraction(SnackbarOptions opts) => opts.RequireInteraction = true;
 
     public void Dispose() {
         disposables.Dispose();

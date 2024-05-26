@@ -4,6 +4,7 @@ using System.Reactive.Subjects;
 using MudBlazor;
 using ReactiveUI;
 using RZ.Foundation;
+using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Services;
 
 namespace Tirax.Application.WireMocker.Components.Features.MockData;
@@ -15,7 +16,7 @@ public sealed class XPortViewModel : ViewModel
 
     string mappings = string.Empty;
 
-    public XPortViewModel(IScheduler scheduler, IDataStore dataStore, IMockServer mockServer) {
+    public XPortViewModel(IScheduler scheduler, IDataStore dataStore, ShellViewModel shell, IMockServer mockServer) {
         hasMappings = this.WhenAnyValue(vm => vm.Mappings)
                           .Select(m => !string.IsNullOrWhiteSpace(m))
                           .ToProperty(this, vm => vm.HasMappings);
@@ -32,7 +33,13 @@ public sealed class XPortViewModel : ViewModel
                                      : (Severity.Info, "Mappings loaded successfully"));
         });
 
-        LoadData = ReactiveCommand.Create<Stream, Outcome<Unit>>(dataStore.LoadFromSnapshot, outputScheduler: scheduler);
+        LoadData = ReactiveCommand.CreateFromTask<Stream, Outcome<Unit>>(async content => {
+            var result = await dataStore.LoadFromSnapshot(content).RunIO();
+            shell.Notify(result.IfSuccess(out _, out var error)
+                             ? (Severity.Success, "Loaded")
+                             : (Severity.Error, error.ToString()));
+            return result;
+        }, outputScheduler: scheduler);
         SaveData = ReactiveCommand.Create<Unit, Stream>(dataStore.SnapshotData, outputScheduler: scheduler);
     }
 
