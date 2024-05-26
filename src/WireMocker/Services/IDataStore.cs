@@ -1,4 +1,7 @@
 ﻿using System.Collections.Concurrent;
+using System.Text;
+using System.Text.Json;
+using RZ.Foundation;
 using RZ.Foundation.Extensions;
 using Tirax.Application.WireMocker.Domain;
 
@@ -10,12 +13,15 @@ public interface IDataStore
 
     OutcomeT<Asynchronous, Service>      Save(Service service);
     OutcomeT<Asynchronous, Seq<Service>> Search(string name);
+
+    Stream        SnapshotData(Unit _);
+    Outcome<Unit> LoadFromSnapshot(Stream snapshot);
 }
 
 public sealed class InMemoryDataStore : IDataStore
 {
-    readonly ConcurrentDictionary<Guid, Service> services = new();
-    readonly ConcurrentDictionary<Guid, ServiceSetting> serviceSettings = new();
+    ConcurrentDictionary<Guid, Service> services = new();
+    ConcurrentDictionary<Guid, ServiceSetting> serviceSettings = new();
 
     public OutcomeT<Synchronous, IAsyncEnumerable<Service>> GetServices() =>
         Success(services.Values.ToArray().AsAsyncEnumerable());
@@ -31,4 +37,25 @@ public sealed class InMemoryDataStore : IDataStore
         var result = services.Values.Where(s => s.Name.Contains(name)).ToSeq();
         return SuccessAsync(result);
     }
+
+    public Stream SnapshotData(Unit _) {
+        var snapshot = new Snapshot(services.Values.ToArray(), serviceSettings.Values.ToArray());
+        var json = JsonSerializer.Serialize(snapshot);
+        return new MemoryStream(Encoding.UTF8.GetBytes(json));
+    }
+
+    public Outcome<Unit> LoadFromSnapshot(Stream snapshotData) {
+        try{
+            var json = new StreamReader(snapshotData).ReadToEnd();
+            var snapshot = JsonSerializer.Deserialize<Snapshot>(json);
+            services = new(snapshot.Services.Map(s => KeyValuePair.Create(s.Id, s)));
+            serviceSettings = new(snapshot.ServiceSettings.Map(s => KeyValuePair.Create(s.Id, s)));
+            return unitOutcome;
+        }
+        catch (Exception e){
+            return Failure<Unit>(e).RunIO();
+        }
+    }
+
+    readonly record struct Snapshot(Service[] Services, ServiceSetting[] ServiceSettings);
 }
