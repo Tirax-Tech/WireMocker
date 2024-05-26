@@ -1,5 +1,4 @@
-﻿using Map = LanguageExt.Map;
-using Seq = LanguageExt.Seq;
+﻿using Seq = LanguageExt.Seq;
 
 namespace Tirax.Application.WireMocker.Domain;
 

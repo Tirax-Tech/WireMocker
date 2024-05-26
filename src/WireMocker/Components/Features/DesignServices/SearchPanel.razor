@@ -13,7 +13,11 @@
     <MudExpansionPanels>
         @foreach (var service in ViewModel!.Services){
             <MudExpansionPanel Text="@service.Name">
-
+                <MudStack>
+                    @if (service.Proxy is not null){
+                        <MudText Typo="Typo.body2">Proxy: @service.Proxy.Url</MudText>
+                    }
+                </MudStack>
             </MudExpansionPanel>
         }
     </MudExpansionPanels>
