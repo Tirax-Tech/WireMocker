@@ -4,33 +4,25 @@
     <MudTextField T="string" @bind-Text="ViewModel!.ServiceSearchText" Immediate="true"
                   Variant="Variant.Outlined" Placeholder="Type a service name" Label="Search service" />
 
-    @if (canNew){
-        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
-                   OnClick="@NewService">
+    @if (ViewModel!.CanNew){
+        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary" OnClick="@NewService">
             New service
         </MudButton>
     }
 
     <MudExpansionPanels>
+        @foreach (var service in ViewModel!.Services){
+            <MudExpansionPanel Text="@service.Name">
 
+            </MudExpansionPanel>
+        }
     </MudExpansionPanels>
 </MudStack>
 
 @code {
-    bool canNew;
-
-    public SearchPanel() {
-        this.WhenActivated(disposables => {
-            ViewModel!.NewService.CanExecute
-                      .Subscribe(searchable => {
-                           canNew = searchable;
-                           StateHasChanged();
-                       }).DisposeWith(disposables);
-        });
-    }
 
     async Task NewService() {
-        await ViewModel!.NewService.Execute();
+        await ViewModel!.NewService.Execute(ViewModel!.ServiceSearchText);
     }
 
 }
