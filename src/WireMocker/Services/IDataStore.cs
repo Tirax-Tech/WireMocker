@@ -10,6 +10,7 @@ namespace Tirax.Application.WireMocker.Services;
 public interface IDataStore
 {
     OutcomeT<Synchronous, IAsyncEnumerable<Service>> GetServices();
+    OutcomeT<Synchronous, Service>                   RemoveService(Guid serviceId);
 
     OutcomeT<Asynchronous, Service>      Save(Service service);
     OutcomeT<Asynchronous, Seq<Service>> Search(string name);
@@ -25,6 +26,16 @@ public sealed class InMemoryDataStore : IDataStore
 
     public OutcomeT<Synchronous, IAsyncEnumerable<Service>> GetServices() =>
         Success(services.Values.ToArray().AsAsyncEnumerable());
+
+    public OutcomeT<Synchronous, Service> RemoveService(Guid serviceId) {
+        if (services.TryRemove(serviceId, out var service)){
+            foreach (var setting in serviceSettings.Values)
+                setting.EndpointMappings.Remove(serviceId, out _);
+            return Success(service);
+        }
+        else
+            return Failure<Service>(StandardErrors.NotFound);
+    }
 
     public OutcomeT<Asynchronous, Service> Save(Service service) {
         var invalidReason = Service.Validator.Validate(service).Errors.Map(e => e.ToString()).HeadOrNone();

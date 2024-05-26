@@ -6,7 +6,6 @@ using DynamicData;
 using LanguageExt.Common;
 using MudBlazor;
 using ReactiveUI;
-using RZ.Foundation;
 using RZ.Foundation.Extensions;
 using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Domain;
@@ -45,6 +44,14 @@ public sealed class SearchPanelViewModel : ViewModel
                 return unit;
             }, outputScheduler: scheduler);
 
+        DeleteService = ReactiveCommand.Create<Guid, Unit>(serviceId => {
+            if (dataStore.RemoveService(serviceId).RunIO().IfFail(out var error, out var service))
+                errorStream.OnNext(error);
+            else
+                serviceChanges.OnNext(new ChangeSet<Service>([new(ListChangeReason.Remove, service)]));
+            return unit;
+        });
+
         var serviceSource = Observable.FromAsync(async () => await LoadAllServices().RunIO());
 
         errorStream.Merge(serviceSource.Where(r => r.IsFail)
@@ -72,6 +79,8 @@ public sealed class SearchPanelViewModel : ViewModel
     public ReadOnlyObservableCollection<Service> Services => services;
 
     public ReactiveCommand<string, Unit> NewService { get; }
+
+    public ReactiveCommand<Guid, Unit> DeleteService { get; }
 
     OutcomeT<Asynchronous, Seq<Service>> LoadAllServices() =>
         from itor in dataStore.GetServices()
