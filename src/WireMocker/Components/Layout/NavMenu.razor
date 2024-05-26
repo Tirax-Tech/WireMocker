@@ -2,6 +2,12 @@
 
 <MudDrawer Elevation="0" @bind-Open="ViewModel!.IsDrawerOpen">
     <MudNavMenu>
+        <MudSwitch ThumbIcon="@Icons.Material.Filled.DarkMode" ThumbIconColor="Color.Tertiary"
+                   LabelPosition="LabelPosition.Start"
+                   @bind-Value="ViewModel!.IsDarkMode">
+            Dark mode
+        </MudSwitch>
+        <MudDivider/>
         <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Logs</MudNavLink>
         <MudNavLink Href="/services" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.DesignServices">Services</MudNavLink>
         <MudNavLink Href="/data" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.DiscFull">Load/Save</MudNavLink>

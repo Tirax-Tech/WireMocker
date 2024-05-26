@@ -1,11 +1,9 @@
-﻿@inherits LayoutComponentBase
-
-@implements IDisposable
+﻿@inherits ReactiveLayoutComponentBase<MainLayoutViewModel>
 
 @inject ISnackbar Snackbar
-@inject MainLayoutViewModel ViewModel
+@inject MainLayoutViewModel MainVm
 
-<MudThemeProvider Theme="App.Theme" />
+<MudThemeProvider Theme="App.Theme" @bind-IsDarkMode="ViewModel!.IsDarkMode" />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
@@ -19,20 +17,16 @@
 
 @code {
 
-    readonly CompositeDisposable disposables = new();
-
-    protected override void OnParametersSet() {
-        ViewModel.Notifications
-                 .Subscribe(m => Snackbar.Add(m.Message, m.Severity,
-                      m.Severity is Severity.Error or Severity.Warning ? RequireInteraction : null))
-                 .DisposeWith(disposables);
-        base.OnParametersSet();
+    public MainLayout() {
+        this.WhenActivated(disposables => {
+            ViewModel = MainVm;
+            ViewModel.Notifications
+                     .Subscribe(m => Snackbar.Add(m.Message, m.Severity,
+                          m.Severity is Severity.Error or Severity.Warning ? RequireInteraction : null))
+                     .DisposeWith(disposables);
+        });
     }
 
     void RequireInteraction(SnackbarOptions opts) => opts.RequireInteraction = true;
-
-    public void Dispose() {
-        disposables.Dispose();
-    }
 
 }

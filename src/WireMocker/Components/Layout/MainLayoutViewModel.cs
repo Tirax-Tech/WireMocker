@@ -10,11 +10,18 @@ public sealed class MainLayoutViewModel(ILogger<MainLayoutViewModel> logger, ISc
 {
     readonly Subject<NotificationMessage> notifications = new();
     AppMode appMode = new AppMode.Page();
+    bool isDarkMode = true;
 
     public AppMode AppMode
     {
         get => appMode;
         set => this.RaiseAndSetIfChanged(ref appMode, value);
+    }
+
+    public bool IsDarkMode
+    {
+        get => isDarkMode;
+        set => this.RaiseAndSetIfChanged(ref isDarkMode, value);
     }
 
     public bool IsDrawerOpen
