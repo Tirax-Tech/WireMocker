@@ -7,7 +7,7 @@ using ReactiveUI;
 using RZ.Foundation;
 using Tirax.Application.WireMocker.Services;
 
-namespace Tirax.Application.WireMocker.Components.Features.ImportExport;
+namespace Tirax.Application.WireMocker.Components.Features.MockData;
 
 public sealed class XPortViewModel : ViewModelDisposable
 {
