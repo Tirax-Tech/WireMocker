@@ -25,16 +25,24 @@ var builder = WebApplication.CreateBuilder([]);
 
 builder.Services
        .AddSingleton<IChaotic, Chaotic>()
-       .AddSingleton<IViewModelFactory, ViewModelFactory>()
+       .AddSingleton<IMockServer>(new MockServer(server))
+       .AddSingleton<IViewLocator, ViewLocator>()
+       .AddSingleton<IDataStore, InMemoryDataStore>()
+       .AddScoped<IViewModelFactory, ViewModelFactory>()  // Scoped, to be able to inject scoped services
+       .AddScoped<IScheduler>(_ => new SynchronizationContextScheduler(SynchronizationContext.Current!))
 
        .AddScoped<MainLayoutViewModel>()
        .AddScoped<ShellViewModel>()
        .AddTransient<XPortViewModel>()
-       .AddTransient<DashboardViewModel>()
-       .AddSingleton<IMockServer>(new MockServer(server))
-       .AddSingleton<IViewLocator, ViewLocator>()
-       .AddScoped<IScheduler>(_ => new SynchronizationContextScheduler(SynchronizationContext.Current!));
-builder.Services.AddMudServices();
+       .AddTransient<DashboardViewModel>();
+
+builder.Services.AddMudServices(config => {
+    var snackbar = config.SnackbarConfiguration;
+
+    snackbar.VisibleStateDuration = 5_000 /* ms */;
+    snackbar.HideTransitionDuration = 1000 /* ms */;
+    snackbar.ShowTransitionDuration = 500 /* ms */;
+});
 
 // Add services to the container.
 builder.Services.AddRazorComponents()

@@ -23,7 +23,7 @@ public sealed class SearchPanelViewModel : ViewModel
                            .Do(title => {
                                 var vm = vmFactory.Create<AddServiceViewModel>(scheduler, title);
                                 shell.PushModal(vm);
-                                vm.Save.Subscribe(_ => shell.CloseCurrentView());
+                                vm.Save.Where(r => r.IsSuccess).Subscribe(_ => ServiceSearchText = string.Empty);
                             }),
             canNew, scheduler);
     }

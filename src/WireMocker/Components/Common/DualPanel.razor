@@ -22,9 +22,6 @@
     [Parameter]
     public RenderFragment? RightPanel { get; set; }
 
-    [CascadingParameter]
-    public required MudTheme Theme { get; set; }
-
     string paperStyle = string.Empty;
 
     protected override void OnParametersSet() {

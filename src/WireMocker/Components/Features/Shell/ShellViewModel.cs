@@ -28,6 +28,9 @@ public sealed class ShellViewModel(MainLayoutViewModel mainVm) : ViewModel
         return unit;
     }
 
+    public NotificationMessage Notify(NotificationMessage message) =>
+        mainVm.Notify(message);
+
     public void PushModal(ViewModel viewModel) {
         var onClose = ReactiveCommand.Create<Unit, Unit>(_ => CloseCurrentView());
         this.RaisePropertyChanging(nameof(Content));

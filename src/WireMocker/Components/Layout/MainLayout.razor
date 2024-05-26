@@ -1,5 +1,14 @@
 ﻿@inherits LayoutComponentBase
 
+@implements IDisposable
+
+@inject ISnackbar Snackbar
+@inject MainLayoutViewModel ViewModel
+
+<MudThemeProvider Theme="App.Theme" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
 <MudLayout>
     <MainAppBar />
     <NavMenu />
@@ -7,3 +16,20 @@
         @Body
     </MudMainContent>
 </MudLayout>
+
+@code {
+
+    readonly CompositeDisposable disposables = new();
+
+    protected override void OnParametersSet() {
+        ViewModel.Notifications
+                 .Subscribe(m => Snackbar.Add(m.Message, m.Severity))
+                 .DisposeWith(disposables);
+        base.OnParametersSet();
+    }
+
+    public void Dispose() {
+        disposables.Dispose();
+    }
+
+}
