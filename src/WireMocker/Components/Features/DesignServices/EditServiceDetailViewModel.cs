@@ -22,7 +22,7 @@ public sealed class EditServiceDetailViewModel : ViewModel
         IsNew = initial.IsNone;
 
         var canSave = this.WhenAnyValue(x => x.Pattern).Select(p => PatternValidator(p).IsEmpty);
-        Save = ReactiveCommand.Create<Unit, Endpoint>(_ => new(chaotic.NewGuid(), MatchType, IgnoreCase, EndpointName), canSave, scheduler);
+        Save = ReactiveCommand.Create<Unit, Endpoint>(_ => new(chaotic.NewGuid(), MatchType, Pattern, IgnoreCase, EndpointName), canSave, scheduler);
         Cancel = ReactiveCommand.Create<Unit, Unit>(_ => unit);
     }
 

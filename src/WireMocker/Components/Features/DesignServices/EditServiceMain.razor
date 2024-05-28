@@ -10,18 +10,25 @@
 
     <MudText Typo="Typo.h5">Proxy</MudText>
 
-    <MudTextField T="string" Label="Proxy URL" Variant="Variant.Outlined" Placeholder="e.g. http://host/path" />
+    <MudTextField T="string" Label="Proxy URL" Variant="Variant.Outlined" Placeholder="e.g. http://host/path"
+                  @bind-Value="ViewModel!.Proxy" />
 
     <MudText Typo="Typo.h5">Endpoints</MudText>
 
-    @if (ViewModel!.ShowAddEndpoint){
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add">
-            Add Endpoint
-        </MudButton>
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@AddEndpoint">
+        Add Endpoint
+    </MudButton>
+
+    @foreach(var endpoint in ViewModel!.Endpoints) {
+        <MudText>@endpoint.MatchType: @endpoint.Pattern</MudText>
     }
 
 </MudStack>
 
 @code {
+
+    async Task AddEndpoint() {
+        await ViewModel!.AddEndpoint.Execute();
+    }
 
 }

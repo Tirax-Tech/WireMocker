@@ -16,7 +16,7 @@ namespace Tirax.Application.WireMocker.Components.Features.DesignServices;
 public sealed class SearchPanelViewModel : ViewModel
 {
     readonly IDataStore dataStore;
-    readonly ReadOnlyObservableCollection<Service> services;
+    readonly ReadOnlyObservableCollection<SearchViewItemViewModel> services;
     readonly ObservableAsPropertyHelper<bool> canNew;
     string serviceSearchText = string.Empty;
 
@@ -28,7 +28,7 @@ public sealed class SearchPanelViewModel : ViewModel
 
         canNew = normalized.Select(s => s is not null).ToProperty(this, x => x.CanNew);
 
-        var serviceChanges = new Subject<IChangeSet<Service>>();
+        var serviceChanges = new Subject<IChangeSet<SearchViewItemViewModel>>();
         var errorStream = new Subject<Error>();
 
         NewService = ReactiveCommand.Create<string, Unit>(
@@ -39,18 +39,11 @@ public sealed class SearchPanelViewModel : ViewModel
                 vm.Save
                   .Where(r => r.IsSuccess)
                   .Do(_ => ServiceSearchText = string.Empty)
-                  .Select(r => r.Unwrap()).ToObservableChangeSet()
+                  .Select(r => r.Unwrap())
+                  .Select(CreateView).ToObservableChangeSet()
                   .Subscribe(serviceChanges.OnNext);
                 return unit;
             }, outputScheduler: scheduler);
-
-        DeleteService = ReactiveCommand.Create<Guid, Unit>(serviceId => {
-            if (dataStore.RemoveService(serviceId).RunIO().IfFail(out var error, out var service))
-                errorStream.OnNext(error);
-            else
-                serviceChanges.OnNext(new ChangeSet<Service>([new(ListChangeReason.Remove, service)]));
-            return unit;
-        });
 
         var serviceSource = Observable.FromAsync(async () => await LoadAllServices().RunIO());
 
@@ -59,13 +52,22 @@ public sealed class SearchPanelViewModel : ViewModel
                    .Subscribe(e => shell.Notify((Severity.Error, e.ToString())));
 
         var initSource = serviceSource.Where(r => r.IsSuccess)
-                                      .SelectMany(r => r.Unwrap())
+                                      .SelectMany(r => r.Unwrap().Map(CreateView))
                                       .ToObservableChangeSet();
 
         serviceChanges.Merge(initSource)
                       .Do(_ => this.RaisePropertyChanging(nameof(Services)))
                       .Bind(out services)
                       .Subscribe(_ => this.RaisePropertyChanged(nameof(Services)));
+        return;
+
+        SearchViewItemViewModel CreateView(Service service) {
+            var vm = vmFactory.Create<SearchViewItemViewModel>(service);
+            vm.Delete
+              .Where(result => result.IsSuccess)
+              .Subscribe(_ => serviceChanges.OnNext(new ChangeSet<SearchViewItemViewModel>([new(ListChangeReason.Remove, vm)])));
+            return vm;
+        }
     }
 
     public string ServiceSearchText
@@ -76,11 +78,9 @@ public sealed class SearchPanelViewModel : ViewModel
 
     public bool CanNew => canNew.Value;
 
-    public ReadOnlyObservableCollection<Service> Services => services;
+    public ReadOnlyObservableCollection<SearchViewItemViewModel> Services => services;
 
     public ReactiveCommand<string, Unit> NewService { get; }
-
-    public ReactiveCommand<Guid, Unit> DeleteService { get; }
 
     OutcomeT<Asynchronous, Seq<Service>> LoadAllServices() =>
         from itor in dataStore.GetServices()

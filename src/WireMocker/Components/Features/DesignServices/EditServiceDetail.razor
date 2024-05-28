@@ -2,7 +2,7 @@
 @inherits ReactiveComponentBase<EditServiceDetailViewModel>
 
 <MudStack>
-    <MudPaper Class="white pa-8">
+    <MudPaper Class="mud-background pa-8">
         <MudStack>
             <MudTextField T="string" Variant="Variant.Filled" Label="(Optional) Endpoint name" @bind-Text="ViewModel!.EndpointName" />
             <MudStack Row="true" AlignItems="AlignItems.Baseline">
@@ -22,11 +22,11 @@
     <MudStack Row="true" Justify="Justify.FlexEnd">
         @if (ViewModel!.IsNew){
             <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       Disabled="!canSave">Add</MudButton>
+                       Disabled="!canSave" OnClick="@Save">Add</MudButton>
         }
         else{
             <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
-                       Disabled="!canSave">Save</MudButton>
+                       Disabled="!canSave" OnClick="@Save">Save</MudButton>
             <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
         }
     </MudStack>
@@ -43,4 +43,9 @@
             }).DisposeWith(disposables);
         });
     }
+
+    async Task Save() {
+        await ViewModel!.Save.Execute();
+    }
+
 }

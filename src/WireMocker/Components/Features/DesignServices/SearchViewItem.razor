@@ -1,0 +1,33 @@
+﻿@inherits ReactiveComponentBase<SearchViewItemViewModel>
+
+@{ var service = ViewModel!.Service; }
+
+<MudExpansionPanel Text="@service.Name" @bind-IsExpanded="ViewModel!.IsExpanded">
+    <TitleContent>
+        <MudStack Row="true" Spacing="0" AlignItems="AlignItems.Center">
+            <MudText Typo="Typo.h6">@service.Name</MudText>
+            <MudSpacer />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@DeleteService" />
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@EditService" />
+        </MudStack>
+    </TitleContent>
+    <ChildContent>
+        <MudStack>
+            @if (service.Proxy is not null){
+                <MudText Typo="Typo.body2">Proxy: @service.Proxy.Url</MudText>
+            }
+        </MudStack>
+    </ChildContent>
+</MudExpansionPanel>
+
+@code {
+
+    async Task EditService() {
+        await ViewModel!.Edit.Execute();
+    }
+
+    async Task DeleteService() {
+        await ViewModel!.Delete.Execute();
+    }
+
+}

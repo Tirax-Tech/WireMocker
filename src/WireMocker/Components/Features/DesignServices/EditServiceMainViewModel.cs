@@ -1,28 +1,34 @@
 ﻿using System.Collections.ObjectModel;
-using System.Reactive.Linq;
+using System.Diagnostics;
 using ReactiveUI;
+using Tirax.Application.WireMocker.Components.Features.Shell;
+using Tirax.Application.WireMocker.Domain;
+using Tirax.Application.WireMocker.Services;
 using Endpoint = Tirax.Application.WireMocker.Domain.Endpoint;
 
 namespace Tirax.Application.WireMocker.Components.Features.DesignServices;
 
 public sealed class EditServiceMainViewModel : ViewModel
 {
-    readonly ObservableAsPropertyHelper<bool> showAddEndpoint;
+    string proxy;
 
-    string proxy = string.Empty;
-    EditServiceDetailViewModel? detail;
+    public EditServiceMainViewModel(IViewModelFactory vmFactory, ShellViewModel shell, Service service) {
+        ServiceName = service.Name;
+        proxy = service.Proxy?.Url ?? string.Empty;
+        Endpoints = new(service.Endpoints.Values);
 
-    public EditServiceMainViewModel(IServiceProvider serviceProvider, string name) {
-        ServiceName = name;
-        detail = ActivatorUtilities.CreateInstance<EditServiceDetailViewModel>(serviceProvider, Option<Endpoint>.None);
-
-        showAddEndpoint = Endpoints.WhenAnyValue(x => x.Count).Select(c => c > 0).ToProperty(this, x => x.ShowAddEndpoint);
         AddEndpoint = ReactiveCommand.Create<Unit, Unit>(_ => {
+            var detail = vmFactory.Create<EditServiceDetailViewModel>(Option<Endpoint>.None);
+            detail.Save.Subscribe(ep => {
+                Endpoints.Add(ep);
+                shell.TrySetRightPanel(null);
+            });
+
+            var result = shell.TrySetRightPanel(detail);
+            Debug.Assert(result, "Expected dual view");
             return unit;
         });
     }
-
-    public ViewModel? DetailPanel => detail;
 
     public string ServiceName { get; }
 
@@ -32,9 +38,7 @@ public sealed class EditServiceMainViewModel : ViewModel
         set => this.RaiseAndSetIfChanged(ref proxy, value);
     }
 
-    public bool ShowAddEndpoint => showAddEndpoint.Value;
-
-    public ObservableCollection<Endpoint> Endpoints { get; } = new();
+    public ObservableCollection<Endpoint> Endpoints { get; }
 
     public ReactiveCommand<Unit, Unit> AddEndpoint { get; }
 }

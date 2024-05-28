@@ -21,7 +21,7 @@ public enum PathMatchType
     Exact, Wildcard
 }
 
-public record Endpoint(Guid Id, PathMatchType MatchType, bool IgnoreCase = true, string? Name = default);
+public record Endpoint(Guid Id, PathMatchType MatchType, string Pattern, bool IgnoreCase = true, string? Name = default);
 
 #region Just Ideas
 

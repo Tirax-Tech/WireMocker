@@ -1,5 +1,4 @@
-﻿@using Tirax.Application.WireMocker.Domain
-@inherits ReactiveComponentBase<SearchPanelViewModel>
+﻿@inherits ReactiveComponentBase<SearchPanelViewModel>
 
 <MudStack>
     <MudTextField T="string" @bind-Text="ViewModel!.ServiceSearchText" Immediate="true"
@@ -12,23 +11,8 @@
     }
 
     <MudExpansionPanels>
-        @foreach (var service in ViewModel!.Services){
-            <MudExpansionPanel Text="@service.Name">
-                <TitleContent>
-                    <MudStack Row="true" AlignItems="AlignItems.Center">
-                        <MudText Typo="Typo.h6">@service.Name</MudText>
-                        <MudSpacer />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@(() => DeleteService(service))" />
-                    </MudStack>
-                </TitleContent>
-                <ChildContent>
-                    <MudStack>
-                        @if (service.Proxy is not null){
-                            <MudText Typo="Typo.body2">Proxy: @service.Proxy.Url</MudText>
-                        }
-                    </MudStack>
-                </ChildContent>
-            </MudExpansionPanel>
+        @foreach (var serviceView in ViewModel!.Services){
+            <SearchViewItem ViewModel="serviceView" @key="serviceView.Service.Id" />
         }
     </MudExpansionPanels>
 </MudStack>
@@ -37,10 +21,6 @@
 
     async Task NewService() {
         await ViewModel!.NewService.Execute(ViewModel!.ServiceSearchText);
-    }
-
-    async Task DeleteService(Service service) {
-        await ViewModel!.DeleteService.Execute(service.Id);
     }
 
 }

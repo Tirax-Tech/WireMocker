@@ -14,9 +14,29 @@ public sealed class ShellViewModel(MainLayoutViewModel mainVm) : ViewModel
         content.Clear();
 
         initAppMode.IfSome(m => mainVm.AppMode = m);
-        var view = isDualMode ? ViewMode.Dual.Default : ViewMode.Single.Instance;
+        var view = isDualMode ? new ViewMode.Dual() : ViewMode.Single.Instance;
         content.Push(new(mainVm.AppMode, viewModel, view));
     }
+
+    #region Dual mode
+
+    public bool TrySetRightPanel(ViewModel? viewModel) {
+        var state = content.Peek();
+        if (state.ViewMode is not ViewMode.Dual)
+            return false;
+
+        this.RaisePropertyChanging(nameof(Content));
+        this.RaisePropertyChanging(nameof(ViewMode));
+        content.Pop();
+        content.Push(state with {
+            ViewMode = new ViewMode.Dual { DetailPanel = viewModel }
+        });
+        this.RaisePropertyChanged(nameof(ViewMode));
+        this.RaisePropertyChanged(nameof(Content));
+        return true;
+    }
+
+    #endregion
 
     public Unit CloseCurrentView() {
         this.RaisePropertyChanging(nameof(Content));
@@ -57,7 +77,6 @@ public abstract record ViewMode
 
     public sealed record Dual : ViewMode
     {
-        public static readonly ViewMode Default = new Dual();
-        public ViewModel? DetailPanel { get; set; }
+        public ViewModel? DetailPanel { get; init; }
     }
 }
