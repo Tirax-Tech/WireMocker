@@ -1,7 +1,7 @@
 ﻿@inherits ReactiveComponentBase<EditServiceMainViewModel>
 
 <SectionContent SectionName="appbar-actions">
-    <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Tertiary" />
+    <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Tertiary" OnClick="@SaveChanges" />
 </SectionContent>
 
 <MudStack>
@@ -29,6 +29,10 @@
 
     async Task AddEndpoint() {
         await ViewModel!.AddEndpoint.Execute();
+    }
+
+    async Task SaveChanges() {
+        await ViewModel!.Save.Execute();
     }
 
 }

@@ -9,7 +9,7 @@ namespace Tirax.Application.WireMocker.Components.Layout;
 public sealed class MainLayoutViewModel(ILogger<MainLayoutViewModel> logger, IScheduler scheduler) : ViewModel
 {
     readonly Subject<NotificationMessage> notifications = new();
-    AppMode appMode = new AppMode.Page();
+    AppMode appMode = AppMode.Page.Instance;
     bool isDarkMode = true;
 
     public AppMode AppMode
@@ -53,6 +53,7 @@ public abstract record AppMode
 {
     public sealed record Page : AppMode
     {
+        public static readonly Page Instance = new();
         public bool IsDrawerOpen { get; set; } = true;
     }
 

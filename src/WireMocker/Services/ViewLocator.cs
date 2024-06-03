@@ -49,15 +49,17 @@ public class ViewLocator : IViewLocator
         if (!modelType.Name.EndsWith("ViewModel"))
             return ViewResolution.InvalidModel.Instance;
 
-        var viewTypeName = modelType.Name[..^9]; // 9 = "ViewModel".Length
+        var typeName = modelType.Name[..^9]; // 9 = "ViewModel".Length
+        var viewType = GetType(modelType, typeName) ?? GetType(modelType, typeName + "View");
 
+        return viewType is null
+                   ? new ViewResolution.ViewTypeNotFound(modelType.Namespace!)
+                   : new ViewResolution.ResolvedViewType(viewType);
+    }
+
+    static Type? GetType(Type modelType, string typeName) {
         // get view type from the same namespace of the model
-        var viewTypeFullName = $"{modelType.Namespace}.{viewTypeName}";
-        var viewType = modelType.Assembly.GetType(viewTypeFullName);
-
-        if (viewType is null)
-            return new ViewResolution.ViewTypeNotFound(viewTypeFullName);
-
-        return new ViewResolution.ResolvedViewType(viewType);
+        var viewTypeFullName = $"{modelType.Namespace}.{typeName}";
+        return modelType.Assembly.GetType(viewTypeFullName);
     }
 }

@@ -1,11 +1,19 @@
 ﻿using ReactiveUI;
+using Tirax.Application.WireMocker.Components.Common;
 using Tirax.Application.WireMocker.Components.Layout;
 
 namespace Tirax.Application.WireMocker.Components.Features.Shell;
 
-public sealed class ShellViewModel(MainLayoutViewModel mainVm) : ViewModel
+public sealed class ShellViewModel : ViewModel
 {
-    readonly Stack<ViewState> content = new();
+    readonly Stack<ViewState> content = [];
+    readonly MainLayoutViewModel mainVm;
+
+    public ShellViewModel(MainLayoutViewModel mainVm) {
+        this.mainVm = mainVm;
+
+        content.Push(new ViewState(AppMode.Page.Instance, BlankContentViewModel.Instance, ViewMode.Single.Instance));
+    }
 
     public ViewModel Content => content.Peek().Content;
     public ViewMode ViewMode => content.Peek().ViewMode;

@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Reactive.Linq;
 using ReactiveUI;
 using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Domain;
@@ -12,7 +13,7 @@ public sealed class EditServiceMainViewModel : ViewModel
 {
     string proxy;
 
-    public EditServiceMainViewModel(IViewModelFactory vmFactory, ShellViewModel shell, Service service) {
+    public EditServiceMainViewModel(IViewModelFactory vmFactory, ShellViewModel shell, SearchPanelViewData viewData, Service service) {
         ServiceName = service.Name;
         proxy = service.Proxy?.Url ?? string.Empty;
         Endpoints = new(service.Endpoints.Values);
@@ -28,6 +29,16 @@ public sealed class EditServiceMainViewModel : ViewModel
             Debug.Assert(result, "Expected dual view");
             return unit;
         });
+
+        Save = ReactiveCommand.CreateFromObservable<Unit, Unit>(_ => {
+            var newService = new Service(service.Id, ServiceName){
+                Proxy = new(Proxy),
+                Endpoints = Endpoints.ToDictionary(ep => ep.Id)
+            };
+            var save = viewData.UpdateService.Execute(newService);
+            save.Subscribe(_ => shell.CloseCurrentView());
+            return save.Select(_ => unit);
+        }, viewData.UpdateService.CanExecute);
     }
 
     public string ServiceName { get; }
@@ -41,4 +52,6 @@ public sealed class EditServiceMainViewModel : ViewModel
     public ObservableCollection<Endpoint> Endpoints { get; }
 
     public ReactiveCommand<Unit, Unit> AddEndpoint { get; }
+
+    public ReactiveCommand<Unit, Unit> Save { get; }
 }

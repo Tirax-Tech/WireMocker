@@ -11,7 +11,8 @@ public sealed class SearchViewItemViewModel : ViewModel
 {
     bool isExpanded;
 
-    public SearchViewItemViewModel(IDataStore dataStore, ShellViewModel shell, IViewModelFactory vmFactory, Service service) {
+    public SearchViewItemViewModel(IDataStore dataStore, ShellViewModel shell, IViewModelFactory vmFactory,
+                                   SearchPanelViewData viewData, Service service) {
         Service = service;
 
         Delete = ReactiveCommand.Create<Unit, Outcome<Service>>(_ => {
@@ -24,7 +25,7 @@ public sealed class SearchViewItemViewModel : ViewModel
 
         Edit = ReactiveCommand.Create<Unit, Unit>(_ => {
             IsExpanded = true;
-            shell.PushModal(vmFactory.Create<EditServiceMainViewModel>(service));
+            shell.PushModal(vmFactory.Create<EditServiceMainViewModel>(viewData, service));
 
             return unit;
         });
