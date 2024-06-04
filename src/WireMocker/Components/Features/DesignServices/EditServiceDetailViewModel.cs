@@ -21,6 +21,13 @@ public sealed class EditServiceDetailViewModel : ViewModel
     public EditServiceDetailViewModel(IChaotic chaotic, IScheduler scheduler, Option<Endpoint> initial) {
         IsNew = initial.IsNone;
 
+        if (initial.IfSome(out var ep)){
+            ignoreCase = ep.IgnoreCase;
+            matchType = ep.MatchType;
+            pattern = ep.Pattern;
+            endpointName = ep.Name;
+        }
+
         var canSave = this.WhenAnyValue(x => x.Pattern).Select(p => PatternValidator(p).IsEmpty);
         Save = ReactiveCommand.Create<Unit, Endpoint>(_ => new(chaotic.NewGuid(), MatchType, Pattern, IgnoreCase, EndpointName), canSave, scheduler);
         Cancel = ReactiveCommand.Create<Unit, Unit>(_ => unit);

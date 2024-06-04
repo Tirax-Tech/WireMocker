@@ -1,5 +1,4 @@
 ﻿using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Reactive.Linq;
 using ReactiveUI;
 using Tirax.Application.WireMocker.Components.Features.Shell;
@@ -18,17 +17,12 @@ public sealed class EditServiceMainViewModel : ViewModel
         proxy = service.Proxy?.Url ?? string.Empty;
         Endpoints = new(service.Endpoints.Values);
 
-        AddEndpoint = ReactiveCommand.Create<Unit, Unit>(_ => {
-            var detail = vmFactory.Create<EditServiceDetailViewModel>(Option<Endpoint>.None);
-            detail.Save.Subscribe(ep => {
-                Endpoints.Add(ep);
-                shell.TrySetRightPanel(null);
-            });
+        AddEndpoint = ReactiveCommand.Create<Unit, Unit>(_ => SaveEndPoint(None, Endpoints.Add));
 
-            var result = shell.TrySetRightPanel(detail);
-            Debug.Assert(result, "Expected dual view");
-            return unit;
-        });
+        EditEndpoint = ReactiveCommand.Create<Endpoint, Unit>(ep => SaveEndPoint(ep, newEp => {
+            var index = Endpoints.IndexOf(ep);
+            Endpoints[index] = newEp;
+        }));
 
         Save = ReactiveCommand.CreateFromObservable<Unit, Unit>(_ => {
             var newService = new Service(service.Id, ServiceName){
@@ -39,6 +33,19 @@ public sealed class EditServiceMainViewModel : ViewModel
             save.Subscribe(_ => shell.CloseCurrentView());
             return save.Select(_ => unit);
         }, viewData.UpdateService.CanExecute);
+
+        return;
+
+        Unit SaveEndPoint(Option<Endpoint> ep, Action<Endpoint> saveAction) {
+            var detail = vmFactory.Create<EditServiceDetailViewModel>(ep);
+            detail.Save.Subscribe(newEp => {
+                saveAction(newEp);
+                shell.TrySetRightPanel(null);
+            });
+            detail.Cancel.Subscribe(_ => shell.TrySetRightPanel(null));
+            shell.TrySetRightPanel(detail);
+            return unit;
+        }
     }
 
     public string ServiceName { get; }
@@ -52,6 +59,8 @@ public sealed class EditServiceMainViewModel : ViewModel
     public ObservableCollection<Endpoint> Endpoints { get; }
 
     public ReactiveCommand<Unit, Unit> AddEndpoint { get; }
+
+    public ReactiveCommand<Endpoint, Unit> EditEndpoint { get; }
 
     public ReactiveCommand<Unit, Unit> Save { get; }
 }

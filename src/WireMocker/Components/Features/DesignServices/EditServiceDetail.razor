@@ -1,5 +1,6 @@
-﻿@using Tirax.Application.WireMocker.Domain
-@inherits ReactiveComponentBase<EditServiceDetailViewModel>
+﻿@using global::RZ.Foundation.Types
+@using Tirax.Application.WireMocker.Domain
+@inherits AppReactiveComponent<EditServiceDetailViewModel>
 
 <MudStack>
     <MudPaper Class="mud-background pa-8">
@@ -22,30 +23,26 @@
     <MudStack Row="true" Justify="Justify.FlexEnd">
         @if (ViewModel!.IsNew){
             <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-                       Disabled="!canSave" OnClick="@Save">Add</MudButton>
+                       Disabled="!canSave" OnClick="@ViewModel!.Save.OnExecute()">Add</MudButton>
         }
         else{
             <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
-                       Disabled="!canSave" OnClick="@Save">Save</MudButton>
-            <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Cancel">Cancel</MudButton>
+                       Disabled="!canSave" OnClick="@ViewModel!.Save.OnExecute()">Save</MudButton>
+            <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Cancel"
+                       Disabled="!canCancel" OnClick="@ViewModel!.Cancel.OnExecute()">Cancel</MudButton>
         }
     </MudStack>
 </MudStack>
 
 @code {
-    bool canSave;
+    readonly MutableRef<bool> canSave = new();
+    readonly MutableRef<bool> canCancel = new();
 
     public EditServiceDetail() {
         this.WhenActivated(disposables => {
-            ViewModel!.Save.CanExecute.Subscribe(v => {
-                canSave = v;
-                StateHasChanged();
-            }).DisposeWith(disposables);
+            Bind(ViewModel!.Save.CanExecute, canSave).DisposeWith(disposables);
+            Bind(ViewModel!.Cancel.CanExecute, canCancel).DisposeWith(disposables);
         });
-    }
-
-    async Task Save() {
-        await ViewModel!.Save.Execute();
     }
 
 }

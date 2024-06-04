@@ -1,6 +1,8 @@
-﻿@using Tirax.Application.WireMocker.Services
+﻿@using System.Diagnostics
+@using global::RZ.Foundation.Types
+@using Tirax.Application.WireMocker.Services
 
-@inherits ReactiveComponentBase<XPortViewModel>
+@inherits AppReactiveComponent<XPortViewModel>
 
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
@@ -27,29 +29,27 @@
     <MudStack>
         <MudTextField T="string" MaxLength="15000"
                       Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="ViewModel!.Mappings" />
-        <MudButton Disabled="!canLoad" Variant="Variant.Filled" Color="Color.Primary" OnClick="@LoadMappings">Load</MudButton>
+        <MudButton Disabled="!canLoad" Variant="Variant.Filled" Color="Color.Primary"
+                   OnClick="@ViewModel!.LoadMappings.OnExecute()">Load</MudButton>
     </MudStack>
 </MudStack>
 
 @code {
-    bool canLoad;
+    readonly MutableRef<bool> canLoad = new();
 
     public XPort() {
         this.WhenActivated(disposables => {
-            this.WhenAnyValue(x => x.ViewModel!.HasMappings)
-                .CombineLatest(ViewModel!.LoadMappings.IsExecuting, (hasMappings, isExecuting) => !isExecuting && hasMappings)
-                .Subscribe(loadable => canLoad = loadable)
-                .DisposeWith(disposables);
+            Bind(this.WhenAnyValue(x => x.ViewModel!.HasMappings)
+                     .CombineLatest(ViewModel!.LoadMappings.IsExecuting, (hasMappings, isExecuting) => !isExecuting && hasMappings),
+                    canLoad)
+               .DisposeWith(disposables);
 
             ViewModel!.Notifications.Subscribe(notification => Snackbar.Add(notification.Message, notification.Severity));
         });
     }
 
     async Task LoadFile(IBrowserFile? file) {
-        if (file is null){
-            Console.WriteLine("File is null?");
-            return;
-        }
+        Debug.Assert(file is not null);
         await using var stream = file.OpenReadStream();
         await ViewModel!.LoadData.Execute(stream);
     }
@@ -58,9 +58,5 @@
         var content = await ViewModel!.SaveData.Execute();
         using var streamRef = new DotNetStreamReference(content);
         await JS.InvokeVoidAsync("downloadFileFromStream", "wire-mocker.data", streamRef);
-    }
-
-    async Task LoadMappings() {
-        await ViewModel!.LoadMappings.Execute();
     }
 }

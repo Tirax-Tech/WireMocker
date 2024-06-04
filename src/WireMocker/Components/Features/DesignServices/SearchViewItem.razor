@@ -5,7 +5,7 @@
 <MudExpansionPanel Text="@service.Name" @bind-IsExpanded="ViewModel!.IsExpanded">
     <TitleContent>
         <MudStack Row="true" Spacing="0" AlignItems="AlignItems.Center">
-            <MudText Typo="Typo.h6">@service.Name</MudText>
+            <MudText Typo="Typo.h4">@service.Name</MudText>
             <MudSpacer />
             <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@DeleteService" />
             <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@EditService" />
@@ -14,7 +14,14 @@
     <ChildContent>
         <MudStack>
             @if (service.Proxy is not null){
-                <MudText Typo="Typo.body2">Proxy: @service.Proxy.Url</MudText>
+                <MudText Typo="Typo.h6">Proxy:</MudText>
+                <MudText Typo="Typo.body2">@service.Proxy.Url</MudText>
+            }
+            @if (service.Endpoints.Count > 0){
+                <MudText Typo="Typo.h6">Endpoints:</MudText>
+            }
+            @foreach (var ep in service.Endpoints){
+                <MudText Typo="Typo.subtitle1">@ep.Value.Pattern</MudText>
             }
         </MudStack>
     </ChildContent>

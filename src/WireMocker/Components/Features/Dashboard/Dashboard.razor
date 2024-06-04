@@ -1,13 +1,12 @@
 ﻿@page "/"
 @rendermode InteractiveServer
 
-@using System.Reactive.Linq
 @inherits ReactiveInjectableComponentBase<DashboardViewModel>
 
 <AppBarTitle Title="Log Entries"/>
 <SectionContent SectionName="appbar-actions">
     <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Secondary" Edge="Edge.End"
-                   OnClick="@ClearEntries" />
+                   OnClick="@ViewModel!.ClearLogEntries.OnExecute()" />
 </SectionContent>
 
 <MudScrollToTop>
@@ -26,12 +25,4 @@
             <ResponsePanel Entry="entry"/>
         </MudItem>
     </MudGrid>
-}
-
-@code {
-
-    async Task ClearEntries() {
-        await ViewModel!.ClearLogEntries.Execute();
-    }
-
 }

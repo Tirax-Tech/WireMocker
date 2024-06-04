@@ -1,7 +1,7 @@
 ﻿@inherits ReactiveComponentBase<EditServiceMainViewModel>
 
 <SectionContent SectionName="appbar-actions">
-    <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Tertiary" OnClick="@SaveChanges" />
+    <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Tertiary" OnClick="@ViewModel!.Save.OnExecute()" />
 </SectionContent>
 
 <MudStack>
@@ -15,24 +15,17 @@
 
     <MudText Typo="Typo.h5">Endpoints</MudText>
 
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" OnClick="@AddEndpoint">
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+               OnClick="@ViewModel!.AddEndpoint.OnExecute()">
         Add Endpoint
     </MudButton>
 
-    @foreach(var endpoint in ViewModel!.Endpoints) {
-        <MudText>@endpoint.MatchType: @endpoint.Pattern</MudText>
+    <MudList Clickable="true">
+    @foreach(var endpoint in ViewModel!.Endpoints){
+        var listText = $"{endpoint.MatchType}: {endpoint.Pattern}";
+
+        <MudListItem Text="@listText" OnClick="@ViewModel!.EditEndpoint.OnExecute(() => endpoint)" />
     }
+    </MudList>
 
 </MudStack>
-
-@code {
-
-    async Task AddEndpoint() {
-        await ViewModel!.AddEndpoint.Execute();
-    }
-
-    async Task SaveChanges() {
-        await ViewModel!.Save.Execute();
-    }
-
-}
