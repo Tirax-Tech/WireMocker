@@ -6,17 +6,47 @@
     <MudPaper Class="mud-background pa-8">
         <MudStack>
             <MudTextField T="string" Variant="Variant.Filled" Label="(Optional) Endpoint name" @bind-Text="ViewModel!.EndpointName" />
-            <MudStack Row="true" AlignItems="AlignItems.Baseline">
-                <MudText Typo="Typo.h6">Match type</MudText>
-                <MudRadioGroup T="PathMatchType" @bind-Value="ViewModel!.MatchType">
-                    <MudRadio Value="@(PathMatchType.Exact)">Exact</MudRadio>
-                    <MudRadio Value="@(PathMatchType.Wildcard)">Wildcard</MudRadio>
-                </MudRadioGroup>
-            </MudStack>
-            <MudSwitch T="bool" Label="Ignore Case" LabelPosition="LabelPosition.End" Color="Color.Primary"
-                       @bind-Value="ViewModel!.IgnoreCase" />
-            <MudTextField T="string" Variant="Variant.Filled" Label="Pattern" Placeholder="e.g. /path/*"
-                          Immediate="true" @bind-Text="ViewModel!.Pattern" />
+
+            <MudExpansionPanels>
+                <MudExpansionPanel Text="Path" IsInitiallyExpanded="true">
+                    <MudStack Row="true" AlignItems="AlignItems.Baseline">
+                        <MudText Typo="Typo.h6">Match type</MudText>
+                        <MudRadioGroup T="PathMatchType" @bind-Value="ViewModel!.MatchType">
+                            <MudRadio Value="@(PathMatchType.Exact)">Exact</MudRadio>
+                            <MudRadio Value="@(PathMatchType.Wildcard)">Wildcard</MudRadio>
+                        </MudRadioGroup>
+                    </MudStack>
+                    <MudSwitch T="bool" Label="Ignore Case" LabelPosition="LabelPosition.End" Color="Color.Primary"
+                               @bind-Value="ViewModel!.IgnoreCase" />
+                    <MudTextField T="string" Variant="Variant.Filled" Label="Pattern" Placeholder="e.g. /path/*"
+                                  Immediate="true" @bind-Text="ViewModel!.Pattern" />
+                </MudExpansionPanel>
+                <MudExpansionPanel Text="Headers">
+                    <table style="width: 100%">
+                        <colgroup>
+                            <col style="width: 50px" />
+                            <col />
+                            <col />
+                            <col style="width: 50px" />
+                        </colgroup>
+                        <thead>
+                        <tr>
+                            <th> </th>
+                            <th>Header</th>
+                            <th>Value</th>
+                            <th> </th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td><MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Secondary" /></td>
+                            <td><MudTextField T="string" Variant="Variant.Filled" Label="Header"/></td>
+                            <td><MudTextField T="string" Variant="Variant.Filled" Label="Value"/></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </MudExpansionPanel>
+            </MudExpansionPanels>
         </MudStack>
     </MudPaper>
 
