@@ -22,7 +22,7 @@
 
     <MudList Clickable="true">
     @foreach(var endpoint in ViewModel!.Endpoints){
-        var listText = $"{endpoint.MatchType}: {endpoint.Pattern}";
+        var listText = $"{endpoint.Path.MatchType}: {endpoint.Path.Pattern}";
 
         <MudListItem Text="@listText" OnClick="@ViewModel!.EditEndpoint.OnExecute(() => endpoint)" />
     }

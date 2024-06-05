@@ -7,8 +7,8 @@
         <MudStack Row="true" Spacing="0" AlignItems="AlignItems.Center">
             <MudText Typo="Typo.h4">@service.Name</MudText>
             <MudSpacer />
-            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@DeleteService" />
-            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@EditService" />
+            <MudIconButton Icon="@Icons.Material.Filled.Delete" OnClick="@ViewModel!.Delete.OnExecute()" />
+            <MudIconButton Icon="@Icons.Material.Filled.Edit" OnClick="@ViewModel!.Edit.OnExecute()" />
         </MudStack>
     </TitleContent>
     <ChildContent>
@@ -21,20 +21,8 @@
                 <MudText Typo="Typo.h6">Endpoints:</MudText>
             }
             @foreach (var ep in service.Endpoints){
-                <MudText Typo="Typo.subtitle1">@ep.Value.Pattern</MudText>
+                <MudText Typo="Typo.subtitle1">@ep.Value.Path.Pattern</MudText>
             }
         </MudStack>
     </ChildContent>
 </MudExpansionPanel>
-
-@code {
-
-    async Task EditService() {
-        await ViewModel!.Edit.Execute();
-    }
-
-    async Task DeleteService() {
-        await ViewModel!.Delete.Execute();
-    }
-
-}

@@ -16,12 +16,16 @@ public abstract record EndpointResponse
 
 public record ProxySetting(string Url);
 
+public record Endpoint(Guid Id, ValueMatch Path, HeaderMatch[] Headers, string? Name = default);
+
+public readonly record struct HeaderMatch(string Header, ValueMatch Value);
+
+public readonly record struct ValueMatch(PathMatchType MatchType, string Pattern, bool IgnoreCase = true);
+
 public enum PathMatchType
 {
     Exact, Wildcard
 }
-
-public record Endpoint(Guid Id, PathMatchType MatchType, string Pattern, bool IgnoreCase = true, string? Name = default);
 
 #region Just Ideas
 

@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Reactive.Linq;
 using ReactiveUI;
+using Tirax.Application.WireMocker.Components.Features.DesignServices.Editor;
 using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Domain;
 using Tirax.Application.WireMocker.Services;
