@@ -4,38 +4,33 @@
 <MudStack>
     <MudPaper Class="mud-background pa-8">
         <MudStack>
-            <MudTextField T="string" Variant="Variant.Filled" Label="(Optional) Endpoint name" @bind-Text="ViewModel!.EndpointName" />
+            <MudTextField T="string" Variant="Variant.Filled" Label="Endpoint name" @bind-Text="ViewModel!.EndpointName" />
 
-            <MudExpansionPanels>
-                <MudExpansionPanel Text="Path" IsInitiallyExpanded="true">
+            <MudCard>
+                <MudCardHeader>
+                    <MudText Typo="Typo.h5">Path</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.subtitle1">Leave the path empty if you are not using it.</MudText>
                     <MatcherView ViewModel="ViewModel!.PathModel" />
-                </MudExpansionPanel>
-                <MudExpansionPanel Text="Headers">
-                    <table style="width: 100%">
-                        <colgroup>
-                            <col style="width: 50px" />
-                            <col />
-                            <col />
-                            <col style="width: 50px" />
-                        </colgroup>
-                        <thead>
-                        <tr>
-                            <th> </th>
-                            <th>Header</th>
-                            <th>Value</th>
-                            <th> </th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <td><MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Secondary" /></td>
-                            <td><MudTextField T="string" Variant="Variant.Filled" Label="Header"/></td>
-                            <td><MudTextField T="string" Variant="Variant.Filled" Label="Value"/></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </MudExpansionPanel>
-            </MudExpansionPanels>
+                </MudCardContent>
+            </MudCard>
+            <MudCard>
+                <MudCardHeader>
+                    <MudText Typo="Typo.h5">Headers</MudText>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudStack>
+                        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">
+                            Add header rule
+                        </MudButton>
+                        <MudGrid>
+                            <MudItem sm="2"><MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Secondary"/></MudItem>
+                            <MudItem sm="10" Class="align-self-center"><MudText Typo="Typo.body1">Add Header</MudText></MudItem>
+                        </MudGrid>
+                    </MudStack>
+                </MudCardContent>
+            </MudCard>
         </MudStack>
     </MudPaper>
 

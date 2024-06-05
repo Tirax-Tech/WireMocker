@@ -1,4 +1,5 @@
-﻿using ReactiveUI;
+﻿using FluentValidation;
+using ReactiveUI;
 using Tirax.Application.WireMocker.Domain;
 
 namespace Tirax.Application.WireMocker.Components.Features.DesignServices.Editor;
@@ -36,4 +37,12 @@ public sealed class MatcherViewModel : ViewModel
     }
 
     public ValueMatch ToDomain() => new(matchType, pattern, ignoreCase);
+
+    public sealed class ValidatorType : AbstractValidator<MatcherViewModel>
+    {
+        public static readonly IValidator<MatcherViewModel> Instance = new ValidatorType();
+        public ValidatorType() {
+            RuleFor(x => x.Pattern).NotEmpty().MaximumLength(500);
+        }
+    }
 }

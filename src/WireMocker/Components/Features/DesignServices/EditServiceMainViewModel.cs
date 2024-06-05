@@ -5,7 +5,6 @@ using Tirax.Application.WireMocker.Components.Features.DesignServices.Editor;
 using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Domain;
 using Tirax.Application.WireMocker.Services;
-using Endpoint = Tirax.Application.WireMocker.Domain.Endpoint;
 
 namespace Tirax.Application.WireMocker.Components.Features.DesignServices;
 
@@ -16,19 +15,19 @@ public sealed class EditServiceMainViewModel : ViewModel
     public EditServiceMainViewModel(IViewModelFactory vmFactory, ShellViewModel shell, SearchPanelViewData viewData, Service service) {
         ServiceName = service.Name;
         proxy = service.Proxy?.Url ?? string.Empty;
-        Endpoints = new(service.Endpoints.Values);
+        RouteRules = new(service.Routes.Values);
 
-        AddEndpoint = ReactiveCommand.Create<Unit, Unit>(_ => SaveEndPoint(None, Endpoints.Add));
+        Add = ReactiveCommand.Create<Unit, Unit>(_ => SaveEndPoint(None, RouteRules.Add));
 
-        EditEndpoint = ReactiveCommand.Create<Endpoint, Unit>(ep => SaveEndPoint(ep, newEp => {
-            var index = Endpoints.IndexOf(ep);
-            Endpoints[index] = newEp;
+        Edit = ReactiveCommand.Create<RouteRule, Unit>(ep => SaveEndPoint(ep, newEp => {
+            var index = RouteRules.IndexOf(ep);
+            RouteRules[index] = newEp;
         }));
 
         Save = ReactiveCommand.CreateFromObservable<Unit, Unit>(_ => {
             var newService = new Service(service.Id, ServiceName){
                 Proxy = new(Proxy),
-                Endpoints = Endpoints.ToDictionary(ep => ep.Id)
+                Routes = RouteRules.ToDictionary(ep => ep.Id)
             };
             var save = viewData.UpdateService.Execute(newService);
             save.Subscribe(_ => shell.CloseCurrentView());
@@ -37,7 +36,7 @@ public sealed class EditServiceMainViewModel : ViewModel
 
         return;
 
-        Unit SaveEndPoint(Option<Endpoint> ep, Action<Endpoint> saveAction) {
+        Unit SaveEndPoint(Option<RouteRule> ep, Action<RouteRule> saveAction) {
             var detail = vmFactory.Create<EditServiceDetailViewModel>(ep);
             detail.Save.Subscribe(newEp => {
                 saveAction(newEp);
@@ -57,11 +56,11 @@ public sealed class EditServiceMainViewModel : ViewModel
         set => this.RaiseAndSetIfChanged(ref proxy, value);
     }
 
-    public ObservableCollection<Endpoint> Endpoints { get; }
+    public ObservableCollection<RouteRule> RouteRules { get; }
 
-    public ReactiveCommand<Unit, Unit> AddEndpoint { get; }
+    public ReactiveCommand<Unit, Unit> Add { get; }
 
-    public ReactiveCommand<Endpoint, Unit> EditEndpoint { get; }
+    public ReactiveCommand<RouteRule, Unit> Edit { get; }
 
     public ReactiveCommand<Unit, Unit> Save { get; }
 }

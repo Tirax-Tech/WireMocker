@@ -15,13 +15,13 @@
         <MudStack>
             @if (service.Proxy is not null){
                 <MudText Typo="Typo.h6">Proxy:</MudText>
-                <MudText Typo="Typo.body2">@service.Proxy.Url</MudText>
+                <MudText Typo="Typo.body2">@service.Proxy!.Value.Url</MudText>
             }
-            @if (service.Endpoints.Count > 0){
+            @if (service.Routes.Count > 0){
                 <MudText Typo="Typo.h6">Endpoints:</MudText>
             }
-            @foreach (var ep in service.Endpoints){
-                <MudText Typo="Typo.subtitle1">@ep.Value.Path.Pattern</MudText>
+            @foreach (var route in service.Routes.Values){
+                <MudText Typo="Typo.body1" @key="route.Id">@route.ShowName().ToString()</MudText>
             }
         </MudStack>
     </ChildContent>

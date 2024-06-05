@@ -13,18 +13,16 @@
     <MudTextField T="string" Label="Proxy URL" Variant="Variant.Outlined" Placeholder="e.g. http://host/path"
                   @bind-Value="ViewModel!.Proxy" />
 
-    <MudText Typo="Typo.h5">Endpoints</MudText>
+    <MudText Typo="Typo.h5">Routes</MudText>
 
     <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-               OnClick="@ViewModel!.AddEndpoint.OnExecute()">
-        Add Endpoint
+               OnClick="@ViewModel!.Add.OnExecute()">
+        Add Rule
     </MudButton>
 
     <MudList Clickable="true">
-    @foreach(var endpoint in ViewModel!.Endpoints){
-        var listText = $"{endpoint.Path.MatchType}: {endpoint.Path.Pattern}";
-
-        <MudListItem Text="@listText" OnClick="@ViewModel!.EditEndpoint.OnExecute(() => endpoint)" />
+    @foreach(var route in ViewModel!.RouteRules){
+        <MudListItem Text="@route.ShowName().ToString()" OnClick="@ViewModel!.Edit.OnExecute(() => route)" />
     }
     </MudList>
 

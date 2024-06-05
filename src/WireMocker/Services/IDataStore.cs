@@ -2,7 +2,6 @@
 using System.Reactive.Linq;
 using System.Text;
 using System.Text.Json;
-using RZ.Foundation.Extensions;
 using RZ.Foundation.Json;
 using RZ.Foundation.Observable;
 using Tirax.Application.WireMocker.Domain;
@@ -24,15 +23,12 @@ public interface IDataStore
 public sealed class InMemoryDataStore : IDataStore
 {
     ConcurrentDictionary<Guid, Service> services = new();
-    ConcurrentDictionary<Guid, ServiceSetting> serviceSettings = new();
 
     public IObservable<Service> GetServices() =>
         services.Values.ToObservable();
 
     public OutcomeT<Synchronous, Service> RemoveService(Guid serviceId) {
         if (services.TryRemove(serviceId, out var service)){
-            foreach (var setting in serviceSettings.Values)
-                setting.EndpointMappings.Remove(serviceId, out _);
             return Success(service);
         }
         else
@@ -53,7 +49,7 @@ public sealed class InMemoryDataStore : IDataStore
     }
 
     public Stream SnapshotData(Unit _) {
-        var snapshot = new Snapshot(services.Values.ToArray(), serviceSettings.Values.ToArray());
+        var snapshot = new Snapshot(services.Values.ToArray());
         var json = JsonSerializer.Serialize(snapshot, JsonOptions);
         return new MemoryStream(Encoding.UTF8.GetBytes(json));
     }
@@ -66,11 +62,10 @@ public sealed class InMemoryDataStore : IDataStore
 
         void Load(Snapshot snapshot) {
             services = new(snapshot.Services.Map(s => KeyValuePair.Create(s.Id, s)));
-            serviceSettings = new(snapshot.ServiceSettings.Map(s => KeyValuePair.Create(s.Id, s)));
         }
     }
 
-    readonly record struct Snapshot(Service[] Services, ServiceSetting[] ServiceSettings);
+    readonly record struct Snapshot(Service[] Services);
 
     static readonly JsonSerializerOptions JsonOptions = new() {
         Converters = { MapJsonConverter.Default, SeqJsonConverter.Default, OptionJsonConverter.Default }

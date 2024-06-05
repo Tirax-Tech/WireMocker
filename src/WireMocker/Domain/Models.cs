@@ -1,22 +1,31 @@
-﻿using Seq = LanguageExt.Seq;
+﻿using System.Text;
+using Tirax.Application.WireMocker.Domain.Helpers;
 
 namespace Tirax.Application.WireMocker.Domain;
 
-public sealed record ServiceSetting(Guid Id, string Name)
+public readonly record struct ProxySetting(string Url);
+
+public readonly record struct RouteRule(Guid Id, ValueMatch? Path, HeaderMatch[] Headers, RouteResponse Responder, string Name)
 {
-    public Dictionary<Guid, EndpointResponse> EndpointMappings { get; init; } = new();
+    public StringBuilder ShowName(StringBuilder? sb = null) {
+        sb ??= new StringBuilder();
+        if (Name is not null){
+            sb.Append(Name);
+            sb.Append(' ');
+        }
+        return sb.Append('(').ShowDetail(this).Append(')');
+    }
 }
 
-public abstract record EndpointResponse
+public abstract record RouteResponse
 {
-    public sealed record Proxy : EndpointResponse;
+    public sealed record Proxy : RouteResponse
+    {
+        public static readonly RouteResponse Instance = new Proxy();
+    }
 
-    public sealed record Response : EndpointResponse;
+    public sealed record Response(string MimeType, string Body) : RouteResponse;
 }
-
-public record ProxySetting(string Url);
-
-public record Endpoint(Guid Id, ValueMatch Path, HeaderMatch[] Headers, string? Name = default);
 
 public readonly record struct HeaderMatch(string Header, ValueMatch Value);
 
@@ -26,20 +35,3 @@ public enum PathMatchType
 {
     Exact, Wildcard
 }
-
-#region Just Ideas
-
-public interface SettingLevel
-{
-    public Guid Id { get; }
-    public string Name { get; }
-}
-
-public sealed record Workspace(string Name, Guid Id) : SettingLevel
-{
-    public Seq<Environment> Environments { get; init; } = Seq.empty<Environment>();
-}
-
-public sealed record Environment(string Name, Guid Id) : SettingLevel;
-
-#endregion
