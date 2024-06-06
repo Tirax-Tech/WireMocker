@@ -1,4 +1,5 @@
-﻿@using global::RZ.Foundation.Types
+﻿@using DynamicData.Binding
+@using global::RZ.Foundation.Types
 @inherits AppReactiveComponent<EditServiceDetailViewModel>
 
 <MudStack>
@@ -21,13 +22,13 @@
                 </MudCardHeader>
                 <MudCardContent>
                     <MudStack>
-                        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary">
+                        <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
+                                   OnClick="@ViewModel!.AddHeader.OnExecute()">
                             Add header rule
                         </MudButton>
-                        <MudGrid>
-                            <MudItem sm="2"><MudIconButton Icon="@Icons.Material.Filled.Add" Color="Color.Secondary"/></MudItem>
-                            <MudItem sm="10" Class="align-self-center"><MudText Typo="Typo.body1">Add Header</MudText></MudItem>
-                        </MudGrid>
+                        @foreach(var header in ViewModel!.Headers){
+                            <HeaderView ViewModel="header" @key="header.Id" />
+                        }
                     </MudStack>
                 </MudCardContent>
             </MudCard>
@@ -54,8 +55,11 @@
 
     public EditServiceDetail() {
         this.WhenActivated(disposables => {
-            Bind(ViewModel!.Save.CanExecute, canSave).DisposeWith(disposables);
-            Bind(ViewModel!.Cancel.CanExecute, canCancel).DisposeWith(disposables);
+            TrackChanges(disposables,
+                ViewModel!.Save.CanExecute.Bind(canSave).Ignore(),
+                ViewModel!.Cancel.CanExecute.Bind(canCancel).Ignore(),
+                ViewModel!.Headers.ObserveCollectionChanges().Ignore()
+                );
         });
     }
 

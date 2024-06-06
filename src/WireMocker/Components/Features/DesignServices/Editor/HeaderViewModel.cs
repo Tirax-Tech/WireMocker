@@ -10,6 +10,9 @@ public sealed class HeaderViewModel : ViewModel
     public HeaderViewModel(Option<HeaderMatch> headerMatch) {
         header = headerMatch.ToNullable()?.Header ?? string.Empty;
         Matcher = new(headerMatch.Map(h => h.Value));
+        Id = headerMatch.Map(h => h.Id).IfNone(Guid.NewGuid());
+
+        Remove = ReactiveCommand.Create<Unit, Guid>(_ => Id);
     }
 
     public string Header
@@ -18,5 +21,9 @@ public sealed class HeaderViewModel : ViewModel
         set => this.RaiseAndSetIfChanged(ref header, value);
     }
 
+    public Guid Id { get; }
+
     public MatcherViewModel Matcher { get; }
+
+    public ReactiveCommand<Unit, Guid> Remove { get; }
 }

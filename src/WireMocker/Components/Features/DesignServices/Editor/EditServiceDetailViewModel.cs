@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using DynamicData;
 using FluentValidation;
 using ReactiveUI;
 using Tirax.Application.WireMocker.Domain;
@@ -22,14 +23,28 @@ public sealed class EditServiceDetailViewModel : ViewModel
                         select path);
         endpointName = initial.ToNullable()?.Name ?? string.Empty;
 
-        var headers = initial.Map(x => x.Headers.Map(h => new HeaderViewModel(h))).IfNone([]);
-        Headers = new(headers);
+        Headers = new();
+        var headers = (from route in initial
+                       select route.Headers.Map(h => CreateViewModel(h))
+                      ).IfNone([]);
+        Headers.AddRange(headers);
+
+        AddHeader = ReactiveCommand.Create<Unit, Unit>(_ => {
+            Headers.Add(CreateViewModel(None));
+            return unit;
+        });
 
         var canSave = PathModel.WhenAnyValue(x => x.Pattern).Select(p => PatternValidator(p).IsEmpty);
         Save = ReactiveCommand.Create<Unit, RouteRule>(_ =>
                 new(chaotic.NewGuid(), PathModel.ToDomain(), [], RouteResponse.Proxy.Instance, EndpointName),
             canSave, scheduler);
         Cancel = ReactiveCommand.Create<Unit, Unit>(_ => unit);
+    }
+
+    HeaderViewModel CreateViewModel(Option<HeaderMatch> headerMatch) {
+        var vm = new HeaderViewModel(headerMatch);
+        vm.Remove.Subscribe(_ => Headers.Remove(vm));
+        return vm;
     }
 
     public bool IsNew { get; }
@@ -42,6 +57,8 @@ public sealed class EditServiceDetailViewModel : ViewModel
 
     public MatcherViewModel PathModel { get; }
     public ObservableCollection<HeaderViewModel> Headers { get; }
+
+    public ReactiveCommand<Unit, Unit> AddHeader { get; }
 
     public ReactiveCommand<Unit, RouteRule> Save { get; }
     public ReactiveCommand<Unit, Unit> Cancel { get; }

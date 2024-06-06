@@ -27,7 +27,7 @@ public abstract record RouteResponse
     public sealed record Response(string MimeType, string Body) : RouteResponse;
 }
 
-public readonly record struct HeaderMatch(string Header, ValueMatch Value);
+public readonly record struct HeaderMatch(Guid Id, string Header, ValueMatch Value);
 
 public readonly record struct ValueMatch(PathMatchType MatchType, string Pattern, bool IgnoreCase = true);
 

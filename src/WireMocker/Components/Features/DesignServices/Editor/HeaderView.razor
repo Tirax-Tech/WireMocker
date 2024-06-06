@@ -1,0 +1,12 @@
+﻿@inherits ReactiveComponentBase<HeaderViewModel>
+
+<MudGrid>
+    <MudItem sm="10">
+        <MudTextField T="string" Variant="Variant.Filled" Label="Header" Placeholder="e.g. X-Service-Name" @bind-Text="ViewModel!.Header" />
+        <MatcherView ViewModel="ViewModel!.Matcher" />
+    </MudItem>
+    <MudItem sm="2">
+        <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error" OnClick="@ViewModel!.Remove.OnExecute()" />
+    </MudItem>
+</MudGrid>
+<MudDivider />

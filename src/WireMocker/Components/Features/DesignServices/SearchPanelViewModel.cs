@@ -7,7 +7,7 @@ using LanguageExt.Common;
 using MudBlazor;
 using ReactiveUI;
 using RZ.Foundation.Extensions;
-using RZ.Foundation.Observable;
+using RZ.Foundation.Reactive;
 using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Domain;
 using Tirax.Application.WireMocker.Services;

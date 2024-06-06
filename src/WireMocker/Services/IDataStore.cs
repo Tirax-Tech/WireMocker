@@ -3,7 +3,7 @@ using System.Reactive.Linq;
 using System.Text;
 using System.Text.Json;
 using RZ.Foundation.Json;
-using RZ.Foundation.Observable;
+using RZ.Foundation.Reactive;
 using Tirax.Application.WireMocker.Domain;
 
 namespace Tirax.Application.WireMocker.Services;

@@ -39,10 +39,11 @@
 
     public XPort() {
         this.WhenActivated(disposables => {
-            Bind(this.WhenAnyValue(x => x.ViewModel!.HasMappings)
-                     .CombineLatest(ViewModel!.LoadMappings.IsExecuting, (hasMappings, isExecuting) => !isExecuting && hasMappings),
-                    canLoad)
-               .DisposeWith(disposables);
+            TrackChanges(disposables,
+                this.WhenAnyValue(x => x.ViewModel!.HasMappings)
+                    .CombineLatest(ViewModel!.LoadMappings.IsExecuting, (hasMappings, isExecuting) => !isExecuting && hasMappings)
+                    .Bind(canLoad).Ignore()
+                );
 
             ViewModel!.Notifications.Subscribe(notification => Snackbar.Add(notification.Message, notification.Severity));
         });
