@@ -3,9 +3,13 @@ using Tirax.Application.WireMocker.Domain.Helpers;
 
 namespace Tirax.Application.WireMocker.Domain;
 
+public sealed record EnvironmentSettings(string Name, RouteMatch[] Routings, Guid Id);
+
+public readonly record struct RouteMatch(Guid RouteId, RouteResponse Response);
+
 public readonly record struct ProxySetting(string Url);
 
-public readonly record struct RouteRule(Guid Id, ValueMatch? Path, HeaderMatch[] Headers, RouteResponse Responder, string Name)
+public readonly record struct RouteRule(Guid Id, ValueMatch? Path, HeaderMatch[] Headers, string Name)
 {
     public StringBuilder ShowName(StringBuilder? sb = null) {
         sb ??= new StringBuilder();

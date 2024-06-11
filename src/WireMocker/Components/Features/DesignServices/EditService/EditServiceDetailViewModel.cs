@@ -1,23 +1,23 @@
 ﻿using System.Collections.ObjectModel;
 using System.Reactive.Concurrency;
-using System.Reactive.Linq;
 using DynamicData;
 using FluentValidation;
 using ReactiveUI;
+using RZ.Foundation;
+using Tirax.Application.WireMocker.Components.Features.DesignServices.Editor;
 using Tirax.Application.WireMocker.Domain;
 using Tirax.Application.WireMocker.RZ;
 
-namespace Tirax.Application.WireMocker.Components.Features.DesignServices.Editor;
+namespace Tirax.Application.WireMocker.Components.Features.DesignServices.EditService;
 
 public sealed class EditServiceDetailViewModel : ViewModel
 {
+    readonly IChaotic chaotic;
     string endpointName;
     MatcherViewModel? pathModel;
 
-    static readonly Helpers.Validator.Func<string>
-        PatternValidator = Helpers.Validator.Create<string>(x => x.NotEmpty().MaximumLength(500));
-
     public EditServiceDetailViewModel(IChaotic chaotic, IScheduler scheduler, Option<RouteRule> initial) {
+        this.chaotic = chaotic;
         IsNew = initial.IsNone;
         pathModel = (from route in initial
                      from path in Optional(route.Path)
@@ -44,15 +44,21 @@ public sealed class EditServiceDetailViewModel : ViewModel
             return unit;
         });
 
-        var canSave = PathModel.WhenAnyValue(x => x.Pattern).Select(p => PatternValidator(p).IsEmpty);
-        Save = ReactiveCommand.Create<Unit, RouteRule>(_ =>
-                new(chaotic.NewGuid(), PathModel.ToDomain(), [], RouteResponse.Proxy.Instance, EndpointName),
-            canSave, scheduler);
+        Save = ReactiveCommand.Create<Unit, Outcome<RouteRule>>(
+            _ => {
+                var validation = Validator.Validate(this);
+                return validation.IsValid
+                           ? new RouteRule(chaotic.NewGuid(), PathModel?.ToDomain(), Headers.Map(h => h.ToDomain()).ToArray(),
+                               EndpointName)
+                           : StandardErrors.UnexpectedError(validation.Errors.First().ErrorMessage);
+            },
+            outputScheduler: scheduler);
+
         Cancel = ReactiveCommand.Create<Unit, Unit>(_ => unit);
     }
 
     HeaderViewModel CreateViewModel(Option<HeaderMatch> headerMatch) {
-        var vm = new HeaderViewModel(headerMatch);
+        var vm = new HeaderViewModel(chaotic, headerMatch);
         vm.Remove.Subscribe(_ => Headers.Remove(vm));
         return vm;
     }
@@ -77,15 +83,18 @@ public sealed class EditServiceDetailViewModel : ViewModel
 
     public ReactiveCommand<Unit, Unit> AddHeader { get; }
 
-    public ReactiveCommand<Unit, RouteRule> Save { get; }
+    public ReactiveCommand<Unit, Outcome<RouteRule>> Save { get; }
     public ReactiveCommand<Unit, Unit> Cancel { get; }
+
+    public static readonly ValidatorType Validator = new();
 
     public sealed class ValidatorType : AbstractValidator<EditServiceDetailViewModel>
     {
-        public static readonly IValidator<EditServiceDetailViewModel> Instance = new ValidatorType();
-
         public ValidatorType() {
             RuleFor(x => x.EndpointName).NotEmpty().MaximumLength(100);
+            RuleFor(x => x.PathModel!).SetValidator(MatcherViewModel.Validator);
+            RuleFor(x => x).Must(x => x.PathModel is not null || x.Headers.Count > 0)
+                           .WithMessage("At least one path or header is required");
         }
     }
 }

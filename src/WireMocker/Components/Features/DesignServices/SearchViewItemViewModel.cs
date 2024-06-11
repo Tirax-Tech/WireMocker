@@ -1,6 +1,7 @@
 ﻿using MudBlazor;
 using ReactiveUI;
 using RZ.Foundation;
+using Tirax.Application.WireMocker.Components.Features.DesignServices.EditService;
 using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Domain;
 using Tirax.Application.WireMocker.Services;

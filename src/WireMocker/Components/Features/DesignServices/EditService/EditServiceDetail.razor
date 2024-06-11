@@ -1,0 +1,96 @@
+﻿@using DynamicData.Binding
+@using global::RZ.Foundation.Types
+@using Tirax.Application.WireMocker.Helpers
+@using Tirax.Application.WireMocker.Components.Features.DesignServices.Editor
+@inherits AppReactiveComponent<EditServiceDetailViewModel>
+
+<MudStack>
+    <MudPaper Class="mud-background pa-8">
+        <MudForm @ref="form" Model="ViewModel!" Validation="EditServiceDetailViewModel.Validator.ValueValidator()">
+            <MudStack>
+                <MudTextField T="string" Variant="Variant.Filled" Label="Endpoint name" @bind-Value="ViewModel!.EndpointName"
+                              For="@(() => ViewModel!.EndpointName)" />
+
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h5">Path</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudStack>
+                            @if (ViewModel!.PathModel is null){
+                                <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
+                                           OnClick="@ViewModel!.AddPath.OnExecute()">
+                                    Add path rule
+                                </MudButton>
+                            }
+                            else{
+                                <MudGrid>
+                                    <MudItem sm="10">
+                                        <MatcherView ViewModel="ViewModel!.PathModel"/>
+                                    </MudItem>
+                                    <MudItem sm="2">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error"
+                                                       OnClick="@ViewModel!.RemovePath.OnExecute()"/>
+                                    </MudItem>
+                                </MudGrid>
+                            }
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+                <MudCard>
+                    <MudCardHeader>
+                        <MudText Typo="Typo.h5">Headers</MudText>
+                    </MudCardHeader>
+                    <MudCardContent>
+                        <MudStack>
+                            <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
+                                       OnClick="@ViewModel!.AddHeader.OnExecute()">
+                                Add header rule
+                            </MudButton>
+                            @foreach (var header in ViewModel!.Headers){
+                                <HeaderView ViewModel="header" @key="header.Id"/>
+                            }
+                        </MudStack>
+                    </MudCardContent>
+                </MudCard>
+            </MudStack>
+        </MudForm>
+    </MudPaper>
+
+    <MudStack Row="true" Justify="Justify.FlexEnd">
+        @{
+            var saveOrAdd = ViewModel!.IsNew ? "Add" : "Save";
+            var saveOrAddIcon = ViewModel!.IsNew ? Icons.Material.Filled.Add : Icons.Material.Filled.Save;
+        }
+
+        <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@saveOrAddIcon"
+                   Disabled="!canSave" OnClick="@Save">@saveOrAdd</MudButton>
+
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Cancel"
+                   Disabled="!canCancel" OnClick="@ViewModel!.Cancel.OnExecute()">Cancel</MudButton>
+    </MudStack>
+</MudStack>
+
+@code {
+    readonly MutableRef<bool> canSave = new();
+    readonly MutableRef<bool> canCancel = new();
+
+    MudForm form = default!;
+
+    public EditServiceDetail() {
+        this.WhenActivated(disposables => {
+            TrackChanges(disposables,
+                ViewModel!.Save.CanExecute.Bind(canSave).Ignore(),
+                ViewModel!.Cancel.CanExecute.Bind(canCancel).Ignore(),
+                ViewModel!.Headers.ObserveCollectionChanges().Ignore()
+                );
+        });
+    }
+
+    async Task Save() {
+        await form.Validate();
+        if (form.IsValid)
+            await ViewModel!.Save.Execute();
+    }
+
+}

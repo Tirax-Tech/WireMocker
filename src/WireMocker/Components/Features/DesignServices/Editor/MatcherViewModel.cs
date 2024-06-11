@@ -38,9 +38,10 @@ public sealed class MatcherViewModel : ViewModel
 
     public ValueMatch ToDomain() => new(matchType, pattern, ignoreCase);
 
+    public static readonly ValidatorType Validator = new();
+
     public sealed class ValidatorType : AbstractValidator<MatcherViewModel>
     {
-        public static readonly IValidator<MatcherViewModel> Instance = new ValidatorType();
         public ValidatorType() {
             RuleFor(x => x.Pattern).NotEmpty().MaximumLength(500);
         }
