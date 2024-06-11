@@ -10,9 +10,12 @@ namespace Tirax.Application.WireMocker.Components.Features.DesignServices;
 
 public sealed class EditServiceMainViewModel : ViewModel
 {
+    readonly ShellViewModel shell;
     string proxy;
+    bool isEditing;
 
     public EditServiceMainViewModel(IViewModelFactory vmFactory, ShellViewModel shell, SearchPanelViewData viewData, Service service) {
+        this.shell = shell;
         ServiceName = service.Name;
         proxy = service.Proxy?.Url ?? string.Empty;
         RouteRules = new(service.Routes.Values);
@@ -40,10 +43,11 @@ public sealed class EditServiceMainViewModel : ViewModel
             var detail = vmFactory.Create<EditServiceDetailViewModel>(ep);
             detail.Save.Subscribe(newEp => {
                 saveAction(newEp);
-                shell.TrySetRightPanel(null);
+                ClearView();
             });
-            detail.Cancel.Subscribe(_ => shell.TrySetRightPanel(null));
+            detail.Cancel.Subscribe(_ => ClearView());
             shell.TrySetRightPanel(detail);
+            IsEditing = true;
             return unit;
         }
     }
@@ -56,6 +60,12 @@ public sealed class EditServiceMainViewModel : ViewModel
         set => this.RaiseAndSetIfChanged(ref proxy, value);
     }
 
+    public bool IsEditing
+    {
+        get => isEditing;
+        private set => this.RaiseAndSetIfChanged(ref isEditing, value);
+    }
+
     public ObservableCollection<RouteRule> RouteRules { get; }
 
     public ReactiveCommand<Unit, Unit> Add { get; }
@@ -63,4 +73,9 @@ public sealed class EditServiceMainViewModel : ViewModel
     public ReactiveCommand<RouteRule, Unit> Edit { get; }
 
     public ReactiveCommand<Unit, Unit> Save { get; }
+
+    void ClearView() {
+        shell.TrySetRightPanel(null);
+        IsEditing = false;
+    }
 }

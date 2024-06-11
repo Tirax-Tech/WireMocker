@@ -1,8 +1,10 @@
 ﻿@inherits ReactiveComponentBase<EditServiceMainViewModel>
 
-<SectionContent SectionName="appbar-actions">
-    <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Tertiary" OnClick="@ViewModel!.Save.OnExecute()" />
-</SectionContent>
+@if (!ViewModel!.IsEditing){
+    <SectionContent SectionName="appbar-actions">
+        <MudIconButton Icon="@Icons.Material.Filled.Save" Color="Color.Tertiary" OnClick="@ViewModel!.Save.OnExecute()" />
+    </SectionContent>
+}
 
 <MudStack>
 
@@ -15,10 +17,12 @@
 
     <MudText Typo="Typo.h5">Routes</MudText>
 
-    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
-               OnClick="@ViewModel!.Add.OnExecute()">
-        Add Rule
-    </MudButton>
+    @if (!ViewModel!.IsEditing){
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@ViewModel!.Add.OnExecute()">
+            Add Rule
+        </MudButton>
+    }
 
     <MudList Clickable="true">
     @foreach(var route in ViewModel!.RouteRules){

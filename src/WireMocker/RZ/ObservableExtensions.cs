@@ -10,13 +10,13 @@ namespace RZ.Foundation.Reactive;
 
 public class ErrorInfoException : ApplicationException
 {
-    public ErrorInfoException(int errorCode, string errorMessage) : base(errorMessage) =>
-        ErrorCode = errorCode;
+    public ErrorInfoException(int code, string errorMessage) : base(errorMessage) =>
+        Code = code;
 
-    public ErrorInfoException(int errorCode, string errorMessage, Exception innerException) : base(errorMessage, innerException) =>
-        ErrorCode = errorCode;
+    public ErrorInfoException(int code, string errorMessage, Exception innerException) : base(errorMessage, innerException) =>
+        Code = code;
 
-    public int ErrorCode { get; }
+    public int Code { get; }
 }
 
 public static class ObservableExtensions
@@ -29,7 +29,7 @@ public static class ObservableExtensions
         where r.Kind == NotificationKind.OnError
         let e = r.Exception!
         select e is ErrorInfoException ei
-                   ? Error.New(ei.ErrorCode, ei.Message)
+                   ? Error.New(ei.Code, ei.Message)
                    : Error.New(StandardErrors.UnexpectedCode, e.ToString());
 
     public static IObservable<Unit> Ignore<_>(this IObservable<_> stream) =>

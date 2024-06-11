@@ -12,8 +12,25 @@
                     <MudText Typo="Typo.h5">Path</MudText>
                 </MudCardHeader>
                 <MudCardContent>
-                    <MudText Typo="Typo.subtitle1">Leave the path empty if you are not using it.</MudText>
-                    <MatcherView ViewModel="ViewModel!.PathModel" />
+                    <MudStack>
+                        @if (ViewModel!.PathModel is null){
+                            <MudButton StartIcon="@Icons.Material.Filled.Add" Variant="Variant.Filled" Color="Color.Primary"
+                                       OnClick="@ViewModel!.AddPath.OnExecute()">
+                                Add path rule
+                            </MudButton>
+                        }
+                        else{
+                            <MudGrid>
+                                <MudItem sm="10">
+                                    <MatcherView ViewModel="ViewModel!.PathModel"/>
+                                </MudItem>
+                                <MudItem sm="2">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Remove" Color="Color.Error"
+                                                   OnClick="@ViewModel!.RemovePath.OnExecute()" />
+                                </MudItem>
+                            </MudGrid>
+                        }
+                    </MudStack>
                 </MudCardContent>
             </MudCard>
             <MudCard>
@@ -43,9 +60,9 @@
         else{
             <MudButton Variant="Variant.Text" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Save"
                        Disabled="!canSave" OnClick="@ViewModel!.Save.OnExecute()">Save</MudButton>
-            <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Cancel"
-                       Disabled="!canCancel" OnClick="@ViewModel!.Cancel.OnExecute()">Cancel</MudButton>
         }
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Cancel"
+                   Disabled="!canCancel" OnClick="@ViewModel!.Cancel.OnExecute()">Cancel</MudButton>
     </MudStack>
 </MudStack>
 

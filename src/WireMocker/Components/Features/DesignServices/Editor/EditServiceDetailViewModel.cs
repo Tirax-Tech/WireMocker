@@ -12,15 +12,16 @@ namespace Tirax.Application.WireMocker.Components.Features.DesignServices.Editor
 public sealed class EditServiceDetailViewModel : ViewModel
 {
     string endpointName;
+    MatcherViewModel? pathModel;
 
     static readonly Helpers.Validator.Func<string>
         PatternValidator = Helpers.Validator.Create<string>(x => x.NotEmpty().MaximumLength(500));
 
     public EditServiceDetailViewModel(IChaotic chaotic, IScheduler scheduler, Option<RouteRule> initial) {
         IsNew = initial.IsNone;
-        PathModel = new(from route in initial
-                        from path in Optional(route.Path)
-                        select path);
+        pathModel = (from route in initial
+                     from path in Optional(route.Path)
+                     select new MatcherViewModel(path)).ToNullable();
         endpointName = initial.ToNullable()?.Name ?? string.Empty;
 
         Headers = new();
@@ -28,6 +29,15 @@ public sealed class EditServiceDetailViewModel : ViewModel
                        select route.Headers.Map(h => CreateViewModel(h))
                       ).IfNone([]);
         Headers.AddRange(headers);
+
+        AddPath = ReactiveCommand.Create<Unit, Unit>(_ => {
+            PathModel = new MatcherViewModel(None);
+            return unit;
+        });
+        RemovePath = ReactiveCommand.Create<Unit, Unit>(_ => {
+            PathModel = null;
+            return unit;
+        });
 
         AddHeader = ReactiveCommand.Create<Unit, Unit>(_ => {
             Headers.Add(CreateViewModel(None));
@@ -55,8 +65,15 @@ public sealed class EditServiceDetailViewModel : ViewModel
         set => this.RaiseAndSetIfChanged(ref endpointName, value);
     }
 
-    public MatcherViewModel PathModel { get; }
+    public MatcherViewModel? PathModel {
+        get => pathModel;
+        set => this.RaiseAndSetIfChanged(ref pathModel, value);
+    }
+
     public ObservableCollection<HeaderViewModel> Headers { get; }
+
+    public ReactiveCommand<Unit, Unit> AddPath { get; }
+    public ReactiveCommand<Unit, Unit> RemovePath { get; }
 
     public ReactiveCommand<Unit, Unit> AddHeader { get; }
 
