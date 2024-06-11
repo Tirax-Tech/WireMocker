@@ -22,11 +22,13 @@
             ViewModel = MainVm;
             ViewModel.Notifications
                      .Subscribe(m => Snackbar.Add(m.Message, m.Severity,
-                          m.Severity is Severity.Error or Severity.Warning ? RequireInteraction : null))
+                          m.Severity is Severity.Error or Severity.Warning ? ErrorTransition : null))
                      .DisposeWith(disposables);
         });
     }
 
-    void RequireInteraction(SnackbarOptions opts) => opts.RequireInteraction = true;
+    static void ErrorTransition(SnackbarOptions opts) {
+        opts.HideTransitionDuration = 6000;
+    }
 
 }
