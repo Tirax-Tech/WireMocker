@@ -2,7 +2,7 @@
 
 @{ var service = ViewModel!.Service; }
 
-<MudExpansionPanel Text="@service.Name" @bind-IsExpanded="ViewModel!.IsExpanded">
+<MudExpansionPanel Text="@service.Name" @bind-Expanded="ViewModel!.IsExpanded">
     <TitleContent>
         <MudStack Row="true" Spacing="0" AlignItems="AlignItems.Center">
             <MudText Typo="Typo.h4">@service.Name</MudText>

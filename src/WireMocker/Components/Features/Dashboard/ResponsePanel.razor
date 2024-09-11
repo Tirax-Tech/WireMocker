@@ -10,7 +10,7 @@
 
 <MudStack>
     <MudStack Row="true" AlignItems="AlignItems.Baseline">
-        <MudChip Color="Color.Secondary" Class="pr-2">@Entry.ResponseMessage.StatusCode</MudChip>
+        <MudChip T="string" Color="Color.Secondary" Class="pr-2">@Entry.ResponseMessage.StatusCode</MudChip>
         <MudText Typo="Typo.body2">@((HttpStatusCode) Entry.ResponseMessage.StatusCode!)</MudText>
     </MudStack>
 

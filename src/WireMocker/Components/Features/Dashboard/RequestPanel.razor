@@ -2,7 +2,7 @@
 
 <MudStack>
     <MudStack Row="true" AlignItems="AlignItems.Baseline">
-        <MudChip Color="Color.Primary" Class="mr-2">@Entry.RequestMessage.Method</MudChip>
+        <MudChip T="string" Color="Color.Primary" Class="mr-2">@Entry.RequestMessage.Method</MudChip>
         <MudText Typo="Typo.body1">@Entry.RequestMessage.Path</MudText>
         <MudSpacer />
         <MudText Typo="Typo.body2">

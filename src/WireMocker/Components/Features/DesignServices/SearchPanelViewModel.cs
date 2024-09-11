@@ -6,10 +6,10 @@ using DynamicData;
 using LanguageExt.Common;
 using MudBlazor;
 using ReactiveUI;
-using RZ.Foundation.Extensions;
 using RZ.Foundation.Reactive;
 using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Domain;
+using Tirax.Application.WireMocker.Helpers;
 using Tirax.Application.WireMocker.Services;
 using Unit = LanguageExt.Unit;
 
@@ -52,7 +52,8 @@ public sealed class SearchPanelViewModel : ViewModel
                 return unit;
             }, outputScheduler: scheduler);
 
-        var serviceSource = dataStore.GetServices();
+        var serviceSource = ObservableConverter.From(_ => dataStore.GetServices().ToAsync())
+                                               .SelectMany(v => v.ToObservable());
         var updatedSource = viewData.UpdateService
                                     .Select(CreateView)
                                     .Select(vm => {

@@ -1,0 +1,14 @@
+﻿@inherits ReactiveComponentBase<PageViewModel>
+
+<DualPanel>
+    <LeftPanel>
+        <MudStack>
+            <MudTextField T="string" Variant="Variant.Outlined" Label="Search plan"/>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="@ViewModel!.Add.OnExecute()">
+                Add plan
+            </MudButton>
+        </MudStack>
+    </LeftPanel>
+</DualPanel>

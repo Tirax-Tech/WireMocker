@@ -24,7 +24,7 @@
         </MudButton>
     }
 
-    <MudList Clickable="true">
+    <MudList T="string">
     @foreach(var route in ViewModel!.RouteRules){
         <MudListItem Text="@route.ShowName().ToString()" OnClick="@ViewModel!.Edit.OnExecute(() => route)" />
     }

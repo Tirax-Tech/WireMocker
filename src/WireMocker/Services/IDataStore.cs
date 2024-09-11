@@ -10,8 +10,8 @@ namespace Tirax.Application.WireMocker.Services;
 
 public interface IDataStore
 {
-    IObservable<Service>           GetServices();
-    OutcomeT<Synchronous, Service> RemoveService(Guid serviceId);
+    OutcomeT<Synchronous, Seq<Service>> GetServices();
+    OutcomeT<Synchronous, Service>      RemoveService(Guid serviceId);
 
     IObservable<Service>                 Save(Service service);
     OutcomeT<Asynchronous, Seq<Service>> Search(string name);
@@ -24,8 +24,8 @@ public sealed class InMemoryDataStore : IDataStore
 {
     ConcurrentDictionary<Guid, Service> services = new();
 
-    public IObservable<Service> GetServices() =>
-        services.Values.ToObservable();
+    public OutcomeT<Synchronous, Seq<Service>> GetServices() =>
+        Success(Seq(services.Values.ToArray()));
 
     public OutcomeT<Synchronous, Service> RemoveService(Guid serviceId) {
         if (services.TryRemove(serviceId, out var service)){

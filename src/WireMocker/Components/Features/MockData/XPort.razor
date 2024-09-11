@@ -11,12 +11,11 @@
 <MudStack>
     <MudText Typo="Typo.h4">Load</MudText>
     <MudFileUpload T="IBrowserFile" FilesChanged="@LoadFile">
-        <ButtonTemplate>
-            <MudButton HtmlTag="label" for="@context.Id" Style="width: 100%"
-                       StartIcon="@Icons.Material.Filled.Upload" Variant="Variant.Filled" Color="Color.Primary">
+        <ActivatorContent>
+            <MudButton Style="width: 100%" StartIcon="@Icons.Material.Filled.Upload" Variant="Variant.Filled" Color="Color.Primary">
                 Load
             </MudButton>
-        </ButtonTemplate>
+        </ActivatorContent>
     </MudFileUpload>
 
     <MudText Typo="Typo.h4">Save</MudText>

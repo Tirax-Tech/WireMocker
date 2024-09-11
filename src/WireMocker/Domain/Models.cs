@@ -3,7 +3,7 @@ using Tirax.Application.WireMocker.Domain.Helpers;
 
 namespace Tirax.Application.WireMocker.Domain;
 
-public sealed record EnvironmentSettings(string Name, RouteMatch[] Routings, Guid Id);
+public sealed record RoutePlan(string Name, RouteMatch[] Routings, Guid Id);
 
 public readonly record struct RouteMatch(Guid RouteId, RouteResponse Response);
 

@@ -1,0 +1,37 @@
+﻿@using Tirax.Application.WireMocker.Helpers
+@inherits ReactiveComponentBase<EditorViewModel>
+
+<DualPanel>
+    <LeftPanel>
+        <MudForm @ref="form" Validation="EditorViewModel.Validator.ValueValidator()">
+            <MudStack>
+                <MudTextField T="string" Variant="Variant.Filled" Label="Plan name" />
+
+                <MudExpansionPanels MultiExpansion="true" Dense="true">
+                    @foreach (var service in ViewModel!.Services){
+                        <MudExpansionPanel Expanded="true" Text="@service.Name" @key="service.Id">
+                            <MudList T="string">
+                                @foreach (var route in service.Routes.Values){
+                                    <MudListItem @key="route.Id">
+                                        <MudStack Row="true">
+                                            @route.Name
+                                            <MudSpacer/>
+                                            <MudIconButton Variant="Variant.Filled" Color="Color.Primary"
+                                                           Icon="@Icons.Material.Filled.Add"/>
+                                        </MudStack>
+                                    </MudListItem>
+                                }
+                            </MudList>
+                        </MudExpansionPanel>
+                    }
+                </MudExpansionPanels>
+            </MudStack>
+        </MudForm>
+    </LeftPanel>
+</DualPanel>
+
+@code {
+
+    MudForm form = default!;
+
+}
