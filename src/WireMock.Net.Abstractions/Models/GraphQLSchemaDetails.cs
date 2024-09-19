@@ -22,7 +22,6 @@ public class GraphQLSchemaDetails
     /// </summary>
     public StringPattern? SchemaAsStringPattern { get; set; }
 
-#if GRAPHQL
     /// <summary>
     /// The GraphQL schema as a <seealso cref="GraphQL.Types.ISchema"/>.
     /// </summary>
@@ -54,7 +53,6 @@ public class GraphQLSchemaDetails
             return null;
         }
     }
-#endif
 
     /// <summary>
     /// The custom Scalars to define for this schema.

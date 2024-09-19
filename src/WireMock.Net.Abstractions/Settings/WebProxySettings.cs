@@ -1,5 +1,7 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
+
 using JetBrains.Annotations;
 
 namespace WireMock.Settings;
@@ -16,13 +18,13 @@ public class WebProxySettings
     public string Address { get; set; } = null!;
 
     /// <summary>
-    /// The user name associated with the credentials.
+    /// The user's name associated with the credentials.
     /// </summary>
     [PublicAPI]
     public string? UserName { get; set; }
 
     /// <summary>
-    /// The password for the user name associated with the credentials.
+    /// The password for the user's name associated with the credentials.
     /// </summary>
     [PublicAPI]
     public string? Password { get; set; }

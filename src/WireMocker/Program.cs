@@ -27,7 +27,7 @@ var builder = WebApplication.CreateBuilder([]);
 
 builder.Services
        .AddSingleton<IChaotic, Chaotic>()
-       .AddSingleton<IMockServer>(new MockServer(server))
+       .AddSingleton<IWireMockServer>(server)
        .AddSingleton<IViewLocator, ViewLocator>()
        .AddSingleton<IDataStore, InMemoryDataStore>()
        .AddScoped<IViewModelFactory, ViewModelFactory>()  // Scoped, to be able to inject scoped services

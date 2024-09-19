@@ -4,11 +4,8 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Linq;
-using System.Reactive.Subjects;
 using JetBrains.Annotations;
-using Microsoft.AspNetCore.Http;
 using Stef.Validation;
 using WireMock.Logging;
 using WireMock.Matchers;
@@ -16,23 +13,12 @@ using WireMock.Matchers.Request;
 
 namespace WireMock.Server;
 
-public abstract record HttpEvents
-{
-    public sealed record Request(Guid Id, IRequestMessage Message): HttpEvents;
-    public sealed record Response(Guid Id, LogEntry Log, TimeSpan Elasped): HttpEvents;
-}
-
 public partial class WireMockServer
 {
+    /// <summary>
+    /// HTTP Log events.
+    /// </summary>
     public IObservable<HttpEvents> HttpEvents => _options.HttpEvents;
-
-    /// <inheritdoc />
-    [PublicAPI]
-    public event NotifyCollectionChangedEventHandler LogEntriesChanged
-    {
-        add => _logEntriesChanged += value;
-        remove => _logEntriesChanged -= value;
-    }
 
     /// <inheritdoc cref="IWireMockServer.LogEntries" />
     [PublicAPI]
@@ -87,25 +73,5 @@ public partial class WireMockServer
         }
 
         return false;
-    }
-
-    private NotifyCollectionChangedEventHandler? _logEntriesChanged;
-
-    private void LogEntries_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
-    {
-        if (_logEntriesChanged is { })
-        {
-            foreach (var handler in _logEntriesChanged.GetInvocationList())
-            {
-                try
-                {
-                    handler.DynamicInvoke(this, e);
-                }
-                catch (Exception exception)
-                {
-                    _options.Logger.Error("Error calling the LogEntriesChanged event handler: {0}", exception.Message);
-                }
-            }
-        }
     }
 }

@@ -67,7 +67,6 @@
         <PackageReference Include="NSwag.Core" Version="13.16.1" />
         <PackageReference Include="SimMetrics.Net" Version="1.0.5" />
         <PackageReference Include="JmesPath.Net" Version="1.0.125" />
-        <PackageReference Include="AnyOf" Version="0.3.0" />
         <PackageReference Include="System.Reactive" Version="6.0.1" />
         <PackageReference Include="TinyMapper" Version="3.0.3" />
     </ItemGroup>
@@ -150,8 +149,6 @@
     </ItemGroup>
 
     <ItemGroup Condition="'$(TargetFramework)' != 'netstandard1.3' and '$(TargetFramework)' != 'net451' and '$(TargetFramework)' != 'net452' and '$(TargetFramework)' != 'net46' and '$(TargetFramework)' != 'net461'">
-        <PackageReference Include="GraphQL" Version="7.5.0" />
-        <PackageReference Include="GraphQL.NewtonsoftJson" Version="7.5.0" />
         <PackageReference Include="MimeKitLite" Version="4.1.0.1" />
         <PackageReference Include="ProtoBufJsonConverter" Version="0.3.0" />
     </ItemGroup>
@@ -182,7 +179,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Handlebars.Net.Helpers" Version="2.4.4" />
         <PackageReference Include="Handlebars.Net.Helpers.DynamicLinq" Version="2.4.4" />
         <PackageReference Include="Handlebars.Net.Helpers.Humanizer" Version="2.4.4" />
         <PackageReference Include="Handlebars.Net.Helpers.Json" Version="2.4.4" />

@@ -1,12 +1,10 @@
 ﻿@using System.Diagnostics
 @using global::RZ.Foundation.Types
-@using Tirax.Application.WireMocker.Services
 
 @inherits AppReactiveComponent<XPortViewModel>
 
 @inject IJSRuntime JS
 @inject ISnackbar Snackbar
-@inject IMockServer MockServer
 
 <MudStack>
     <MudText Typo="Typo.h4">Load</MudText>
@@ -22,7 +20,7 @@
     <MudButton StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary" OnClick="@Save">Save</MudButton>
 
     <MudText Typo="Typo.h4">Mappings</MudText>
-    <MudText Typo="Typo.body1">Mapping count = @MockServer.Mappings.Length</MudText>
+    <MudText Typo="Typo.body1">Mapping count = @ViewModel!.MappingCount</MudText>
 
     <MudText Typo="Typo.h5">Load</MudText>
     <MudStack>

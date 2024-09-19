@@ -38,10 +38,15 @@
 
     <ItemGroup>
         <!-- See also https://mstack.nl/blog/20210801-source-generators -->
+        <PackageReference Include="AnyOf" Version="0.4.0" />
         <PackageReference Include="FluentBuilder" Version="0.9.0">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
+        <PackageReference Include="GraphQL.NewtonsoftJson" Version="8.1.0" />
+        <PackageReference Include="Handlebars.Net.Helpers" Version="2.4.5" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 
         <PackageReference Include="PolySharp" Version="1.14.0">
           <PrivateAssets>all</PrivateAssets>

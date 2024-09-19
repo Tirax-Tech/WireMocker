@@ -6,24 +6,31 @@ using ReactiveUI;
 using RZ.Foundation;
 using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Services;
+using WireMock.Server;
 
 namespace Tirax.Application.WireMocker.Components.Features.MockData;
 
 public sealed class XPortViewModel : ViewModel
 {
+    readonly IWireMockServer mockServer;
     readonly ObservableAsPropertyHelper<bool> hasMappings;
     readonly Subject<(Severity Severity, string Message)> notifications = new();
 
     string mappings = string.Empty;
+    int mappingCount;
 
-    public XPortViewModel(IScheduler scheduler, IDataStore dataStore, ShellViewModel shell, IMockServer mockServer) {
+    public XPortViewModel(IScheduler scheduler, IDataStore dataStore, ShellViewModel shell, IWireMockServer mockServer) {
+        this.mockServer = mockServer;
         hasMappings = this.WhenAnyValue(vm => vm.Mappings)
                           .Select(m => !string.IsNullOrWhiteSpace(m))
                           .ToProperty(this, vm => vm.HasMappings);
 
+        ReloadMappingCount();
+
         LoadMappings = ReactiveCommand.CreateFromObservable(
                 () => ObservableFrom.Func(() => {
                     mockServer.LoadMappings(Mappings);
+                    ReloadMappingCount();
                     return unit;
                 }).CatchToOutcome(),
                 this.WhenAnyValue(vm => vm.HasMappings),
@@ -54,6 +61,12 @@ public sealed class XPortViewModel : ViewModel
         set => this.RaiseAndSetIfChanged(ref mappings, value);
     }
 
+    public int MappingCount
+    {
+        get => mappingCount;
+        set => this.RaiseAndSetIfChanged(ref mappingCount, value);
+    }
+
     public IObservable<(Severity Severity, string Message)> Notifications => notifications;
 
     public ReactiveCommand<Stream, Outcome<Unit>> LoadData { get; }
@@ -61,4 +74,8 @@ public sealed class XPortViewModel : ViewModel
     public ReactiveCommand<RUnit, Outcome<Unit>> LoadMappings { get; }
 
     public ReactiveCommand<RUnit, Stream> SaveData { get; }
+
+    void ReloadMappingCount() {
+        MappingCount = mockServer.Mappings.Count(map => !map.IsAdminInterface);
+    }
 }

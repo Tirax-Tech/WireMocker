@@ -1,37 +1,38 @@
 ﻿using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using ReactiveUI;
-using Tirax.Application.WireMocker.Services;
+using RZ.Foundation.Blazor.MVVM;
 using WireMock.Logging;
+using WireMock.Server;
 
 namespace Tirax.Application.WireMocker.Components.Features.Dashboard;
 
-public sealed class DashboardViewModel : ViewModel, IDisposable
+public sealed class DashboardViewModel : ActivatableViewModel
 {
+    readonly IWireMockServer mockServer;
     const int MaxLogEntries = 1000;
 
     readonly CompositeDisposable disposable = new();
 
-    public DashboardViewModel(IMockServer mockServer) {
-        InitLogEntries(mockServer.AllLogEntries.ToSeq());
+    public DashboardViewModel(IWireMockServer mockServer) {
+        this.mockServer = mockServer;
+        InitLogEntries(mockServer.LogEntries.ToSeq());
 
-        ClearLogEntries = ReactiveCommand.Create<Unit, Unit>(_ => {
+        ClearLogEntries = ReactiveCommand.Create(() => {
             this.RaisePropertyChanging(nameof(LogEntries));
             LogEntries.Clear();
             this.RaisePropertyChanged(nameof(LogEntries));
-            return unit;
         }).DisposeWith(disposable);
-
-        mockServer.LogEntries.Subscribe(AddLogEntry).DisposeWith(disposable);
     }
 
     public LinkedList<ILogEntry> LogEntries { get; } = new();
 
-    public ReactiveCommand<Unit, Unit> ClearLogEntries { get; }
+    public ReactiveCommand<RUnit, RUnit> ClearLogEntries { get; }
 
-    void AddLogEntry(ILogEntry[] entry)
+    void AddLogEntry(ILogEntry entry)
     {
         this.RaisePropertyChanging(nameof(LogEntries));
-        entry.Iter(log => LogEntries.AddFirst(log));
+        LogEntries.AddFirst(entry);
         while (LogEntries.Count > MaxLogEntries)
             LogEntries.RemoveLast();
         this.RaisePropertyChanged(nameof(LogEntries));
@@ -48,5 +49,14 @@ public sealed class DashboardViewModel : ViewModel, IDisposable
 
     public void Dispose() {
         disposable.Dispose();
+    }
+
+    protected override void OnActivated(CompositeDisposable disposables) {
+        mockServer.HttpEvents
+                  .Where(ev => ev is HttpEvents.Response)
+                  .Cast<HttpEvents.Response>()
+                  .Select(response => response.Log)
+                  .Subscribe(AddLogEntry)
+                  .DisposeWith(disposable);
     }
 }

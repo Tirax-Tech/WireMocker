@@ -2,6 +2,8 @@
 
 // This source file is based on mock4net by Alexandre Victoor which is licensed under the Apache 2.0 License.
 // For more details see 'mock4net/LICENSE.txt' and 'mock4net/readme.md' in this project root.
+
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -102,8 +104,6 @@ public partial class WireMockServer : IWireMockServer
     /// </summary>
     public void Dispose()
     {
-        _options.LogEntries.CollectionChanged -= LogEntries_CollectionChanged;
-
         Dispose(true);
         GC.SuppressFinalize(this);
     }
@@ -368,10 +368,7 @@ public partial class WireMockServer : IWireMockServer
             }
         }
 
-        WireMockMiddlewareOptionsHelper.InitFromSettings(settings, _options, o =>
-        {
-            o.LogEntries.CollectionChanged += LogEntries_CollectionChanged;
-        });
+        WireMockMiddlewareOptionsHelper.InitFromSettings(settings, _options);
 
         _matcherMapper = new MatcherMapper(_settings);
         _mappingConverter = new MappingConverter(_matcherMapper);

@@ -1,5 +1,7 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
+
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -10,13 +12,10 @@ using WireMock.Admin.Mappings;
 using WireMock.Handlers;
 using WireMock.Logging;
 using WireMock.Matchers;
-using WireMock.RegularExpressions;
 using WireMock.Types;
 using System.Globalization;
 using WireMock.Models;
-#if USE_ASPNETCORE
 using Microsoft.Extensions.DependencyInjection;
-#endif
 
 namespace WireMock.Settings;
 
@@ -25,7 +24,7 @@ namespace WireMock.Settings;
 /// </summary>
 public class WireMockServerSettings
 {
-    internal const int DefaultStartTimeout = 10000;
+    public const int DefaultStartTimeout = 10000;
 
     /// <summary>
     /// Gets or sets the http port.
@@ -150,7 +149,6 @@ public class WireMockServerSettings
     [JsonIgnore]
     public Action<object>? PostWireMockMiddlewareInit { get; set; }
 
-#if USE_ASPNETCORE
     /// <summary>
     /// Action which is called with IServiceCollection when ASP.NET Core DI is being configured. [Optional]
     /// </summary>
@@ -163,7 +161,6 @@ public class WireMockServerSettings
     /// </summary>
     [PublicAPI]
     public CorsPolicyOptions? CorsPolicyOptions { get; set; }
-#endif
 
     /// <summary>
     /// The IWireMockLogger which logs Debug, Info, Warning or Error
@@ -246,7 +243,6 @@ public class WireMockServerSettings
     [PublicAPI]
     public bool CustomCertificateDefined => CertificateSettings?.IsDefined == true;
 
-#if USE_ASPNETCORE
     /// <summary>
     /// Client certificate mode for the server
     /// </summary>
@@ -257,7 +253,6 @@ public class WireMockServerSettings
     /// Whether to accept any client certificate
     /// </summary>
     public bool AcceptAnyClientCertificate { get; set; }
-#endif
 
     /// <summary>
     /// Defines the global IWebhookSettings to use.

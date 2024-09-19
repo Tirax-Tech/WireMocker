@@ -1,13 +1,20 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
+
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
 using WireMock.Admin.Mappings;
 using WireMock.Logging;
 using WireMock.Types;
 
 namespace WireMock.Server;
+
+public abstract record HttpEvents
+{
+    public sealed record Request(Guid Id, IRequestMessage Message): HttpEvents;
+    public sealed record Response(Guid Id, ILogEntry Log, TimeSpan Elasped): HttpEvents;
+}
 
 /// <summary>
 /// The fluent mock server interface.
@@ -30,6 +37,11 @@ public interface IWireMockServer : IDisposable
     IEnumerable<ILogEntry> LogEntries { get; }
 
     /// <summary>
+    /// HTTP log events
+    /// </summary>
+    IObservable<HttpEvents> HttpEvents { get; }
+
+    /// <summary>
     /// Gets the mappings as MappingModels.
     /// </summary>
     IEnumerable<MappingModel> MappingModels { get; }
@@ -37,8 +49,7 @@ public interface IWireMockServer : IDisposable
     // <summary>
     // Gets the mappings.
     // </summary>
-    //[PublicAPI]
-    //IEnumerable<IMapping> Mappings { get; }
+    IEnumerable<IMapping> Mappings { get; }
 
     /// <summary>
     /// Gets the ports.
@@ -70,16 +81,9 @@ public interface IWireMockServer : IDisposable
     /// </summary>
     string? Provider { get; }
 
-    //ConcurrentDictionary<string, ScenarioState> Scenarios { get; }
-
-    /// <summary>
-    /// Occurs when [log entries changed].
-    /// </summary>
-    event NotifyCollectionChangedEventHandler LogEntriesChanged;
-
     /// <summary>
     /// Adds a 'catch all mapping'
-    /// 
+    ///
     /// - matches all Paths and any Methods
     /// - priority is set to 1000
     /// - responds with a 404 "No matching mapping found"
@@ -115,7 +119,7 @@ public interface IWireMockServer : IDisposable
 
     /// <summary>
     /// Reads a static mapping file and adds or updates a single mapping.
-    /// 
+    ///
     /// Calling this method manually forces WireMock.Net to read and apply the specified static mapping file.
     /// </summary>
     /// <param name="path">The path to the static mapping file.</param>
@@ -124,7 +128,7 @@ public interface IWireMockServer : IDisposable
     /// <summary>
     /// Reads the static mappings from a folder.
     /// (This method is also used when WireMockServerSettings.ReadStaticMappings is set to true.
-    /// 
+    ///
     /// Calling this method manually forces WireMock.Net to read and apply all static mapping files in the specified folder.
     /// </summary>
     /// <param name="folder">The optional folder. If not defined, use {CurrentFolder}/__admin/mappings</param>
@@ -205,7 +209,7 @@ public interface IWireMockServer : IDisposable
 
     /// <summary>
     /// Register the mappings (via <see cref="MappingModel"/>).
-    /// 
+    ///
     /// This can be used if you have 1 or more <see cref="MappingModel"/> defined and want to register these in WireMock.Net directly instead of using the fluent syntax.
     /// </summary>
     /// <param name="mappings">The MappingModels</param>
@@ -213,7 +217,7 @@ public interface IWireMockServer : IDisposable
 
     /// <summary>
     /// Register the mappings (via json string).
-    /// 
+    ///
     /// This can be used if you the mappings as json string defined and want to register these in WireMock.Net directly instead of using the fluent syntax.
     /// </summary>
     /// <param name="mappings">The mapping(s) as json string.</param>
