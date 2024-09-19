@@ -24,7 +24,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\libs\WireMock.Net\src\WireMock.Net\WireMock.Net.csproj" />
     <ProjectReference Include="..\WireMocker\Tirax.Application.WireMocker.csproj" />
   </ItemGroup>
 

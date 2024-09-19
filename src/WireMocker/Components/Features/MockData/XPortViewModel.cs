@@ -21,10 +21,13 @@ public sealed class XPortViewModel : ViewModel
                           .Select(m => !string.IsNullOrWhiteSpace(m))
                           .ToProperty(this, vm => vm.HasMappings);
 
-        LoadMappings = ReactiveCommand.Create<Unit, Outcome<Unit>>(
-            _ => mockServer.LoadMappings(Mappings).RunIO(),
-            this.WhenAnyValue(vm => vm.HasMappings),
-            scheduler
+        LoadMappings = ReactiveCommand.CreateFromObservable(
+                () => ObservableFrom.Func(() => {
+                    mockServer.LoadMappings(Mappings);
+                    return unit;
+                }).CatchToOutcome(),
+                this.WhenAnyValue(vm => vm.HasMappings),
+                scheduler
             );
 
         LoadMappings.Subscribe(outcome => {
@@ -34,13 +37,13 @@ public sealed class XPortViewModel : ViewModel
         });
 
         LoadData = ReactiveCommand.CreateFromTask<Stream, Outcome<Unit>>(async content => {
-            var result = await dataStore.LoadFromSnapshot(content).RunIO();
+            var result = await TryCatch(() => dataStore.LoadFromSnapshot(content));
             shell.Notify(result.IfSuccess(out _, out var error)
                              ? (Severity.Success, "Loaded")
                              : (Severity.Error, error.ToString()));
             return result;
         }, outputScheduler: scheduler);
-        SaveData = ReactiveCommand.Create<Unit, Stream>(dataStore.SnapshotData, outputScheduler: scheduler);
+        SaveData = ReactiveCommand.Create(dataStore.SnapshotData, outputScheduler: scheduler);
     }
 
     public bool HasMappings => hasMappings.Value;
@@ -55,7 +58,7 @@ public sealed class XPortViewModel : ViewModel
 
     public ReactiveCommand<Stream, Outcome<Unit>> LoadData { get; }
 
-    public ReactiveCommand<Unit, Outcome<Unit>> LoadMappings { get; }
+    public ReactiveCommand<RUnit, Outcome<Unit>> LoadMappings { get; }
 
-    public ReactiveCommand<Unit, Stream> SaveData { get; }
+    public ReactiveCommand<RUnit, Stream> SaveData { get; }
 }

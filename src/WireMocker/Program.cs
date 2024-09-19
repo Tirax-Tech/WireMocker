@@ -1,9 +1,10 @@
 global using LanguageExt;
 global using static LanguageExt.Prelude;
 global using static RZ.Foundation.Prelude;
+global using RZ.Foundation.Blazor.Helpers;
 global using RZ.Foundation.Extensions;
-global using RZ.Foundation.Functional;
 global using ReactiveUI.Blazor;
+global using RUnit = System.Reactive.Unit;
 using System.Reactive.Concurrency;
 using MudBlazor.Services;
 using Tirax.Application.WireMocker.Components;

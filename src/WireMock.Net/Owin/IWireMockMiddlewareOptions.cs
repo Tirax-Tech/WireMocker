@@ -1,5 +1,7 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
+
 using System;
 using System.Collections.Concurrent;
 using System.Reactive.Subjects;
@@ -9,12 +11,8 @@ using WireMock.Matchers;
 using WireMock.Server;
 using WireMock.Types;
 using WireMock.Util;
-#if !USE_ASPNETCORE
-using Owin;
-#else
 using IAppBuilder = Microsoft.AspNetCore.Builder.IApplicationBuilder;
 using Microsoft.Extensions.DependencyInjection;
-#endif
 
 namespace WireMock.Owin;
 
@@ -44,7 +42,6 @@ internal interface IWireMockMiddlewareOptions
 
     Action<IAppBuilder>? PostWireMockMiddlewareInit { get; set; }
 
-#if USE_ASPNETCORE
     Action<IServiceCollection>? AdditionalServiceRegistration { get; set; }
 
     CorsPolicyOptions? CorsPolicyOptions { get; set; }
@@ -52,7 +49,6 @@ internal interface IWireMockMiddlewareOptions
     ClientCertificateMode ClientCertificateMode { get; set; }
 
     bool AcceptAnyClientCertificate { get; set; }
-#endif
 
     IFileSystemHandler? FileSystemHandler { get; set; }
 

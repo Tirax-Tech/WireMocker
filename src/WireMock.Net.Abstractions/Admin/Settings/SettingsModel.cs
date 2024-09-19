@@ -1,8 +1,9 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
+
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using JetBrains.Annotations;
 using WireMock.Handlers;
 using WireMock.Types;
 
@@ -92,7 +93,7 @@ public class SettingsModel
     public bool? WatchStaticMappingsInSubdirectories { get; set; }
 
     /// <summary>
-    /// Policies to use when using CORS. By default CORS is disabled. [Optional]
+    /// Policies to use when using CORS. By default, CORS is disabled. [Optional]
     /// </summary>
     public string? CorsPolicyOptions { get; set; }
 
@@ -123,7 +124,6 @@ public class SettingsModel
     /// </summary>
     public Dictionary<string, string>? ProtoDefinitions { get; set; }
 
-#if NETSTANDARD1_3_OR_GREATER || NET461
     /// <summary>
     /// Server client certificate mode
     /// </summary>
@@ -133,5 +133,4 @@ public class SettingsModel
     /// Whether to accept any client certificate
     /// </summary>
     public bool AcceptAnyClientCertificate { get; set; }
-#endif
 }

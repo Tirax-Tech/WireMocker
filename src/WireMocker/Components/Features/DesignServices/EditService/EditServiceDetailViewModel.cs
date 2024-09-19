@@ -4,6 +4,7 @@ using DynamicData;
 using FluentValidation;
 using ReactiveUI;
 using RZ.Foundation;
+using RZ.Foundation.Types;
 using Tirax.Application.WireMocker.Components.Features.DesignServices.Editor;
 using Tirax.Application.WireMocker.Domain;
 using Tirax.Application.WireMocker.RZ;
@@ -48,9 +49,8 @@ public sealed class EditServiceDetailViewModel : ViewModel
             _ => {
                 var validation = Validator.Validate(this);
                 return validation.IsValid
-                           ? new RouteRule(chaotic.NewGuid(), PathModel?.ToDomain(), Headers.Map(h => h.ToDomain()).ToArray(),
-                               EndpointName)
-                           : StandardErrors.UnexpectedError(validation.Errors.First().ErrorMessage);
+                           ? new RouteRule(chaotic.NewGuid(), PathModel?.ToDomain(), Headers.Map(h => h.ToDomain()).ToArray(), EndpointName)
+                           : new ErrorInfo(StandardErrorCodes.InvalidRequest, validation.Errors.First().ErrorMessage);
             },
             outputScheduler: scheduler);
 

@@ -3,13 +3,11 @@ using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using DynamicData;
-using LanguageExt.Common;
 using MudBlazor;
 using ReactiveUI;
-using RZ.Foundation.Reactive;
+using RZ.Foundation.Types;
 using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Domain;
-using Tirax.Application.WireMocker.Helpers;
 using Tirax.Application.WireMocker.Services;
 using Unit = LanguageExt.Unit;
 
@@ -34,7 +32,7 @@ public sealed class SearchPanelViewModel : ViewModel
         canNew = normalized.Select(s => s is not null).ToProperty(this, x => x.CanNew);
 
         var serviceChanges = new Subject<IChangeSet<SearchViewItemViewModel>>();
-        var errorStream = new Subject<Error>();
+        var errorStream = new Subject<ErrorInfo>();
 
         var viewData = new SearchPanelViewData {
             UpdateService = ReactiveCommand.CreateFromObservable<Service, Service>(service => {
@@ -52,8 +50,7 @@ public sealed class SearchPanelViewModel : ViewModel
                 return unit;
             }, outputScheduler: scheduler);
 
-        var serviceSource = ObservableConverter.From(_ => dataStore.GetServices().ToAsync())
-                                               .SelectMany(v => v.ToObservable());
+        var serviceSource = ObservableFrom.Generator(dataStore.GetServices).Shared();
         var updatedSource = viewData.UpdateService
                                     .Select(CreateView)
                                     .Select(vm => {

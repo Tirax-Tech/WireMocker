@@ -16,19 +16,17 @@ public sealed class SearchViewItemViewModel : ViewModel
                                    SearchPanelViewData viewData, Service service) {
         Service = service;
 
-        Delete = ReactiveCommand.Create<Unit, Outcome<Service>>(_ => {
+        Delete = ReactiveCommand.Create(() => {
             var serviceId = service.Id;
-            var result = dataStore.RemoveService(serviceId).RunIO();
-            if (result.IfFail(out var error, out var _))
+            var result = TryCatch(() => dataStore.RemoveService(serviceId));
+            if (result.IfFail(out var error, out _))
                 shell.Notify((Severity.Error, error.ToString()));
             return result;
         });
 
-        Edit = ReactiveCommand.Create<Unit, Unit>(_ => {
+        Edit = ReactiveCommand.Create(() => {
             IsExpanded = true;
             shell.PushModal(vmFactory.Create<EditServiceMainViewModel>(viewData, service));
-
-            return unit;
         });
     }
 
@@ -39,6 +37,6 @@ public sealed class SearchViewItemViewModel : ViewModel
     }
 
     public Service Service { get; }
-    public ReactiveCommand<Unit, Outcome<Service>> Delete { get; }
-    public ReactiveCommand<Unit, Unit> Edit { get; }
+    public ReactiveCommand<RUnit, Outcome<Service?>> Delete { get; }
+    public ReactiveCommand<RUnit, RUnit> Edit { get; }
 }

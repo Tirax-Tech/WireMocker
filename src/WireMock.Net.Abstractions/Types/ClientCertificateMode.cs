@@ -1,12 +1,16 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
+
+using JetBrains.Annotations;
+
 namespace WireMock.Types;
 
-#if NETSTANDARD1_3_OR_GREATER || NET461
 /// <summary>
-/// Describes the client certificate requirements for a HTTPS connection.
+/// Describes the client certificate requirements for an HTTPS connection.
 /// This enum is the same as https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.server.kestrel.https.clientcertificatemode
 /// </summary>
+[PublicAPI]
 public enum ClientCertificateMode
 {
     /// <summary>
@@ -30,4 +34,3 @@ public enum ClientCertificateMode
     /// </summary>
     DelayCertificate,
 }
-#endif

@@ -8,30 +8,30 @@ namespace Tirax.Application.WireMocker.Services;
 
 public class MockServer(WireMockServer server) : IMockServer
 {
-    public Seq<ILogEntry> AllLogEntries => server.LogEntries.ToSeq();
+    public ILogEntry[] AllLogEntries => server.LogEntries.ToArray();
 
-    public IObservable<Seq<ILogEntry>> LogEntries { get; } =
+    public IObservable<ILogEntry[]> LogEntries { get; } =
         Observable
            .FromEventPattern<NotifyCollectionChangedEventHandler,
                 NotifyCollectionChangedEventArgs>(add => server.LogEntriesChanged += add,
                                                   remove => server.LogEntriesChanged -= remove)
-           .Select(args => args.EventArgs.NewItems!.Cast<ILogEntry>().ToArray().ToSeq());
+           .Select(args => args.EventArgs.NewItems!.Cast<ILogEntry>().ToArray());
 
-    public Seq<IMapping> Mappings => server.Mappings.Where(map => !map.IsAdminInterface).ToSeq();
+    public IMapping[] Mappings => server.Mappings.Where(map => !map.IsAdminInterface).ToArray();
 
-    public OutcomeT<Synchronous, Unit> LoadMappings(string mappings) {
+    public void LoadMappings(string mappings) {
         server.ResetMappings();
-        return TryCatch(() => server.WithMapping(mappings)).Map(_ => unit).As();
+        server.WithMapping(mappings);
     }
 }
 
 public interface IMockServer
 {
-    Seq<ILogEntry> AllLogEntries { get; }
+    ILogEntry[] AllLogEntries { get; }
 
-    IObservable<Seq<ILogEntry>> LogEntries { get; }
+    IObservable<ILogEntry[]> LogEntries { get; }
 
-    Seq<IMapping> Mappings { get; }
+    IMapping[] Mappings { get; }
 
-    OutcomeT<Synchronous, Unit> LoadMappings(string mappings);
+    void LoadMappings(string mappings);
 }
