@@ -13,14 +13,14 @@ using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Components.Layout;
 using Tirax.Application.WireMocker.RZ;
 using Tirax.Application.WireMocker.Services;
-using WireMock.Net.StandAlone;
+using WireMock.Server;
 using WireMock.Settings;
 
 var settings = new WireMockServerSettings {
     Port = 9091,
     StartAdminInterface = true
 };
-var server = StandAloneApp.Start(settings);
+var server = WireMockServer.Start(settings);
 
 var builder = WebApplication.CreateBuilder([]);
 

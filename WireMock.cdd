@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+<c:Diagram
+xmlns:c="http://www.cadifra.com/schema/1.0"
+xmlns:c1v3="http://www.cadifra.com/schema/1.3"
+ProductVersion="1.3.4">
+
+<Page id="r1"
+Size="9"
+Width="21000"
+Height="29700"
+Landscape="1"
+Rows="2"
+Columns="2"
+Margins="1016 1016 1016 1016"
+CutGlueMargins="1016 1016 1016 1016"
+Scale="1"/>
+
+<DiagramType id="r2"
+TypeValue="1"/>
+
+<Style id="r3">
+<dir n="Base" Typeface="arial" Size="11" Bold="0">
+<dir n="Class Diagram">
+<dir n="Association" Bold="1"/>
+<dir n="Class" Bold="0">
+<dir n="Attached Text"/>
+<dir n="Header" Bold="1"/>
+</dir>
+<dir n="Multiplicity, Role" Bold="0"/>
+</dir>
+<dir n="Dependency" Bold="0"/>
+</dir>
+</Style>
+
+<Class id="r4"
+Pos="19400 -11000"
+Size="3300 1000">
+<Text>WireMockServer</Text>
+</Class>
+
+<Class id="r5"
+Pos="32300 -14400"
+Size="2100 1000"
+Abstract="1">
+<Text>ILogEntry</Text>
+</Class>
+
+<Class id="r6"
+Pos="25900 -11000"
+Size="5800 1000"
+Abstract="1">
+<Text>IWireMockMiddlewareOptions</Text>
+</Class>
+
+<Class id="r7"
+Pos="27800 -14400"
+Size="2000 1000">
+<Text>LogEntry</Text>
+</Class>
+
+<Assoc id="r8">
+<End id="r9"
+Pos="28800 -12000"
+Class="r6"
+Type="3"/>
+<Segment id="r10"
+Ends="r9 r11"/>
+<End id="r11"
+Pos="28800 -14400"
+Class="r7"
+Type="1"/>
+</Assoc>
+
+<Generalization id="r12">
+<End id="r13"
+Pos="29800 -14900"
+Class="r7"
+Type="2"/>
+<Segment id="r14"
+Ends="r13 r15"/>
+<End id="r15"
+Pos="32300 -14900"
+Class="r5"
+Type="1"/>
+</Generalization>
+
+<Assoc id="r16">
+<End id="r17"
+Pos="22700 -11500"
+Class="r4"
+Type="1"/>
+<Segment id="r18"
+Ends="r17 r19"/>
+<End id="r19"
+Pos="25900 -11500"
+Class="r6"
+Type="1"
+Traversed="1"/>
+</Assoc>
+
+<Class id="r20"
+Pos="25900 -8600"
+Size="5800 1000">
+<Text>WireMockMiddlewareOptions</Text>
+</Class>
+
+<Generalization id="r21">
+<End id="r22"
+Pos="28800 -9600"
+Class="r20"
+Type="2"/>
+<Segment id="r23"
+Ends="r22 r24"/>
+<End id="r24"
+Pos="28800 -11000"
+Class="r6"
+Type="1"/>
+</Generalization>
+
+<Class id="r25"
+Pos="8500 -14400"
+Size="4200 1000">
+<Text>WireMockMiddleware</Text>
+</Class>
+
+<Class id="r26"
+Pos="25900 -4500"
+Size="2300 1000"
+Abstract="1">
+<Text>IMapping</Text>
+</Class>
+
+<Class id="r27"
+Pos="25900 -6800"
+Size="2300 1000">
+<Text>Mapping</Text>
+</Class>
+
+<Generalization id="r28">
+<End id="r29"
+Pos="27000 -6800"
+Class="r27"
+Type="2"/>
+<Segment id="r30"
+Ends="r29 r31"/>
+<End id="r31"
+Pos="27000 -5500"
+Class="r26"
+Type="1"/>
+</Generalization>
+
+<Class id="r32"
+Pos="8800 -17500"
+Size="3800 1000"
+Abstract="1">
+<Text>IResponseProvider</Text>
+</Class>
+
+<Class id="r33"
+Pos="14300 -17500"
+Size="2100 1000">
+<Text>Response</Text>
+</Class>
+
+<Class id="r34"
+Pos="14300 -19900"
+Size="6500 1000">
+<Text>DynamicResponseProvider</Text>
+</Class>
+
+<Class id="r37"
+Pos="14300 -18700"
+Size="6500 1000">
+<Text>ProxyAsyncResponseProvider</Text>
+</Class>
+
+<Class id="r39"
+Pos="14300 -21100"
+Size="6500 1000">
+<Text>DynamicAsyncResponseProvider</Text>
+</Class>
+
+<Generalization id="r54">
+<End id="r35"
+Pos="14300 -18100"
+Class="r33"
+Type="2"/>
+<End id="r36"
+Pos="12600 -18100"
+Class="r32"
+Type="1"/>
+<Segment id="r38"
+Ends="r42 r50"/>
+<Segment id="r40"
+Ends="r46 r42"/>
+<Segment id="r41"
+Ends="r50 r35"
+Oblique="1"/>
+<Join id="r42"
+Pos="13400 -19100"/>
+<Segment id="r43"
+Ends="r44 r42"/>
+<End id="r44"
+Pos="14300 -19100"
+Class="r37"
+Type="2"/>
+<Segment id="r45"
+Ends="r36 r50"/>
+<Join id="r46"
+Pos="13400 -20400"/>
+<Segment id="r47"
+Ends="r48 r46"/>
+<End id="r48"
+Pos="14300 -20400"
+Class="r34"
+Type="2"/>
+<Segment id="r49"
+Ends="r51 r46"/>
+<Join id="r50"
+Pos="13400 -18100"/>
+<Join id="r51"
+Pos="13400 -21700"/>
+<Segment id="r52"
+Ends="r53 r51"/>
+<End id="r53"
+Pos="14300 -21700"
+Class="r39"
+Type="2"/>
+</Generalization>
+
+<Class id="r55"
+Pos="25900 -17500"
+Size="2500 1000">
+<Text>ProxyHelper</Text>
+</Class>
+
+<Class id="r56"
+Pos="14300 -11000"
+Size="2900 1000"
+Abstract="1">
+<Text>IOwinSelfHost</Text>
+</Class>
+
+<Assoc id="r57">
+<End id="r58"
+Pos="19400 -11500"
+Class="r4"
+Type="1"/>
+<Segment id="r59"
+Ends="r58 r60"/>
+<End id="r60"
+Pos="17200 -11500"
+Class="r56"
+Type="1"
+Traversed="1"/>
+</Assoc>
+
+<Class id="r61"
+Pos="8500 -11000"
+Size="4100 1000">
+<Text>AspNetCoreSelfHost</Text>
+</Class>
+
+<Generalization id="r62">
+<End id="r63"
+Pos="12600 -11600"
+Class="r61"
+Type="2"/>
+<Segment id="r64"
+Ends="r63 r65"/>
+<End id="r65"
+Pos="14300 -11600"
+Class="r56"
+Type="1"/>
+</Generalization>
+
+<Assoc id="r66">
+<End id="r67"
+Pos="10600 -12000"
+Class="r61"
+Type="1"/>
+<Segment id="r68"
+Ends="r67 r69"/>
+<End id="r69"
+Pos="10600 -14400"
+Class="r25"
+Type="1"
+Traversed="1"/>
+</Assoc>
+
+<Assoc id="r70">
+<End id="r71"
+Pos="12700 -15000"
+Class="r25"
+Type="1"/>
+<Segment id="r72"
+Ends="r71 r73"/>
+<Join id="r73"
+Pos="26600 -15000"/>
+<Segment id="r74"
+Ends="r73 r75"/>
+<End id="r75"
+Pos="26600 -12000"
+Class="r6"
+Type="1"
+Traversed="1"/>
+</Assoc>
+
+<Class id="r76"
+Pos="19400 -4500"
+Size="3900 1000"
+Abstract="1">
+<Text>IRequestMessage</Text>
+</Class>
+
+<Class id="r77"
+Pos="13800 -4500"
+Size="3400 1000">
+<Text>RequestMessage</Text>
+</Class>
+
+<Generalization id="r78">
+<End id="r79"
+Pos="17200 -5000"
+Class="r77"
+Type="2"/>
+<Segment id="r80"
+Ends="r79 r81"/>
+<End id="r81"
+Pos="19400 -5000"
+Class="r76"
+Type="1"/>
+</Generalization>
+
+<Class id="r82"
+Pos="19400 -6800"
+Size="3900 1000"
+Abstract="1">
+<Text>IResponseMessage</Text>
+</Class>
+
+</c:Diagram>
