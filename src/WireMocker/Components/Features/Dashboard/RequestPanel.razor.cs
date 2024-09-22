@@ -16,5 +16,5 @@ public sealed class RequestPanelViewModel(
     public DateTimeOffset Timestamp { get; } = timestamp;
     public IReadOnlyList<HttpStringValues> Queries { get; } = queries;
     public IReadOnlyList<HttpStringValues> Headers { get; } = headers;
-    public string? Body { get; } = body is null ? null : body.BodyAsString ?? $"(Content type: {body.DetectedBodyTypeFromContentType})";
+    public string? Body { get; } = body is null ? null : body.BodyAsString ?? $"(Content type: {body.GetBodyType()})";
 }

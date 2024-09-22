@@ -12,6 +12,8 @@ public sealed class DashboardViewModel : ActivatableViewModel
     readonly IWireMockServer mockServer;
     const int MaxLogEntries = 1000;
 
+    readonly Dictionary<Guid, HttpTransactionViewModel> httpEntryLookup = new();
+
     public DashboardViewModel(IWireMockServer mockServer) {
         this.mockServer = mockServer;
         InitLogEntries(mockServer.LogEntries.ToSeq());
@@ -44,9 +46,14 @@ public sealed class DashboardViewModel : ActivatableViewModel
                req.Headers.Map(h => (h.Key, (IReadOnlyList<string>)h.Value)).ToArray(),
                req.BodyData);
 
+    static ResponsePanelViewModel ToResponseVm(IResponseMessage res)
+        => new((int) res.StatusCode!,
+               res.Headers.Map(h => (h.Key, (IReadOnlyList<string>)h.Value)).ToArray(),
+               res.BodyData);
+
     static HttpTransactionViewModel ToHttpTransaction(ILogEntry log) {
         var request = ToRequestVm(log.RequestMessage);
-        var response = new ResponsePanelViewModel();
+        var response = ToResponseVm(log.ResponseMessage);
         return new HttpTransactionViewModel(log.Guid, request, response);
     }
 
@@ -62,9 +69,21 @@ public sealed class DashboardViewModel : ActivatableViewModel
     protected override void OnActivated(CompositeDisposable disposables) {
         mockServer.HttpEvents.Subscribe(ev => {
             switch (ev){
-                case HttpEvents.Request req:
-                    AddLogEntry(new(req.Id, ToRequestVm(req.Message)));
+                case HttpEvents.Request req: {
+                    var entry = new HttpTransactionViewModel(req.Id, ToRequestVm(req.Message));
+                    httpEntryLookup[req.Id] = entry;
+                    AddLogEntry(entry);
                     break;
+                }
+                case HttpEvents.Response res:
+                {
+                    httpEntryLookup[res.Id].ResponseVm = ToResponseVm(res.Log.ResponseMessage);
+                    httpEntryLookup.Remove(res.Id);
+                    break;
+                }
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(ev));
             }
         }).DisposeWith(disposables);
     }

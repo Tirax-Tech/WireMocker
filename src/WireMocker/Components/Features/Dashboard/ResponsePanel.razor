@@ -1,60 +1,16 @@
-﻿@using System.Net
-@using System.Text.Encodings.Web
-@using System.Text.Json
-@using System.Text.Json.Serialization
-@using Newtonsoft.Json
-@using Newtonsoft.Json.Linq
-@using WireMock.Admin.Mappings
-@using WireMock.Logging
-@using WireMock.Types
+﻿@inherits ReactiveComponentBase<ResponsePanelViewModel>
 
 <MudStack>
     <MudStack Row="true" AlignItems="AlignItems.Baseline">
-        <MudChip T="string" Color="Color.Secondary" Class="pr-2">@Entry.ResponseMessage.StatusCode</MudChip>
-        <MudText Typo="Typo.body2">@((HttpStatusCode) Entry.ResponseMessage.StatusCode!)</MudText>
+        <MudChip T="string" Color="Color.Secondary" Class="pr-2">@ViewModel!.StatusCode</MudChip>
+        <MudText Typo="Typo.body2">@ViewModel!.StatusCodeText</MudText>
     </MudStack>
 
-    @* <HeaderTable Headers="Entry.ResponseMessage.Headers" /> *@
+    <HeaderTable Headers="ViewModel!.Headers" />
 
-    @{ var body = GetBody(); }
-    @if (body is not null){
+    @if (ViewModel!.Body is not null){
         <div class="pa-4 code-panel">
-            @body
+            @ViewModel!.Body
         </div>
     }
 </MudStack>
-
-@code {
-    [Parameter]
-    public required ILogEntry Entry { get; set; }
-
-    static readonly JsonSerializerOptions JsonOptions = new() {
-        WriteIndented = true,
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
-    };
-
-    string? GetBody() {
-        var res = Entry.ResponseMessage;
-
-        return res.BodyData?.DetectedBodyType switch {
-            null            => null,
-            BodyType.String => res.BodyData.BodyAsString,
-            BodyType.Json   => ParseJsonBody(res.BodyData.BodyAsJson!),
-
-            _ => $"({res.BodyData?.DetectedBodyType})"
-        };
-    }
-
-    string? ParseJsonBody(object json) =>
-        json switch {
-            StatusModel status => JsonConvert.SerializeObject(status, Formatting.Indented),
-
-            JObject o => o.ToString(Formatting.Indented),
-            JArray a  => a.ToString(Formatting.Indented),
-            bool b    => b.ToString(),
-
-            _ => $"Unexpected JSON type {json.GetType().FullName}"
-        };
-
-}

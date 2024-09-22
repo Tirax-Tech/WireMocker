@@ -6,11 +6,15 @@
     </MudItem>
 
     <MudItem md="6" Class="pa-8">
-        <div class="container">
-        <MudSkeleton Width="50em" Height="1em" Class="mb-2"/>
-        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="50em" Height="10em"/>
-        @* <ResponsePanel Entry="entry"/> *@
-        </div>
+        @if (ViewModel!.ResponseVm is null){
+            <div class="container">
+                <MudSkeleton Width="50em" Height="1em" Class="mb-2"/>
+                <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="50em" Height="10em"/>
+            </div>
+        }
+        else {
+            <ResponsePanel ViewModel="ViewModel!.ResponseVm" />
+        }
     </MudItem>
 </MudGrid>
 
