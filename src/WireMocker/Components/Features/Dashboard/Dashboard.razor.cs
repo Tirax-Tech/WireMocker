@@ -1,7 +1,7 @@
 ﻿using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using ReactiveUI;
 using RZ.Foundation.Blazor.MVVM;
+using WireMock;
 using WireMock.Logging;
 using WireMock.Server;
 
@@ -12,51 +12,60 @@ public sealed class DashboardViewModel : ActivatableViewModel
     readonly IWireMockServer mockServer;
     const int MaxLogEntries = 1000;
 
-    readonly CompositeDisposable disposable = new();
-
     public DashboardViewModel(IWireMockServer mockServer) {
         this.mockServer = mockServer;
         InitLogEntries(mockServer.LogEntries.ToSeq());
 
         ClearLogEntries = ReactiveCommand.Create(() => {
-            this.RaisePropertyChanging(nameof(LogEntries));
-            LogEntries.Clear();
-            this.RaisePropertyChanged(nameof(LogEntries));
-        }).DisposeWith(disposable);
+            this.RaisePropertyChanging(nameof(HttpEntries));
+            HttpEntries.Clear();
+            this.RaisePropertyChanged(nameof(HttpEntries));
+        });
     }
 
-    public LinkedList<ILogEntry> LogEntries { get; } = new();
+    public LinkedList<HttpTransactionViewModel> HttpEntries { get; } = new();
 
     public ReactiveCommand<RUnit, RUnit> ClearLogEntries { get; }
 
-    void AddLogEntry(ILogEntry entry)
+    void AddLogEntry(HttpTransactionViewModel entry)
     {
-        this.RaisePropertyChanging(nameof(LogEntries));
-        LogEntries.AddFirst(entry);
-        while (LogEntries.Count > MaxLogEntries)
-            LogEntries.RemoveLast();
-        this.RaisePropertyChanged(nameof(LogEntries));
+        this.RaisePropertyChanging(nameof(HttpEntries));
+        HttpEntries.AddFirst(entry);
+        while (HttpEntries.Count > MaxLogEntries)
+            HttpEntries.RemoveLast();
+        this.RaisePropertyChanged(nameof(HttpEntries));
+    }
+
+    static RequestPanelViewModel ToRequestVm(IRequestMessage req)
+        => new(req.Method,
+               req.Path,
+               req.DateTime,
+               req.Query.Map(h => (h.Key, (IReadOnlyList<string>)h.Value)).ToArray(),
+               req.Headers.Map(h => (h.Key, (IReadOnlyList<string>)h.Value)).ToArray(),
+               req.BodyData);
+
+    static HttpTransactionViewModel ToHttpTransaction(ILogEntry log) {
+        var request = ToRequestVm(log.RequestMessage);
+        var response = new ResponsePanelViewModel();
+        return new HttpTransactionViewModel(log.Guid, request, response);
     }
 
     void InitLogEntries(in Seq<ILogEntry> entries)
     {
-        this.RaisePropertyChanging(nameof(LogEntries));
-        entries.Take(MaxLogEntries)
-               .OrderByDescending(i => i.RequestMessage.DateTime)
-               .Iter(log => LogEntries.AddLast(log));
-        this.RaisePropertyChanged(nameof(LogEntries));
-    }
-
-    public void Dispose() {
-        disposable.Dispose();
+        this.RaisePropertyChanging(nameof(HttpEntries));
+        entries.OrderByDescending(i => i.RequestMessage.DateTime)
+               .Take(MaxLogEntries)
+               .Iter(log => HttpEntries.AddLast(ToHttpTransaction(log)));
+        this.RaisePropertyChanged(nameof(HttpEntries));
     }
 
     protected override void OnActivated(CompositeDisposable disposables) {
-        mockServer.HttpEvents
-                  .Where(ev => ev is HttpEvents.Response)
-                  .Cast<HttpEvents.Response>()
-                  .Select(response => response.Log)
-                  .Subscribe(AddLogEntry)
-                  .DisposeWith(disposable);
+        mockServer.HttpEvents.Subscribe(ev => {
+            switch (ev){
+                case HttpEvents.Request req:
+                    AddLogEntry(new(req.Id, ToRequestVm(req.Message)));
+                    break;
+            }
+        }).DisposeWith(disposables);
     }
 }

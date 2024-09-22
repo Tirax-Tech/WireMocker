@@ -1,13 +1,19 @@
 ﻿using ReactiveUI;
-using Tirax.Application.WireMocker.Components.Features.Shell;
 
 namespace Tirax.Application.WireMocker.Components.Features.Dashboard;
 
 public sealed class HttpTransactionViewModel : ViewModel
 {
-    RequestPanelViewModel requestVm;
-
     ResponsePanelViewModel? responseVm;
+
+    public HttpTransactionViewModel(Guid id, RequestPanelViewModel request, ResponsePanelViewModel? response = null) {
+        Id = id;
+        RequestVm = request;
+        ResponseVm = response;
+    }
+
+    public Guid Id { get; }
+    public RequestPanelViewModel RequestVm { get; }
 
     public ResponsePanelViewModel? ResponseVm
     {

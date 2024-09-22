@@ -1,0 +1,19 @@
+﻿@inherits ReactiveComponentBase<HttpTransactionViewModel>
+
+<MudGrid @key="ViewModel!.Id">
+    <MudItem md="6" Class="pa-8">
+        <RequestPanel ViewModel="ViewModel!.RequestVm" />
+    </MudItem>
+
+    <MudItem md="6" Class="pa-8">
+        <div class="container">
+        <MudSkeleton Width="50em" Height="1em" Class="mb-2"/>
+        <MudSkeleton SkeletonType="SkeletonType.Rectangle" Width="50em" Height="10em"/>
+        @* <ResponsePanel Entry="entry"/> *@
+        </div>
+    </MudItem>
+</MudGrid>
+
+@code {
+
+}

@@ -15,24 +15,14 @@
 
 <MudText Typo="Typo.h3">Dashboard</MudText>
 
-@foreach (var entry in ViewModel!.LogEntries){
-    <MudGrid @key="entry.Guid">
-        <MudItem md="6" Class="pa-8">
-            <RequestPanel Entry="entry"/>
-        </MudItem>
-
-        <MudItem md="6" Class="pa-8">
-            <ResponsePanel Entry="entry"/>
-        </MudItem>
-    </MudGrid>
+@foreach (var entry in ViewModel!.HttpEntries){
+    <HttpTransactionView ViewModel="entry" @key="entry.Id"/>
 }
 
 @code {
-
     public Dashboard() {
         this.WhenActivated(_ => {
             // for view model activation
         });
     }
-
 }

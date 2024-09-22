@@ -14,7 +14,7 @@
         <MudText Typo="Typo.body2">@((HttpStatusCode) Entry.ResponseMessage.StatusCode!)</MudText>
     </MudStack>
 
-    <HeaderTable Headers="Entry.ResponseMessage.Headers" />
+    @* <HeaderTable Headers="Entry.ResponseMessage.Headers" /> *@
 
     @{ var body = GetBody(); }
     @if (body is not null){

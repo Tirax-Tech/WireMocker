@@ -5,6 +5,7 @@ global using RZ.Foundation.Blazor.Helpers;
 global using RZ.Foundation.Extensions;
 global using ReactiveUI.Blazor;
 global using RUnit = System.Reactive.Unit;
+global using HttpStringValues = (string Key, System.Collections.Generic.IReadOnlyList<string> Values);
 using System.Reactive.Concurrency;
 using MudBlazor.Services;
 using Tirax.Application.WireMocker.Components;
