@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Threading.Tasks;
 using System.Linq;
@@ -18,157 +19,98 @@ using System.Diagnostics;
 using WireMock.Constants;
 using WireMock.Server;
 using WireMock.Util;
-#if !USE_ASPNETCORE
-using IContext = Microsoft.Owin.IOwinContext;
-using OwinMiddleware = Microsoft.Owin.OwinMiddleware;
-using Next = Microsoft.Owin.OwinMiddleware;
-#else
-using OwinMiddleware = System.Object;
 using IContext = Microsoft.AspNetCore.Http.HttpContext;
 using Next = Microsoft.AspNetCore.Http.RequestDelegate;
-#endif
 
 namespace WireMock.Owin
 {
-    internal class WireMockMiddleware : OwinMiddleware
+#pragma warning disable CS9113 // Parameter is unread.
+    internal class WireMockMiddleware(
+        Next next, // Needed for being an ASP.NET Core's middleware
+#pragma warning restore CS9113 // Parameter is unread.
+        IWireMockMiddlewareOptions options,
+        IOwinRequestMapper requestMapper,
+        IOwinResponseMapper responseMapper,
+        IMappingMatcher mappingMatcher,
+        IGuidUtils guidUtils)
     {
-        private readonly object _lock = new();
-        private static readonly Task CompletedTask = Task.FromResult(false);
+        readonly object @lock = new();
+        static readonly Task CompletedTask = Task.FromResult(false);
 
-        private readonly IWireMockMiddlewareOptions _options;
-        private readonly IOwinRequestMapper _requestMapper;
-        private readonly IOwinResponseMapper _responseMapper;
-        private readonly IMappingMatcher _mappingMatcher;
-        private readonly LogEntryMapper _logEntryMapper;
-        private readonly IGuidUtils _guidUtils;
+        readonly IWireMockMiddlewareOptions options = Guard.NotNull(options);
+        readonly IOwinRequestMapper requestMapper = Guard.NotNull(requestMapper);
+        readonly IOwinResponseMapper responseMapper = Guard.NotNull(responseMapper);
+        readonly IMappingMatcher mappingMatcher = Guard.NotNull(mappingMatcher);
+        readonly LogEntryMapper logEntryMapper = new(options);
+        readonly IGuidUtils guidUtils = Guard.NotNull(guidUtils);
 
-#if !USE_ASPNETCORE
-        public WireMockMiddleware(
-            Next next,
-            IWireMockMiddlewareOptions options,
-            IOwinRequestMapper requestMapper,
-            IOwinResponseMapper responseMapper,
-            IMappingMatcher mappingMatcher,
-            IGuidUtils guidUtils
-        ) : base(next)
-        {
-            _options = Guard.NotNull(options);
-            _requestMapper = Guard.NotNull(requestMapper);
-            _responseMapper = Guard.NotNull(responseMapper);
-            _mappingMatcher = Guard.NotNull(mappingMatcher);
-            _logEntryMapper = new LogEntryMapper(options);
-            _guidUtils = Guard.NotNull(guidUtils);
-        }
-#else
-        public WireMockMiddleware(
-            Next next,
-            IWireMockMiddlewareOptions options,
-            IOwinRequestMapper requestMapper,
-            IOwinResponseMapper responseMapper,
-            IMappingMatcher mappingMatcher,
-            IGuidUtils guidUtils
-        )
-        {
-            _options = Guard.NotNull(options);
-            _requestMapper = Guard.NotNull(requestMapper);
-            _responseMapper = Guard.NotNull(responseMapper);
-            _mappingMatcher = Guard.NotNull(mappingMatcher);
-            _logEntryMapper = new LogEntryMapper(options);
-            _guidUtils = Guard.NotNull(guidUtils);
-        }
-#endif
-
-#if !USE_ASPNETCORE
-        public override Task Invoke(IContext ctx)
-#else
-        public Task Invoke(IContext ctx)
-#endif
-        {
-            if (_options.HandleRequestsSynchronously.GetValueOrDefault(false))
-            {
-                lock (_lock)
-                {
+        public Task Invoke(IContext ctx) {
+            if (options.HandleRequestsSynchronously.GetValueOrDefault(false))
+                lock (@lock)
                     return InvokeInternalAsync(ctx);
-                }
-            }
 
             return InvokeInternalAsync(ctx);
         }
 
-        private async Task InvokeInternalAsync(IContext ctx)
-        {
-            var request = await _requestMapper.MapAsync(ctx.Request, _options).ConfigureAwait(false);
+        async Task InvokeInternalAsync(IContext ctx) {
+            var request = await requestMapper.MapAsync(ctx.Request, options).ConfigureAwait(false);
 
-            var logId = _guidUtils.NewGuid();
-            _options.HttpEvents.OnNext(new HttpEvents.Request(logId, request));
+            var logId = guidUtils.NewGuid();
             var stopwatch = Stopwatch.StartNew();
 
             var logRequest = false;
             IResponseMessage? response = null;
             (MappingMatcherResult? Match, MappingMatcherResult? Partial) result = (null, null);
 
-            try
-            {
-                foreach (var mapping in _options.Mappings.Values)
-                {
+            try{
+                foreach (var mapping in options.Mappings.Values){
                     if (mapping.Scenario is null)
-                    {
                         continue;
-                    }
 
                     // Set scenario start
-                    if (!_options.Scenarios.ContainsKey(mapping.Scenario) && mapping.IsStartState)
-                    {
-                        _options.Scenarios.TryAdd(mapping.Scenario, new ScenarioState
-                        {
-                            Name = mapping.Scenario
-                        });
-                    }
+                    if (!options.Scenarios.ContainsKey(mapping.Scenario) && mapping.IsStartState)
+                        options.Scenarios.TryAdd(mapping.Scenario, new ScenarioState { Name = mapping.Scenario });
                 }
 
-                result = _mappingMatcher.FindBestMatch(request);
+                result = mappingMatcher.FindBestMatch(request);
+
+                var isAdmin = (result.Match ?? result.Partial)?.Mapping.IsAdminInterface ?? false;
+                options.HttpEvents.OnNext(new HttpEvents.Request(logId, request) { IsAdmin = isAdmin });
 
                 var targetMapping = result.Match?.Mapping;
-                if (targetMapping == null)
-                {
+                if (targetMapping == null){
                     logRequest = true;
-                    _options.Logger.Warn("HttpStatusCode set to 404 : No matching mapping found");
+                    options.Logger.Warn("HttpStatusCode set to 404 : No matching mapping found");
                     response = ResponseMessageBuilder.Create(HttpStatusCode.NotFound, WireMockConstants.NoMatchingFound);
                     return;
                 }
 
                 logRequest = targetMapping.LogMapping;
 
-                if (targetMapping.IsAdminInterface && _options.AuthenticationMatcher != null && request.Headers != null)
-                {
+                if (targetMapping.IsAdminInterface && options.AuthenticationMatcher != null && request.Headers != null){
                     bool present = request.Headers.TryGetValue(HttpKnownHeaderNames.Authorization, out WireMockList<string>? authorization);
-                    if (!present || _options.AuthenticationMatcher.IsMatch(authorization!.ToString()).Score < MatchScores.Perfect)
-                    {
-                        _options.Logger.Error("HttpStatusCode set to 401");
+                    if (!present || options.AuthenticationMatcher.IsMatch(authorization!.ToString()).Score < MatchScores.Perfect){
+                        options.Logger.Error("HttpStatusCode set to 401");
                         response = ResponseMessageBuilder.Create(HttpStatusCode.Unauthorized, null);
                         return;
                     }
                 }
 
-                if (!targetMapping.IsAdminInterface && _options.RequestProcessingDelay > TimeSpan.Zero)
-                {
-                    await Task.Delay(_options.RequestProcessingDelay.Value).ConfigureAwait(false);
-                }
+                if (!targetMapping.IsAdminInterface && options.RequestProcessingDelay > TimeSpan.Zero)
+                    await Task.Delay(options.RequestProcessingDelay.Value);
 
-                var (theResponse, theOptionalNewMapping) = await targetMapping.ProvideResponseAsync(request).ConfigureAwait(false);
+                var (theResponse, theOptionalNewMapping) = await targetMapping.ProvideResponseAsync(request);
                 response = theResponse;
 
-                var responseBuilder = targetMapping.Provider as Response;
+                if (!targetMapping.IsAdminInterface && theOptionalNewMapping != null){
+                    var responseBuilder = targetMapping.Provider as Response;
 
-                if (!targetMapping.IsAdminInterface && theOptionalNewMapping != null)
-                {
-                    if (responseBuilder?.ProxyAndRecordSettings?.SaveMapping == true || targetMapping.Settings?.ProxyAndRecordSettings?.SaveMapping == true)
-                    {
-                        _options.Mappings.TryAdd(theOptionalNewMapping.Guid, theOptionalNewMapping);
-                    }
+                    if (responseBuilder?.ProxyAndRecordSettings?.SaveMapping == true ||
+                        targetMapping.Settings.ProxyAndRecordSettings?.SaveMapping == true)
+                        options.Mappings.TryAdd(theOptionalNewMapping.Guid, theOptionalNewMapping);
 
-                    if (responseBuilder?.ProxyAndRecordSettings?.SaveMappingToFile == true || targetMapping.Settings?.ProxyAndRecordSettings?.SaveMappingToFile == true)
-                    {
+                    if (responseBuilder?.ProxyAndRecordSettings?.SaveMappingToFile == true ||
+                        targetMapping.Settings.ProxyAndRecordSettings?.SaveMappingToFile == true){
                         var matcherMapper = new MatcherMapper(targetMapping.Settings);
                         var mappingConverter = new MappingConverter(matcherMapper);
                         var mappingToFileSaver = new MappingToFileSaver(targetMapping.Settings, mappingConverter);
@@ -178,129 +120,109 @@ namespace WireMock.Owin
                 }
 
                 if (targetMapping.Scenario != null)
-                {
                     UpdateScenarioState(targetMapping);
-                }
 
-                if (!targetMapping.IsAdminInterface && targetMapping.Webhooks?.Length > 0)
-                {
+                if (targetMapping is { IsAdminInterface: false, Webhooks.Length: > 0 })
                     await SendToWebhooksAsync(targetMapping, request, response).ConfigureAwait(false);
-                }
             }
-            catch (Exception ex)
-            {
-                _options.Logger.Error($"Providing a Response for Mapping '{result.Match?.Mapping.Guid}' failed. HttpStatusCode set to 500. Exception: {ex}");
+            catch (Exception ex){
+                options.Logger.Error($"Providing a Response for Mapping '{result.Match?.Mapping.Guid}' failed. " +
+                                     $"HttpStatusCode set to 500. Exception: {ex}");
                 response = ResponseMessageBuilder.Create(500, ex.Message);
             }
-            finally
-            {
+            finally{
                 var elapsed = stopwatch.Elapsed;
 
-                var log = new LogEntry
-                {
+                Debug.Assert(response is not null);
+                var log = new LogEntry {
                     Guid = logId,
                     RequestMessage = request,
-                    ResponseMessage = response!,
+                    ResponseMessage = response,
 
-                    MappingGuid = result.Match?.Mapping?.Guid,
-                    MappingTitle = result.Match?.Mapping?.Title,
-                    RequestMatchResult = result.Match?.RequestMatchResult,
+                    MappingGuid = result.Match?.Mapping.Guid,
+                    MappingTitle = result.Match?.Mapping.Title,
+                    RequestMatchResult = result.Match?.RequestMatchResult!,
 
-                    PartialMappingGuid = result.Partial?.Mapping?.Guid,
-                    PartialMappingTitle = result.Partial?.Mapping?.Title,
-                    PartialMatchResult = result.Partial?.RequestMatchResult
+                    PartialMappingGuid = result.Partial?.Mapping.Guid,
+                    PartialMappingTitle = result.Partial?.Mapping.Title,
+                    PartialMatchResult = result.Partial?.RequestMatchResult!
                 };
                 LogRequest(log, logRequest);
-                _options.HttpEvents.OnNext(new HttpEvents.Response(logId, log, elapsed));
 
-                try
-                {
-                    if (_options.SaveUnmatchedRequests == true && result.Match?.RequestMatchResult is not { IsPerfectMatch: true })
-                    {
+                var isAdmin = (result.Match ?? result.Partial)?.Mapping.IsAdminInterface ?? false;
+                options.HttpEvents.OnNext(new HttpEvents.Response(logId, log, elapsed) { IsAdmin = isAdmin });
+
+                try{
+                    if (options.SaveUnmatchedRequests == true && result.Match?.RequestMatchResult is not { IsPerfectMatch: true }){
                         var filename = $"{log.Guid}.LogEntry.json";
-                        _options.FileSystemHandler?.WriteUnmatchedRequest(filename, JsonUtils.Serialize(log));
+                        options.FileSystemHandler?.WriteUnmatchedRequest(filename, JsonUtils.Serialize(log));
                     }
                 }
-                catch
-                {
+                catch{
                     // Empty catch
                 }
 
-                try
-                {
-                    await _responseMapper.MapAsync(response, ctx.Response).ConfigureAwait(false);
+                try{
+                    await responseMapper.MapAsync(response, ctx.Response).ConfigureAwait(false);
                 }
-                catch (Exception ex)
-                {
-                    _options.Logger.Error("HttpStatusCode set to 404 : No matching mapping found", ex);
+                catch (Exception ex){
+                    options.Logger.Error("HttpStatusCode set to 404 : No matching mapping found", ex);
 
                     var notFoundResponse = ResponseMessageBuilder.Create(HttpStatusCode.NotFound, WireMockConstants.NoMatchingFound);
-                    await _responseMapper.MapAsync(notFoundResponse, ctx.Response).ConfigureAwait(false);
+                    await responseMapper.MapAsync(notFoundResponse, ctx.Response).ConfigureAwait(false);
                 }
             }
 
             await CompletedTask.ConfigureAwait(false);
         }
 
-        private async Task SendToWebhooksAsync(IMapping mapping, IRequestMessage request, IResponseMessage response)
-        {
+        async Task SendToWebhooksAsync(IMapping mapping, IRequestMessage request, IResponseMessage response) {
             var tasks = new List<Func<Task>>();
-            for (int index = 0; index < mapping.Webhooks?.Length; index++)
-            {
+            for (int index = 0; index < mapping.Webhooks?.Length; index++){
                 var httpClientForWebhook = HttpClientBuilder.Build(mapping.Settings.WebhookSettings ?? new WebhookSettings());
                 var webhookSender = new WebhookSender(mapping.Settings);
                 var webhookRequest = mapping.Webhooks[index].Request;
                 var webHookIndex = index;
 
-                tasks.Add(async () =>
-                {
-                    try
-                    {
-                        var result = await webhookSender.SendAsync(httpClientForWebhook, mapping, webhookRequest, request, response).ConfigureAwait(false);
-                        if (!result.IsSuccessStatusCode)
-                        {
+                tasks.Add(async () => {
+                    try{
+                        var result = await webhookSender.SendAsync(httpClientForWebhook, mapping, webhookRequest, request, response)
+                                                        .ConfigureAwait(false);
+                        if (!result.IsSuccessStatusCode){
                             var content = await result.Content.ReadAsStringAsync().ConfigureAwait(false);
-                            _options.Logger.Warn($"Sending message to Webhook [{webHookIndex}] from Mapping '{mapping.Guid}' failed. HttpStatusCode: {result.StatusCode} Content: {content}");
+                            options.Logger.Warn(
+                                $"Sending message to Webhook [{webHookIndex}] from Mapping '{mapping.Guid}' failed. HttpStatusCode: {result.StatusCode} Content: {content}");
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        _options.Logger.Error($"Sending message to Webhook [{webHookIndex}] from Mapping '{mapping.Guid}' failed. Exception: {ex}");
+                    catch (Exception ex){
+                        options.Logger.Error(
+                            $"Sending message to Webhook [{webHookIndex}] from Mapping '{mapping.Guid}' failed. Exception: {ex}");
                     }
                 });
             }
 
-            if (mapping.UseWebhooksFireAndForget == true)
-            {
-                try
-                {
+            if (mapping.UseWebhooksFireAndForget == true){
+                try{
                     // Do not wait
-                    await Task.Run(() =>
-                    {
-                        Task.WhenAll(tasks.Select(async task => await task.Invoke())).ConfigureAwait(false);
-                    });
+                    await Task.Run(() => { Task.WhenAll(tasks.Select(async task => await task.Invoke())).ConfigureAwait(false); });
                 }
-                catch
-                {
+                catch{
                     // Ignore
                 }
             }
-            else
-            {
+            else{
                 await Task.WhenAll(tasks.Select(async task => await task.Invoke())).ConfigureAwait(false);
             }
         }
 
-        private void UpdateScenarioState(IMapping mapping)
-        {
-            var scenario = _options.Scenarios[mapping.Scenario!];
+        void UpdateScenarioState(IMapping mapping) {
+            var scenario = options.Scenarios[mapping.Scenario!];
 
             // Increase the number of times this state has been executed
             scenario.Counter++;
 
             // Only if the number of times this state is executed equals the required StateTimes, proceed to next state and reset the counter to 0
-            if (scenario.Counter == (mapping.StateTimes ?? 1))
-            {
+            if (scenario.Counter == (mapping.StateTimes ?? 1)){
                 scenario.NextState = mapping.NextState;
                 scenario.Counter = 0;
             }
@@ -310,57 +232,46 @@ namespace WireMock.Owin
             scenario.Finished = mapping.NextState == null;
         }
 
-        private void LogRequest(LogEntry entry, bool addRequest)
-        {
-            _options.Logger.DebugRequestResponse(_logEntryMapper.Map(entry), entry.RequestMessage.Path.StartsWith("/__admin/"));
+        void LogRequest(LogEntry entry, bool addRequest) {
+            options.Logger.DebugRequestResponse(logEntryMapper.Map(entry), entry.RequestMessage.Path.StartsWith("/__admin/"));
 
             // If addRequest is set to true and MaxRequestLogCount is null or does have a value greater than 0, try to add a new request log.
-            if (addRequest && _options.MaxRequestLogCount is null or > 0)
-            {
+            if (addRequest && options.MaxRequestLogCount is null or > 0){
                 TryAddLogEntry(entry);
             }
 
             // In case MaxRequestLogCount has a value greater than 0, try to delete existing request logs based on the count.
-            if (_options.MaxRequestLogCount is > 0)
-            {
-                var logEntries = _options.LogEntries.ToList();
-                foreach (var logEntry in logEntries.OrderBy(le => le.RequestMessage.DateTime).Take(logEntries.Count - _options.MaxRequestLogCount.Value))
-                {
+            if (options.MaxRequestLogCount is > 0){
+                var logEntries = options.LogEntries.ToList();
+                foreach (var logEntry in logEntries.OrderBy(le => le.RequestMessage.DateTime)
+                                                   .Take(logEntries.Count - options.MaxRequestLogCount.Value)){
                     TryRemoveLogEntry(logEntry);
                 }
             }
 
             // In case RequestLogExpirationDuration has a value greater than 0, try to delete existing request logs based on the date.
-            if (_options.RequestLogExpirationDuration is > 0)
-            {
-                var checkTime = DateTime.UtcNow.AddHours(-_options.RequestLogExpirationDuration.Value);
-                foreach (var logEntry in _options.LogEntries.ToList().Where(le => le.RequestMessage.DateTime < checkTime))
-                {
+            if (options.RequestLogExpirationDuration is > 0){
+                var checkTime = DateTime.UtcNow.AddHours(-options.RequestLogExpirationDuration.Value);
+                foreach (var logEntry in options.LogEntries.ToList().Where(le => le.RequestMessage.DateTime < checkTime)){
                     TryRemoveLogEntry(logEntry);
                 }
             }
         }
 
-        private void TryAddLogEntry(LogEntry logEntry)
-        {
-            try
-            {
-                _options.LogEntries.Add(logEntry);
+        void TryAddLogEntry(LogEntry logEntry) {
+            try{
+                options.LogEntries.Add(logEntry);
             }
-            catch
-            {
+            catch{
                 // Ignore exception (can happen during stress testing)
             }
         }
 
-        private void TryRemoveLogEntry(LogEntry logEntry)
-        {
-            try
-            {
-                _options.LogEntries.Remove(logEntry);
+        void TryRemoveLogEntry(LogEntry logEntry) {
+            try{
+                options.LogEntries.Remove(logEntry);
             }
-            catch
-            {
+            catch{
                 // Ignore exception (can happen during stress testing)
             }
         }

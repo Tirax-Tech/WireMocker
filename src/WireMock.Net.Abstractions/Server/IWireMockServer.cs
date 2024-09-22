@@ -13,7 +13,10 @@ namespace WireMock.Server;
 public abstract record HttpEvents
 {
     public sealed record Request(Guid Id, IRequestMessage Message): HttpEvents;
-    public sealed record Response(Guid Id, ILogEntry Log, TimeSpan Elasped): HttpEvents;
+
+    public sealed record Response(Guid Id, ILogEntry Log, TimeSpan Elasped) : HttpEvents;
+
+    public bool IsAdmin { get; init; }
 }
 
 /// <summary>

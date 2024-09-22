@@ -1,4 +1,5 @@
 ﻿using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using ReactiveUI;
 using RZ.Foundation.Blazor.MVVM;
 using WireMock;
@@ -67,7 +68,7 @@ public sealed class DashboardViewModel : ActivatableViewModel
     }
 
     protected override void OnActivated(CompositeDisposable disposables) {
-        mockServer.HttpEvents.Subscribe(ev => {
+        mockServer.HttpEvents.Where(ev => !ev.IsAdmin).Subscribe(ev => {
             switch (ev){
                 case HttpEvents.Request req: {
                     var entry = new HttpTransactionViewModel(req.Id, ToRequestVm(req.Message));
