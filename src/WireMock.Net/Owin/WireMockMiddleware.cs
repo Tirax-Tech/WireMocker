@@ -141,11 +141,11 @@ namespace WireMock.Owin
 
                     MappingGuid = result.Match?.Mapping.Guid,
                     MappingTitle = result.Match?.Mapping.Title,
-                    RequestMatchResult = result.Match?.RequestMatchResult!,
+                    RequestMatchResult = result.Match?.RequestMatchResult,
 
                     PartialMappingGuid = result.Partial?.Mapping.Guid,
                     PartialMappingTitle = result.Partial?.Mapping.Title,
-                    PartialMatchResult = result.Partial?.RequestMatchResult!
+                    PartialMatchResult = result.Partial?.RequestMatchResult
                 };
                 LogRequest(log, logRequest);
 

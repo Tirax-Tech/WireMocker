@@ -47,14 +47,18 @@ public sealed class DashboardViewModel : ActivatableViewModel
                req.Headers.Map(h => (h.Key, (IReadOnlyList<string>)h.Value)).ToArray(),
                req.BodyData);
 
-    static ResponsePanelViewModel ToResponseVm(IResponseMessage res)
+    static ResponsePanelViewModel ToResponseVm(IResponseMessage res, bool isMatched)
         => new((int) res.StatusCode!,
                res.Headers.Map(h => (h.Key, (IReadOnlyList<string>)h.Value)).ToArray(),
-               res.BodyData);
+               res.BodyData,
+                isMatched);
+
+    static bool IsMatched(ILogEntry log)
+        => log.RequestMatchResult is not null || log.PartialMatchResult is not null;
 
     static HttpTransactionViewModel ToHttpTransaction(ILogEntry log) {
         var request = ToRequestVm(log.RequestMessage);
-        var response = ToResponseVm(log.ResponseMessage);
+        var response = ToResponseVm(log.ResponseMessage, IsMatched(log));
         return new HttpTransactionViewModel(log.Guid, request, response);
     }
 
@@ -78,7 +82,7 @@ public sealed class DashboardViewModel : ActivatableViewModel
                 }
                 case HttpEvents.Response res:
                 {
-                    httpEntryLookup[res.Id].ResponseVm = ToResponseVm(res.Log.ResponseMessage);
+                    httpEntryLookup[res.Id].ResponseVm = ToResponseVm(res.Log.ResponseMessage, IsMatched(res.Log));
                     httpEntryLookup.Remove(res.Id);
                     break;
                 }

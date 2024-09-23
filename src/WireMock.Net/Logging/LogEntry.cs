@@ -20,7 +20,7 @@ public class LogEntry : ILogEntry
     public IResponseMessage ResponseMessage { get; set; } = null!;
 
     /// <inheritdoc cref="ILogEntry.RequestMatchResult" />
-    public IRequestMatchResult RequestMatchResult { get; set; } = null!;
+    public IRequestMatchResult? RequestMatchResult { get; set; }
 
     /// <inheritdoc cref="ILogEntry.MappingGuid" />
     public Guid? MappingGuid { get; set; }
@@ -35,5 +35,5 @@ public class LogEntry : ILogEntry
     public string? PartialMappingTitle { get; set; }
 
     /// <inheritdoc cref="ILogEntry.PartialMatchResult" />
-    public IRequestMatchResult PartialMatchResult { get; set; } = null!;
+    public IRequestMatchResult? PartialMatchResult { get; set; }
 }

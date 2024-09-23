@@ -38,12 +38,12 @@ public interface ILogEntry
     /// <summary>
     /// Gets the partial match result.
     /// </summary>
-    IRequestMatchResult PartialMatchResult { get; }
+    IRequestMatchResult? PartialMatchResult { get; }
 
     /// <summary>
     /// Gets the request match result.
     /// </summary>
-    IRequestMatchResult RequestMatchResult { get; }
+    IRequestMatchResult? RequestMatchResult { get; }
 
     /// <summary>
     /// Gets the request message.
