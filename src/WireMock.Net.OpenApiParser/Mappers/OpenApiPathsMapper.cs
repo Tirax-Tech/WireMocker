@@ -17,48 +17,30 @@ using WireMock.Net.OpenApiParser.Extensions;
 using WireMock.Net.OpenApiParser.Settings;
 using WireMock.Net.OpenApiParser.Types;
 using WireMock.Net.OpenApiParser.Utils;
+// ReSharper disable UnusedMethodReturnValue.Local
 
 namespace WireMock.Net.OpenApiParser.Mappers;
 
-internal class OpenApiPathsMapper
+internal class OpenApiPathsMapper(WireMockOpenApiParserSettings settings)
 {
-    private const string HeaderContentType = "Content-Type";
+    const string HeaderContentType = "Content-Type";
 
-    private readonly WireMockOpenApiParserSettings _settings;
-    private readonly ExampleValueGenerator _exampleValueGenerator;
+    readonly WireMockOpenApiParserSettings settings = Guard.NotNull(settings);
+    readonly ExampleValueGenerator exampleValueGenerator = new(settings);
 
-    public OpenApiPathsMapper(WireMockOpenApiParserSettings settings)
-    {
-        _settings = Guard.NotNull(settings);
-        _exampleValueGenerator = new ExampleValueGenerator(settings);
-    }
+    public MappingModel[] ToMappingModels(OpenApiPaths? paths, IList<OpenApiServer> servers)
+        => paths?
+          .OrderBy(p => p.Key)
+          .Select(p => MapPath(p.Key, p.Value, servers))
+          .SelectMany(x => x)
+          .ToArray() ?? [];
 
-    public IReadOnlyList<MappingModel> ToMappingModels(OpenApiPaths? paths, IList<OpenApiServer> servers)
-    {
-        return paths?
-            .OrderBy(p => p.Key)
-            .Select(p => MapPath(p.Key, p.Value, servers))
-            .SelectMany(x => x)
-            .ToArray() ??
-               Array.Empty<MappingModel>();
-    }
+    MappingModel[] MapPath(string path, OpenApiPathItem pathItem, IList<OpenApiServer> servers)
+        => pathItem.Operations
+                   .Select(o => MapOperationToMappingModel(path, o.Key.ToString().ToUpperInvariant(), o.Value, servers))
+                   .ToArray();
 
-    private IReadOnlyList<MappingModel> MapPaths(OpenApiPaths? paths, IList<OpenApiServer> servers)
-    {
-        return paths?
-            .OrderBy(p => p.Key)
-            .Select(p => MapPath(p.Key, p.Value, servers))
-            .SelectMany(x => x)
-            .ToArray() ??
-               Array.Empty<MappingModel>();
-    }
-
-    private IReadOnlyList<MappingModel> MapPath(string path, OpenApiPathItem pathItem, IList<OpenApiServer> servers)
-    {
-        return pathItem.Operations.Select(o => MapOperationToMappingModel(path, o.Key.ToString().ToUpperInvariant(), o.Value, servers)).ToArray();
-    }
-
-    private MappingModel MapOperationToMappingModel(string path, string httpMethod, OpenApiOperation operation, IList<OpenApiServer> servers)
+    MappingModel MapOperationToMappingModel(string path, string httpMethod, OpenApiOperation operation, IList<OpenApiServer> servers)
     {
         var queryParameters = operation.Parameters.Where(p => p.In == ParameterLocation.Query);
         var pathParameters = operation.Parameters.Where(p => p.In == ParameterLocation.Path);
@@ -102,7 +84,7 @@ internal class OpenApiPathsMapper
             Guid = Guid.NewGuid(),
             Request = new RequestModel
             {
-                Methods = new[] { httpMethod },
+                Methods = [httpMethod],
                 Path = MapBasePath(servers) + MapPathWithParameters(path, pathParameters),
                 Params = MapQueryParameters(queryParameters),
                 Headers = MapRequestHeaders(headers),
@@ -117,7 +99,7 @@ internal class OpenApiPathsMapper
         };
     }
 
-    private BodyModel? MapRequestBody(object? requestBody)
+    BodyModel? MapRequestBody(object? requestBody)
     {
         if (requestBody == null)
         {
@@ -130,28 +112,24 @@ internal class OpenApiPathsMapper
             {
                 Name = "JsonMatcher",
                 Pattern = JsonConvert.SerializeObject(requestBody, Formatting.Indented),
-                IgnoreCase = _settings.RequestBodyIgnoreCase
+                IgnoreCase = settings.RequestBodyIgnoreCase
             }
         };
     }
 
-    private static bool TryGetContent(IDictionary<string, OpenApiMediaType>? contents, [NotNullWhen(true)] out OpenApiMediaType? openApiMediaType, [NotNullWhen(true)] out string? contentType)
-    {
+    static bool TryGetContent(IDictionary<string, OpenApiMediaType>? contents, [NotNullWhen(true)] out OpenApiMediaType? openApiMediaType,
+                              [NotNullWhen(true)] out string? contentType) {
         openApiMediaType = null;
         contentType = null;
 
         if (contents == null || contents.Values.Count == 0)
-        {
             return false;
-        }
 
-        if (contents.TryGetValue("application/json", out var content))
-        {
+        if (contents.TryGetValue("application/json", out var content)){
             openApiMediaType = content;
             contentType = "application/json";
         }
-        else
-        {
+        else{
             var first = contents.FirstOrDefault();
             openApiMediaType = first.Value;
             contentType = first.Key;
@@ -160,7 +138,7 @@ internal class OpenApiPathsMapper
         return true;
     }
 
-    private object? MapSchemaToObject(OpenApiSchema? schema, string? name = null)
+    object? MapSchemaToObject(OpenApiSchema? schema, string? name = null)
     {
         if (schema == null)
         {
@@ -171,7 +149,7 @@ internal class OpenApiPathsMapper
         {
             case SchemaType.Array:
                 var jArray = new JArray();
-                for (int i = 0; i < _settings.NumberOfArrayItems; i++)
+                for (int i = 0; i < settings.NumberOfArrayItems; i++)
                 {
                     if (schema.Items.Properties.Count > 0)
                     {
@@ -199,9 +177,7 @@ internal class OpenApiPathsMapper
                 }
 
                 if (schema.AllOf.Count > 0)
-                {
                     jArray.Add(MapSchemaAllOfToObject(schema));
-                }
 
                 return jArray;
 
@@ -209,22 +185,16 @@ internal class OpenApiPathsMapper
             case SchemaType.Integer:
             case SchemaType.Number:
             case SchemaType.String:
-                return _exampleValueGenerator.GetExampleValue(schema);
+                return exampleValueGenerator.GetExampleValue(schema);
 
             case SchemaType.Object:
                 var propertyAsJObject = new JObject();
                 foreach (var schemaProperty in schema.Properties)
-                {
                     propertyAsJObject.Add(MapPropertyAsJObject(schemaProperty.Value, schemaProperty.Key));
-                }
 
                 if (schema.AllOf.Count > 0)
-                {
                     foreach (var group in schema.AllOf.SelectMany(p => p.Properties).GroupBy(x => x.Key))
-                    {
                         propertyAsJObject.Add(MapPropertyAsJObject(group.First().Value, group.Key));
-                    }
-                }
 
                 return name != null ? new JProperty(name, propertyAsJObject) : propertyAsJObject;
 
@@ -233,20 +203,15 @@ internal class OpenApiPathsMapper
         }
     }
 
-    private JObject MapSchemaAllOfToObject(OpenApiSchema schema)
-    {
+    JObject MapSchemaAllOfToObject(OpenApiSchema schema) {
         var arrayItem = new JObject();
         foreach (var property in schema.AllOf)
-        {
-            foreach (var item in property.Properties)
-            {
-                arrayItem.Add(MapPropertyAsJObject(item.Value, item.Key));
-            }
-        }
+        foreach (var item in property.Properties)
+            arrayItem.Add(MapPropertyAsJObject(item.Value, item.Key));
         return arrayItem;
     }
 
-    private object MapPropertyAsJObject(OpenApiSchema openApiSchema, string key)
+    object MapPropertyAsJObject(OpenApiSchema openApiSchema, string key)
     {
         if (openApiSchema.GetSchemaType() == SchemaType.Object || openApiSchema.GetSchemaType() == SchemaType.Array)
         {
@@ -260,10 +225,10 @@ internal class OpenApiPathsMapper
         }
 
         // bool propertyIsNullable = openApiSchema.Nullable || (openApiSchema.TryGetXNullable(out bool x) && x);
-        return new JProperty(key, _exampleValueGenerator.GetExampleValue(openApiSchema));
+        return new JProperty(key, exampleValueGenerator.GetExampleValue(openApiSchema));
     }
 
-    private string MapPathWithParameters(string path, IEnumerable<OpenApiParameter>? parameters)
+    string MapPathWithParameters(string path, IEnumerable<OpenApiParameter>? parameters)
     {
         if (parameters == null)
         {
@@ -273,35 +238,29 @@ internal class OpenApiPathsMapper
         string newPath = path;
         foreach (var parameter in parameters)
         {
-            var exampleMatcherModel = GetExampleMatcherModel(parameter.Schema, _settings.PathPatternToUse);
+            var exampleMatcherModel = GetExampleMatcherModel(parameter.Schema, settings.PathPatternToUse);
             newPath = newPath.Replace($"{{{parameter.Name}}}", exampleMatcherModel.Pattern as string);
         }
 
         return newPath;
     }
 
-    private string MapBasePath(IList<OpenApiServer>? servers)
+    static string MapBasePath(IList<OpenApiServer>? servers)
     {
         if (servers == null || servers.Count == 0)
-        {
             return string.Empty;
-        }
 
         OpenApiServer server = servers.First();
-        if (Uri.TryCreate(server.Url, UriKind.RelativeOrAbsolute, out Uri uriResult))
-        {
+        if (Uri.TryCreate(server.Url, UriKind.RelativeOrAbsolute, out var uriResult))
             return uriResult.IsAbsoluteUri ? uriResult.AbsolutePath : uriResult.ToString();
-        }
 
         return string.Empty;
     }
 
-    private JToken? MapOpenApiAnyToJToken(IOpenApiAny? any)
+    static JToken? MapOpenApiAnyToJToken(IOpenApiAny? any)
     {
         if (any == null)
-        {
             return null;
-        }
 
         using var outputString = new StringWriter();
         var writer = new OpenApiJsonWriter(outputString);
@@ -315,58 +274,54 @@ internal class OpenApiPathsMapper
         return JObject.Parse(outputString.ToString());
     }
 
-    private IDictionary<string, object>? MapHeaders(string? responseContentType, IDictionary<string, OpenApiHeader>? headers)
+    IDictionary<string, object>? MapHeaders(string? responseContentType, IDictionary<string, OpenApiHeader>? headers)
     {
         var mappedHeaders = headers?.ToDictionary(
             item => item.Key,
-            _ => GetExampleMatcherModel(null, _settings.HeaderPatternToUse).Pattern!
+            _ => GetExampleMatcherModel(null, settings.HeaderPatternToUse).Pattern!
         ) ?? new Dictionary<string, object>();
 
         if (!string.IsNullOrEmpty(responseContentType))
-        {
-            mappedHeaders.TryAdd(HeaderContentType, responseContentType!);
-        }
+            mappedHeaders.TryAdd(HeaderContentType, responseContentType);
 
         return mappedHeaders.Keys.Any() ? mappedHeaders : null;
     }
 
-    private IList<ParamModel>? MapQueryParameters(IEnumerable<OpenApiParameter> queryParameters)
+    IList<ParamModel>? MapQueryParameters(IEnumerable<OpenApiParameter> queryParameters)
     {
         var list = queryParameters
             .Where(req => req.Required)
             .Select(qp => new ParamModel
             {
                 Name = qp.Name,
-                IgnoreCase = _settings.QueryParameterPatternIgnoreCase,
-                Matchers = new[]
-                {
-                    GetExampleMatcherModel(qp.Schema, _settings.QueryParameterPatternToUse)
-                }
+                IgnoreCase = settings.QueryParameterPatternIgnoreCase,
+                Matchers = [
+                    GetExampleMatcherModel(qp.Schema, settings.QueryParameterPatternToUse)
+                ]
             })
             .ToList();
 
         return list.Any() ? list : null;
     }
 
-    private IList<HeaderModel>? MapRequestHeaders(IEnumerable<OpenApiParameter> headers)
+    IList<HeaderModel>? MapRequestHeaders(IEnumerable<OpenApiParameter> headers)
     {
         var list = headers
             .Where(req => req.Required)
             .Select(qp => new HeaderModel
             {
                 Name = qp.Name,
-                IgnoreCase = _settings.HeaderPatternIgnoreCase,
-                Matchers = new[]
-                {
-                    GetExampleMatcherModel(qp.Schema, _settings.HeaderPatternToUse)
-                }
+                IgnoreCase = settings.HeaderPatternIgnoreCase,
+                Matchers = [
+                    GetExampleMatcherModel(qp.Schema, settings.HeaderPatternToUse)
+                ]
             })
             .ToList();
 
         return list.Any() ? list : null;
     }
 
-    private MatcherModel GetExampleMatcherModel(OpenApiSchema? schema, ExampleValueType type)
+    MatcherModel GetExampleMatcherModel(OpenApiSchema? schema, ExampleValueType type)
     {
         return type switch
         {
@@ -374,7 +329,7 @@ internal class OpenApiPathsMapper
             {
                 Name = "ExactMatcher",
                 Pattern = GetExampleValueAsStringForSchemaType(schema),
-                IgnoreCase = _settings.IgnoreCaseExampleValues
+                IgnoreCase = settings.IgnoreCaseExampleValues
             },
 
             _ => new MatcherModel
@@ -385,15 +340,15 @@ internal class OpenApiPathsMapper
         };
     }
 
-    private string GetExampleValueAsStringForSchemaType(OpenApiSchema? schema)
+    string GetExampleValueAsStringForSchemaType(OpenApiSchema? schema)
     {
-        var value = _exampleValueGenerator.GetExampleValue(schema);
+        var value = exampleValueGenerator.GetExampleValue(schema);
 
         return value switch
         {
             string valueAsString => valueAsString,
 
-            _ => value.ToString(),
+            _ => value.ToString()
         };
     }
 }

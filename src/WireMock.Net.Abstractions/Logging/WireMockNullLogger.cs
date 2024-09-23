@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using WireMock.Admin.Requests;
 
@@ -11,6 +12,8 @@ namespace WireMock.Logging;
 /// <seealso cref="IWireMockLogger" />
 public class WireMockNullLogger : IWireMockLogger
 {
+    public static readonly WireMockNullLogger Instance = new();
+
     /// <see cref="IWireMockLogger.Debug"/>
     public void Debug(string formatString, params object[] args)
     {

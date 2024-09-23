@@ -51,7 +51,7 @@ public partial class WireMockServer
 
         var (responseMessage, mapping) = await proxyHelper.SendAsync(
             null,
-            _settings.ProxyAndRecordSettings!,
+            this.settings.ProxyAndRecordSettings!,
             _httpClientForProxy!,
             requestMessage,
             proxyUriWithRequestPathAndQuery.AbsoluteUri
@@ -61,12 +61,12 @@ public partial class WireMockServer
         {
             if (settings.ProxyAndRecordSettings.SaveMapping)
             {
-                _options.Mappings.TryAdd(mapping.Guid, mapping);
+                options.Mappings.TryAdd(mapping.Guid, mapping);
             }
 
             if (settings.ProxyAndRecordSettings.SaveMappingToFile)
             {
-                _mappingToFileSaver.SaveMappingToFile(mapping);
+                mappingToFileSaver.SaveMappingToFile(mapping);
             }
         }
 

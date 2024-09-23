@@ -1,70 +1,34 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-#if !USE_ASPNETCORE
-using Microsoft.Owin;
-using IContext = Microsoft.Owin.IOwinContext;
-using OwinMiddleware = Microsoft.Owin.OwinMiddleware;
-using Next = Microsoft.Owin.OwinMiddleware;
-#else
-using OwinMiddleware = System.Object;
 using IContext = Microsoft.AspNetCore.Http.HttpContext;
 using Next = Microsoft.AspNetCore.Http.RequestDelegate;
-#endif
 using WireMock.Owin.Mappers;
 using Stef.Validation;
 
-namespace WireMock.Owin
+namespace WireMock.Owin;
+
+internal class GlobalExceptionMiddleware(Next next, IWireMockMiddlewareOptions options, IOwinResponseMapper responseMapper)
 {
-    internal class GlobalExceptionMiddleware : OwinMiddleware
+    readonly IWireMockMiddlewareOptions options = Guard.NotNull(options);
+    readonly IOwinResponseMapper responseMapper = Guard.NotNull(responseMapper);
+
+    public Task Invoke(IContext ctx)
+        => InvokeInternalAsync(ctx);
+
+    async Task InvokeInternalAsync(IContext ctx)
     {
-        private readonly IWireMockMiddlewareOptions _options;
-        private readonly IOwinResponseMapper _responseMapper;
-
-#if !USE_ASPNETCORE
-        public GlobalExceptionMiddleware(Next next, IWireMockMiddlewareOptions options, IOwinResponseMapper responseMapper) : base(next)
+        try
         {
-            _options = Guard.NotNull(options);
-            _responseMapper = Guard.NotNull(responseMapper);;
+            await next.Invoke(ctx);
         }
-#else
-        public GlobalExceptionMiddleware(Next next, IWireMockMiddlewareOptions options, IOwinResponseMapper responseMapper)
+        catch (Exception ex)
         {
-            Next = next;
-            _options = Guard.NotNull(options);
-            _responseMapper = Guard.NotNull(responseMapper);
-        }
-#endif
-
-#if USE_ASPNETCORE
-        public Next Next { get; }
-#endif
-
-#if !USE_ASPNETCORE
-        public override Task Invoke(IContext ctx)
-#else
-        public Task Invoke(IContext ctx)
-#endif
-        {
-            return InvokeInternalAsync(ctx);
-        }
-
-        private async Task InvokeInternalAsync(IContext ctx)
-        {
-            try
-            {
-                if (Next != null)
-                {
-                    await Next.Invoke(ctx).ConfigureAwait(false);
-                }
-            }
-            catch (Exception ex)
-            {
-                _options.Logger.Error("HttpStatusCode set to 500 {0}", ex);
-                await _responseMapper.MapAsync(ResponseMessageBuilder.Create(500, JsonConvert.SerializeObject(ex)), ctx.Response).ConfigureAwait(false);
-            }
+            options.Logger.Error("HttpStatusCode set to 500 {0}", ex);
+            await responseMapper.MapAsync(ResponseMessageBuilder.Create(500, JsonConvert.SerializeObject(ex)), ctx.Response);
         }
     }
 }

@@ -73,7 +73,7 @@ public partial class WireMockServer
     #region InitAdmin
     private void InitAdmin()
     {
-        _adminPaths = new AdminPaths(_settings);
+        _adminPaths = new AdminPaths(settings);
 
         // __admin/health
         Given(Request.Create().WithPath(_adminPaths.Health).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(HealthGet));
@@ -152,7 +152,7 @@ public partial class WireMockServer
     [PublicAPI]
     public void SaveStaticMappings(string? folder = null)
     {
-        _mappingBuilder.SaveMappingsToFolder(folder);
+        mappingBuilder.SaveMappingsToFolder(folder);
     }
 
     /// <inheritdoc cref="IWireMockServer.ReadStaticMappings" />
@@ -161,18 +161,18 @@ public partial class WireMockServer
     {
         if (folder == null)
         {
-            folder = _settings.FileSystemHandler.GetMappingFolder();
+            folder = settings.FileSystemHandler.GetMappingFolder();
         }
 
-        if (!_settings.FileSystemHandler.FolderExists(folder))
+        if (!settings.FileSystemHandler.FolderExists(folder))
         {
-            _settings.Logger.Info("The Static Mapping folder '{0}' does not exist, reading Static MappingFiles will be skipped.", folder);
+            settings.Logger.Info("The Static Mapping folder '{0}' does not exist, reading Static MappingFiles will be skipped.", folder);
             return;
         }
 
-        foreach (string filename in _settings.FileSystemHandler.EnumerateFiles(folder, _settings.WatchStaticMappingsInSubdirectories == true).OrderBy(f => f))
+        foreach (string filename in settings.FileSystemHandler.EnumerateFiles(folder, settings.WatchStaticMappingsInSubdirectories == true).OrderBy(f => f))
         {
-            _settings.Logger.Info("Reading Static MappingFile : '{0}'", filename);
+            settings.Logger.Info("Reading Static MappingFile : '{0}'", filename);
 
             try
             {
@@ -180,7 +180,7 @@ public partial class WireMockServer
             }
             catch
             {
-                _settings.Logger.Error("Static MappingFile : '{0}' could not be read. This file will be skipped.", filename);
+                settings.Logger.Error("Static MappingFile : '{0}' could not be read. This file will be skipped.", filename);
             }
         }
     }
@@ -191,18 +191,18 @@ public partial class WireMockServer
     {
         if (folder == null)
         {
-            folder = _settings.FileSystemHandler.GetMappingFolder();
+            folder = settings.FileSystemHandler.GetMappingFolder();
         }
 
-        if (!_settings.FileSystemHandler.FolderExists(folder))
+        if (!settings.FileSystemHandler.FolderExists(folder))
         {
             return;
         }
 
-        bool includeSubdirectories = _settings.WatchStaticMappingsInSubdirectories == true;
+        bool includeSubdirectories = settings.WatchStaticMappingsInSubdirectories == true;
         string includeSubdirectoriesText = includeSubdirectories ? " and Subdirectories" : string.Empty;
 
-        _settings.Logger.Info($"Watching folder '{folder}'{includeSubdirectoriesText} for new, updated and deleted MappingFiles.");
+        settings.Logger.Info($"Watching folder '{folder}'{includeSubdirectoriesText} for new, updated and deleted MappingFiles.");
 
         DisposeEnhancedFileSystemWatcher();
         _enhancedFileSystemWatcher = new EnhancedFileSystemWatcher(folder, "*.json", EnhancedFileSystemWatcherTimeoutMs)
@@ -223,7 +223,7 @@ public partial class WireMockServer
 
         string filenameWithoutExtension = Path.GetFileNameWithoutExtension(path);
 
-        if (FileHelper.TryReadMappingFileWithRetryAndDelay(_settings.FileSystemHandler, path, out var value))
+        if (FileHelper.TryReadMappingFileWithRetryAndDelay(settings.FileSystemHandler, path, out var value))
         {
             var mappingModels = DeserializeJsonToArray<MappingModel>(value);
             if (mappingModels.Length == 1 && Guid.TryParse(filenameWithoutExtension, out var guidFromFilename))
@@ -263,35 +263,35 @@ public partial class WireMockServer
     {
         var model = new SettingsModel
         {
-            AllowBodyForAllHttpMethods = _settings.AllowBodyForAllHttpMethods,
-            AllowOnlyDefinedHttpStatusCodeInResponse = _settings.AllowOnlyDefinedHttpStatusCodeInResponse,
-            AllowPartialMapping = _settings.AllowPartialMapping,
-            DisableDeserializeFormUrlEncoded = _settings.DisableDeserializeFormUrlEncoded,
-            DisableJsonBodyParsing = _settings.DisableJsonBodyParsing,
-            DisableRequestBodyDecompressing = _settings.DisableRequestBodyDecompressing,
-            DoNotSaveDynamicResponseInLogEntry = _settings.DoNotSaveDynamicResponseInLogEntry,
-            GlobalProcessingDelay = (int?)_options.RequestProcessingDelay?.TotalMilliseconds,
+            AllowBodyForAllHttpMethods = settings.AllowBodyForAllHttpMethods,
+            AllowOnlyDefinedHttpStatusCodeInResponse = settings.AllowOnlyDefinedHttpStatusCodeInResponse,
+            AllowPartialMapping = settings.AllowPartialMapping,
+            DisableDeserializeFormUrlEncoded = settings.DisableDeserializeFormUrlEncoded,
+            DisableJsonBodyParsing = settings.DisableJsonBodyParsing,
+            DisableRequestBodyDecompressing = settings.DisableRequestBodyDecompressing,
+            DoNotSaveDynamicResponseInLogEntry = settings.DoNotSaveDynamicResponseInLogEntry,
+            GlobalProcessingDelay = (int?)options.RequestProcessingDelay?.TotalMilliseconds,
             // GraphQLSchemas TODO
-            HandleRequestsSynchronously = _settings.HandleRequestsSynchronously,
-            HostingScheme = _settings.HostingScheme,
-            MaxRequestLogCount = _settings.MaxRequestLogCount,
-            ProtoDefinitions = _settings.ProtoDefinitions,
-            QueryParameterMultipleValueSupport = _settings.QueryParameterMultipleValueSupport,
-            ReadStaticMappings = _settings.ReadStaticMappings,
-            RequestLogExpirationDuration = _settings.RequestLogExpirationDuration,
-            SaveUnmatchedRequests = _settings.SaveUnmatchedRequests,
-            UseRegexExtended = _settings.UseRegexExtended,
-            WatchStaticMappings = _settings.WatchStaticMappings,
-            WatchStaticMappingsInSubdirectories = _settings.WatchStaticMappingsInSubdirectories,
+            HandleRequestsSynchronously = settings.HandleRequestsSynchronously,
+            HostingScheme = settings.HostingScheme,
+            MaxRequestLogCount = settings.MaxRequestLogCount,
+            ProtoDefinitions = settings.ProtoDefinitions,
+            QueryParameterMultipleValueSupport = settings.QueryParameterMultipleValueSupport,
+            ReadStaticMappings = settings.ReadStaticMappings,
+            RequestLogExpirationDuration = settings.RequestLogExpirationDuration,
+            SaveUnmatchedRequests = settings.SaveUnmatchedRequests,
+            UseRegexExtended = settings.UseRegexExtended,
+            WatchStaticMappings = settings.WatchStaticMappings,
+            WatchStaticMappingsInSubdirectories = settings.WatchStaticMappingsInSubdirectories,
 
 #if USE_ASPNETCORE
-            AcceptAnyClientCertificate = _settings.AcceptAnyClientCertificate,
-            ClientCertificateMode = _settings.ClientCertificateMode,
-            CorsPolicyOptions = _settings.CorsPolicyOptions?.ToString()
+            AcceptAnyClientCertificate = settings.AcceptAnyClientCertificate,
+            ClientCertificateMode = settings.ClientCertificateMode,
+            CorsPolicyOptions = settings.CorsPolicyOptions?.ToString()
 #endif
         };
 
-        model.ProxyAndRecordSettings = TinyMapperUtils.Instance.Map(_settings.ProxyAndRecordSettings);
+        model.ProxyAndRecordSettings = TinyMapperUtils.Instance.Map(settings.ProxyAndRecordSettings);
 
         return ToJson(model);
     }
@@ -301,35 +301,35 @@ public partial class WireMockServer
         var settings = DeserializeObject<SettingsModel>(requestMessage);
 
         // _settings
-        _settings.AllowBodyForAllHttpMethods = settings.AllowBodyForAllHttpMethods;
-        _settings.AllowOnlyDefinedHttpStatusCodeInResponse = settings.AllowOnlyDefinedHttpStatusCodeInResponse;
-        _settings.AllowPartialMapping = settings.AllowPartialMapping;
-        _settings.DisableDeserializeFormUrlEncoded = settings.DisableDeserializeFormUrlEncoded;
-        _settings.DisableJsonBodyParsing = settings.DisableJsonBodyParsing;
-        _settings.DisableRequestBodyDecompressing = settings.DisableRequestBodyDecompressing;
-        _settings.DoNotSaveDynamicResponseInLogEntry = settings.DoNotSaveDynamicResponseInLogEntry;
-        _settings.HandleRequestsSynchronously = settings.HandleRequestsSynchronously;
-        _settings.MaxRequestLogCount = settings.MaxRequestLogCount;
-        _settings.ProtoDefinitions = settings.ProtoDefinitions;
-        _settings.ProxyAndRecordSettings = TinyMapperUtils.Instance.Map(settings.ProxyAndRecordSettings);
-        _settings.QueryParameterMultipleValueSupport = settings.QueryParameterMultipleValueSupport;
-        _settings.ReadStaticMappings = settings.ReadStaticMappings;
-        _settings.RequestLogExpirationDuration = settings.RequestLogExpirationDuration;
-        _settings.SaveUnmatchedRequests = settings.SaveUnmatchedRequests;
-        _settings.UseRegexExtended = settings.UseRegexExtended;
-        _settings.WatchStaticMappings = settings.WatchStaticMappings;
-        _settings.WatchStaticMappingsInSubdirectories = settings.WatchStaticMappingsInSubdirectories;
+        this.settings.AllowBodyForAllHttpMethods = settings.AllowBodyForAllHttpMethods;
+        this.settings.AllowOnlyDefinedHttpStatusCodeInResponse = settings.AllowOnlyDefinedHttpStatusCodeInResponse;
+        this.settings.AllowPartialMapping = settings.AllowPartialMapping;
+        this.settings.DisableDeserializeFormUrlEncoded = settings.DisableDeserializeFormUrlEncoded;
+        this.settings.DisableJsonBodyParsing = settings.DisableJsonBodyParsing;
+        this.settings.DisableRequestBodyDecompressing = settings.DisableRequestBodyDecompressing;
+        this.settings.DoNotSaveDynamicResponseInLogEntry = settings.DoNotSaveDynamicResponseInLogEntry;
+        this.settings.HandleRequestsSynchronously = settings.HandleRequestsSynchronously;
+        this.settings.MaxRequestLogCount = settings.MaxRequestLogCount;
+        this.settings.ProtoDefinitions = settings.ProtoDefinitions;
+        this.settings.ProxyAndRecordSettings = TinyMapperUtils.Instance.Map(settings.ProxyAndRecordSettings);
+        this.settings.QueryParameterMultipleValueSupport = settings.QueryParameterMultipleValueSupport;
+        this.settings.ReadStaticMappings = settings.ReadStaticMappings;
+        this.settings.RequestLogExpirationDuration = settings.RequestLogExpirationDuration;
+        this.settings.SaveUnmatchedRequests = settings.SaveUnmatchedRequests;
+        this.settings.UseRegexExtended = settings.UseRegexExtended;
+        this.settings.WatchStaticMappings = settings.WatchStaticMappings;
+        this.settings.WatchStaticMappingsInSubdirectories = settings.WatchStaticMappingsInSubdirectories;
 
-        InitSettings(_settings);
+        InitSettings(this.settings);
 
 #if USE_ASPNETCORE
         if (Enum.TryParse<CorsPolicyOptions>(settings.CorsPolicyOptions, true, out var corsPolicyOptions))
         {
-            _settings.CorsPolicyOptions = corsPolicyOptions;
+            this.settings.CorsPolicyOptions = corsPolicyOptions;
         }
 #endif
 
-        WireMockMiddlewareOptionsHelper.InitFromSettings(_settings, _options, o =>
+        WireMockMiddlewareOptionsHelper.InitFromSettings(this.settings, options, o =>
         {
             if (settings.GlobalProcessingDelay != null)
             {
@@ -338,8 +338,8 @@ public partial class WireMockServer
 
 #if USE_ASPNETCORE
             o.CorsPolicyOptions = corsPolicyOptions;
-            o.ClientCertificateMode = _settings.ClientCertificateMode;
-            o.AcceptAnyClientCertificate = _settings.AcceptAnyClientCertificate;
+            o.ClientCertificateMode = this.settings.ClientCertificateMode;
+            o.AcceptAnyClientCertificate = this.settings.AcceptAnyClientCertificate;
 #endif
         });
 
@@ -353,11 +353,11 @@ public partial class WireMockServer
         var mapping = FindMappingByGuid(requestMessage);
         if (mapping == null)
         {
-            _settings.Logger.Warn("HttpStatusCode set to 404 : Mapping not found");
+            settings.Logger.Warn("HttpStatusCode set to 404 : Mapping not found");
             return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "Mapping not found");
         }
 
-        var model = _mappingConverter.ToMappingModel(mapping);
+        var model = mappingConverter.ToMappingModel(mapping);
 
         return ToJson(model);
     }
@@ -366,17 +366,17 @@ public partial class WireMockServer
     {
         if (TryParseGuidFromRequestMessage(requestMessage, out var guid))
         {
-            var code = _mappingBuilder.ToCSharpCode(guid, GetMappingConverterType(requestMessage));
+            var code = mappingBuilder.ToCSharpCode(guid, GetMappingConverterType(requestMessage));
             if (code is null)
             {
-                _settings.Logger.Warn("HttpStatusCode set to 404 : Mapping not found");
+                settings.Logger.Warn("HttpStatusCode set to 404 : Mapping not found");
                 return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "Mapping not found");
             }
 
             return ToResponseMessage(code);
         }
 
-        _settings.Logger.Warn("HttpStatusCode set to 400");
+        settings.Logger.Warn("HttpStatusCode set to 400");
         return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, "GUID is missing");
     }
 
@@ -406,7 +406,7 @@ public partial class WireMockServer
             return ResponseMessageBuilder.Create(HttpStatusCode.OK, "Mapping added or updated", guidFromPut);
         }
 
-        _settings.Logger.Warn("HttpStatusCode set to 404 : Mapping not found");
+        settings.Logger.Warn("HttpStatusCode set to 404 : Mapping not found");
         return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "Mapping not found");
     }
 
@@ -417,7 +417,7 @@ public partial class WireMockServer
             return ResponseMessageBuilder.Create(HttpStatusCode.OK, "Mapping removed", guid);
         }
 
-        _settings.Logger.Warn("HttpStatusCode set to 404 : Mapping not found");
+        settings.Logger.Warn("HttpStatusCode set to 404 : Mapping not found");
         return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "Mapping not found");
     }
 
@@ -452,7 +452,7 @@ public partial class WireMockServer
 
     private MappingModel[] ToMappingModels()
     {
-        return _mappingBuilder.GetMappings();
+        return mappingBuilder.GetMappings();
     }
 
     private IResponseMessage MappingsGet(IRequestMessage requestMessage)
@@ -464,7 +464,7 @@ public partial class WireMockServer
     {
         var converterType = GetMappingConverterType(requestMessage);
 
-        var code = _mappingBuilder.ToCSharpCode(converterType);
+        var code = mappingBuilder.ToCSharpCode(converterType);
 
         return ToResponseMessage(code);
     }
@@ -486,12 +486,12 @@ public partial class WireMockServer
         }
         catch (ArgumentException a)
         {
-            _settings.Logger.Error("HttpStatusCode set to 400 {0}", a);
+            settings.Logger.Error("HttpStatusCode set to 400 {0}", a);
             return ResponseMessageBuilder.Create(400, a.Message);
         }
         catch (Exception e)
         {
-            _settings.Logger.Error("HttpStatusCode set to 500 {0}", e);
+            settings.Logger.Error("HttpStatusCode set to 500 {0}", e);
             return ResponseMessageBuilder.Create(500, e.ToString());
         }
     }
@@ -532,18 +532,18 @@ public partial class WireMockServer
                 }
                 else
                 {
-                    _settings.Logger.Debug($"Did not find/delete mapping with GUID: {guid}.");
+                    settings.Logger.Debug($"Did not find/delete mapping with GUID: {guid}.");
                 }
             }
         }
         catch (ArgumentException a)
         {
-            _settings.Logger.Error("ArgumentException: {0}", a);
+            settings.Logger.Error("ArgumentException: {0}", a);
             return null;
         }
         catch (Exception e)
         {
-            _settings.Logger.Error("Exception: {0}", e);
+            settings.Logger.Error("Exception: {0}", e);
             return null;
         }
 
@@ -578,12 +578,12 @@ public partial class WireMockServer
             var entry = LogEntries.SingleOrDefault(r => !r.RequestMessage.Path.StartsWith("/__admin/") && r.Guid == guid);
             if (entry is { })
             {
-                var model = new LogEntryMapper(_options).Map(entry);
+                var model = new LogEntryMapper(options).Map(entry);
                 return ToJson(model);
             }
         }
 
-        _settings.Logger.Warn("HttpStatusCode set to 404 : Request not found");
+        settings.Logger.Warn("HttpStatusCode set to 404 : Request not found");
         return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "Request not found");
     }
 
@@ -594,7 +594,7 @@ public partial class WireMockServer
             return ResponseMessageBuilder.Create(200, "Request removed");
         }
 
-        _settings.Logger.Warn("HttpStatusCode set to 404 : Request not found");
+        settings.Logger.Warn("HttpStatusCode set to 404 : Request not found");
         return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "Request not found");
     }
     #endregion Request/{guid}
@@ -602,7 +602,7 @@ public partial class WireMockServer
     #region Requests
     private IResponseMessage RequestsGet(IRequestMessage requestMessage)
     {
-        var logEntryMapper = new LogEntryMapper(_options);
+        var logEntryMapper = new LogEntryMapper(options);
         var result = LogEntries
             .Where(r => !r.RequestMessage.Path.StartsWith("/__admin/"))
             .Select(logEntryMapper.Map);
@@ -635,7 +635,7 @@ public partial class WireMockServer
             }
         }
 
-        var logEntryMapper = new LogEntryMapper(_options);
+        var logEntryMapper = new LogEntryMapper(options);
         var result = dict.OrderBy(x => x.Value.AverageTotalScore).Select(x => x.Key).Select(logEntryMapper.Map);
 
         return ToJson(result);
@@ -649,7 +649,7 @@ public partial class WireMockServer
         )
         {
             var logEntries = LogEntries.Where(le => !le.RequestMessage.Path.StartsWith("/__admin/") && le.MappingGuid == mappingGuid);
-            var logEntryMapper = new LogEntryMapper(_options);
+            var logEntryMapper = new LogEntryMapper(options);
             var result = logEntries.Select(logEntryMapper.Map);
             return ToJson(result);
         }
@@ -702,7 +702,7 @@ public partial class WireMockServer
     public void SavePact(string folder, string? filename = null)
     {
         var (filenameUpdated, bytes) = PactMapper.ToPact(this, filename);
-        _settings.FileSystemHandler.WriteFile(folder, filenameUpdated, bytes);
+        settings.FileSystemHandler.WriteFile(folder, filenameUpdated, bytes);
     }
 
     /// <summary>
@@ -761,25 +761,25 @@ public partial class WireMockServer
 
     private void EnhancedFileSystemWatcherCreated(object sender, FileSystemEventArgs args)
     {
-        _settings.Logger.Info("MappingFile created : '{0}', reading file.", args.FullPath);
+        settings.Logger.Info("MappingFile created : '{0}', reading file.", args.FullPath);
         if (!ReadStaticMappingAndAddOrUpdate(args.FullPath))
         {
-            _settings.Logger.Error("Unable to read MappingFile '{0}'.", args.FullPath);
+            settings.Logger.Error("Unable to read MappingFile '{0}'.", args.FullPath);
         }
     }
 
     private void EnhancedFileSystemWatcherChanged(object sender, FileSystemEventArgs args)
     {
-        _settings.Logger.Info("MappingFile updated : '{0}', reading file.", args.FullPath);
+        settings.Logger.Info("MappingFile updated : '{0}', reading file.", args.FullPath);
         if (!ReadStaticMappingAndAddOrUpdate(args.FullPath))
         {
-            _settings.Logger.Error("Unable to read MappingFile '{0}'.", args.FullPath);
+            settings.Logger.Error("Unable to read MappingFile '{0}'.", args.FullPath);
         }
     }
 
     private void EnhancedFileSystemWatcherDeleted(object sender, FileSystemEventArgs args)
     {
-        _settings.Logger.Info("MappingFile deleted : '{0}'", args.FullPath);
+        settings.Logger.Info("MappingFile deleted : '{0}'", args.FullPath);
         string filenameWithoutExtension = Path.GetFileNameWithoutExtension(args.FullPath);
 
         if (Guid.TryParse(filenameWithoutExtension, out var guidFromFilename))

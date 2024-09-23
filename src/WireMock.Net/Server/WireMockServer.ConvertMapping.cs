@@ -137,7 +137,7 @@ public partial class WireMockServer
                 var clientIPModel = JsonUtils.ParseJTokenToObject<ClientIPModel>(requestModel.ClientIP);
                 if (clientIPModel.Matchers != null)
                 {
-                    requestBuilder = requestBuilder.WithPath(clientIPModel.Matchers.Select(_matcherMapper.Map).OfType<IStringMatcher>().ToArray());
+                    requestBuilder = requestBuilder.WithPath(clientIPModel.Matchers.Select(matcherMapper.Map).OfType<IStringMatcher>().ToArray());
                 }
             }
         }
@@ -154,7 +154,7 @@ public partial class WireMockServer
                 if (pathModel.Matchers != null)
                 {
                     var matchOperator = StringUtils.ParseMatchOperator(pathModel.MatchOperator);
-                    requestBuilder = requestBuilder.WithPath(matchOperator, pathModel.Matchers.Select(_matcherMapper.Map).OfType<IStringMatcher>().ToArray());
+                    requestBuilder = requestBuilder.WithPath(matchOperator, pathModel.Matchers.Select(matcherMapper.Map).OfType<IStringMatcher>().ToArray());
                 }
             }
         }
@@ -170,7 +170,7 @@ public partial class WireMockServer
                 if (urlModel.Matchers != null)
                 {
                     var matchOperator = StringUtils.ParseMatchOperator(urlModel.MatchOperator);
-                    requestBuilder = requestBuilder.WithUrl(matchOperator, urlModel.Matchers.Select(_matcherMapper.Map).OfType<IStringMatcher>().ToArray());
+                    requestBuilder = requestBuilder.WithUrl(matchOperator, urlModel.Matchers.Select(matcherMapper.Map).OfType<IStringMatcher>().ToArray());
                 }
             }
         }
@@ -197,7 +197,7 @@ public partial class WireMockServer
                     headerModel.IgnoreCase == true,
                     headerModel.RejectOnMatch == true ? MatchBehaviour.RejectOnMatch : MatchBehaviour.AcceptOnMatch,
                     matchOperator,
-                    headerModel.Matchers!.Select(_matcherMapper.Map).OfType<IStringMatcher>().ToArray()
+                    headerModel.Matchers!.Select(matcherMapper.Map).OfType<IStringMatcher>().ToArray()
                 );
             }
         }
@@ -210,7 +210,7 @@ public partial class WireMockServer
                      cookieModel.Name,
                      cookieModel.IgnoreCase == true,
                      cookieModel.RejectOnMatch == true ? MatchBehaviour.RejectOnMatch : MatchBehaviour.AcceptOnMatch,
-                     cookieModel.Matchers!.Select(_matcherMapper.Map).OfType<IStringMatcher>().ToArray());
+                     cookieModel.Matchers!.Select(matcherMapper.Map).OfType<IStringMatcher>().ToArray());
             }
         }
 
@@ -219,18 +219,18 @@ public partial class WireMockServer
             foreach (var paramModel in requestModel.Params.Where(p => p is { Matchers: { } }))
             {
                 var ignoreCase = paramModel.IgnoreCase == true;
-                requestBuilder = requestBuilder.WithParam(paramModel.Name, ignoreCase, paramModel.Matchers!.Select(_matcherMapper.Map).OfType<IStringMatcher>().ToArray());
+                requestBuilder = requestBuilder.WithParam(paramModel.Name, ignoreCase, paramModel.Matchers!.Select(matcherMapper.Map).OfType<IStringMatcher>().ToArray());
             }
         }
 
         if (requestModel.Body?.Matcher != null)
         {
-            requestBuilder = requestBuilder.WithBody(_matcherMapper.Map(requestModel.Body.Matcher)!);
+            requestBuilder = requestBuilder.WithBody(matcherMapper.Map(requestModel.Body.Matcher)!);
         }
         else if (requestModel.Body?.Matchers != null)
         {
             var matchOperator = StringUtils.ParseMatchOperator(requestModel.Body.MatchOperator);
-            requestBuilder = requestBuilder.WithBody(_matcherMapper.Map(requestModel.Body.Matchers)!, matchOperator);
+            requestBuilder = requestBuilder.WithBody(matcherMapper.Map(requestModel.Body.Matchers)!, matchOperator);
         }
 
         return requestBuilder;

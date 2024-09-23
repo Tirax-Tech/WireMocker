@@ -1,27 +1,20 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using Stef.Validation;
 
 namespace WireMock.RegularExpressions;
 
 /// <summary>
 /// Extension to the <see cref="Regex"/> object, adding support for GUID tokens for matching on.
 /// </summary>
-#if !NETSTANDARD1_3
 [Serializable]
-#endif
-internal class RegexExtended : Regex
+public class RegexExtended : Regex
 {
     /// <inheritdoc cref="Regex"/>
-    public RegexExtended(string pattern) : this(pattern, RegexOptions.None)
-    {
-    }
-
-    /// <inheritdoc cref="Regex"/>
-    public RegexExtended(string pattern, RegexOptions options) :
+    public RegexExtended(string pattern, RegexOptions options = RegexOptions.None) :
         this(pattern, options, InfiniteMatchTimeout)
     {
     }
@@ -32,15 +25,8 @@ internal class RegexExtended : Regex
     {
     }
 
-#if !NETSTANDARD1_3 && !NET8_0_OR_GREATER
-    /// <inheritdoc cref="Regex"/>
-    protected RegexExtended(System.Runtime.Serialization.SerializationInfo info, System.Runtime.Serialization.StreamingContext context) :
-        base(info, context)
-    {
-    }
-#endif
     // Dictionary of various Guid tokens with a corresponding regular expression pattern to use instead.
-    private static readonly Dictionary<string, string> GuidTokenPatterns = new()
+    static readonly Dictionary<string, string> GuidTokenPatterns = new()
     {
         // Lower case format `B` Guid pattern
         { @"\guidb", @"(\{[a-z0-9]{8}-([a-z0-9]{4}-){3}[a-z0-9]{12}\})" },
@@ -77,14 +63,10 @@ internal class RegexExtended : Regex
     /// Replaces all instances of valid GUID tokens with the correct regular expression to match.
     /// </summary>
     /// <param name="pattern">Pattern to replace token for.</param>
-    private static string ReplaceGuidPattern(string pattern)
+    static string ReplaceGuidPattern(string pattern)
     {
-        Guard.NotNull(pattern);
-
         foreach (var tokenPattern in GuidTokenPatterns)
-        {
             pattern = pattern.Replace(tokenPattern.Key, tokenPattern.Value);
-        }
 
         return pattern;
     }

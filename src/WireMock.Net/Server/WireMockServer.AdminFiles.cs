@@ -23,13 +23,13 @@ public partial class WireMockServer
 
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
-        var mappingFolder = _settings.FileSystemHandler.GetMappingFolder();
-        if (!_settings.FileSystemHandler.FolderExists(mappingFolder))
+        var mappingFolder = settings.FileSystemHandler.GetMappingFolder();
+        if (!settings.FileSystemHandler.FolderExists(mappingFolder))
         {
-            _settings.FileSystemHandler.CreateFolder(mappingFolder);
+            settings.FileSystemHandler.CreateFolder(mappingFolder);
         }
 
-        _settings.FileSystemHandler.WriteFile(filename, requestMessage.BodyAsBytes);
+        settings.FileSystemHandler.WriteFile(filename, requestMessage.BodyAsBytes);
 
         return ResponseMessageBuilder.Create(HttpStatusCode.OK, "File created");
     }
@@ -43,13 +43,13 @@ public partial class WireMockServer
 
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
-        if (!_settings.FileSystemHandler.FileExists(filename))
+        if (!settings.FileSystemHandler.FileExists(filename))
         {
-            _settings.Logger.Info("The file '{0}' does not exist, updating file will be skipped.", filename);
+            settings.Logger.Info("The file '{0}' does not exist, updating file will be skipped.", filename);
             return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "File is not found");
         }
 
-        _settings.FileSystemHandler.WriteFile(filename, requestMessage.BodyAsBytes);
+        settings.FileSystemHandler.WriteFile(filename, requestMessage.BodyAsBytes);
 
         return ResponseMessageBuilder.Create(HttpStatusCode.OK, "File updated");
     }
@@ -58,13 +58,13 @@ public partial class WireMockServer
     {
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
-        if (!_settings.FileSystemHandler.FileExists(filename))
+        if (!settings.FileSystemHandler.FileExists(filename))
         {
-            _settings.Logger.Info("The file '{0}' does not exist.", filename);
+            settings.Logger.Info("The file '{0}' does not exist.", filename);
             return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "File is not found");
         }
 
-        var bytes = _settings.FileSystemHandler.ReadFile(filename);
+        var bytes = settings.FileSystemHandler.ReadFile(filename);
         var response = new ResponseMessage
         {
             StatusCode = 200,
@@ -94,9 +94,9 @@ public partial class WireMockServer
     {
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
-        if (!_settings.FileSystemHandler.FileExists(filename))
+        if (!settings.FileSystemHandler.FileExists(filename))
         {
-            _settings.Logger.Info("The file '{0}' does not exist.", filename);
+            settings.Logger.Info("The file '{0}' does not exist.", filename);
             return ResponseMessageBuilder.Create(HttpStatusCode.NotFound);
         }
 
@@ -107,13 +107,13 @@ public partial class WireMockServer
     {
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
-        if (!_settings.FileSystemHandler.FileExists(filename))
+        if (!settings.FileSystemHandler.FileExists(filename))
         {
-            _settings.Logger.Info("The file '{0}' does not exist.", filename);
+            settings.Logger.Info("The file '{0}' does not exist.", filename);
             return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "File is not deleted");
         }
 
-        _settings.FileSystemHandler.DeleteFile(filename);
+        settings.FileSystemHandler.DeleteFile(filename);
         return ResponseMessageBuilder.Create(HttpStatusCode.OK, "File deleted.");
     }
 

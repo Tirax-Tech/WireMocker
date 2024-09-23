@@ -11,7 +11,7 @@ internal partial class AspNetCoreSelfHost
 {
     public void AddCors(IServiceCollection services)
     {
-        if (_wireMockMiddlewareOptions.CorsPolicyOptions > CorsPolicyOptions.None)
+        if (wireMockMiddlewareOptions.CorsPolicyOptions > CorsPolicyOptions.None)
         {
             /* https://stackoverflow.com/questions/31942037/how-to-enable-cors-in-asp-net-core */
             /* Enable Cors */
@@ -19,17 +19,17 @@ internal partial class AspNetCoreSelfHost
                 .AddPolicy(CorsPolicyName,
                     corsPolicyBuilder =>
                     {
-                        if (_wireMockMiddlewareOptions.CorsPolicyOptions.Value.HasFlag(CorsPolicyOptions.AllowAnyHeader))
+                        if (wireMockMiddlewareOptions.CorsPolicyOptions.Value.HasFlag(CorsPolicyOptions.AllowAnyHeader))
                         {
                             corsPolicyBuilder.AllowAnyHeader();
                         }
 
-                        if (_wireMockMiddlewareOptions.CorsPolicyOptions.Value.HasFlag(CorsPolicyOptions.AllowAnyMethod))
+                        if (wireMockMiddlewareOptions.CorsPolicyOptions.Value.HasFlag(CorsPolicyOptions.AllowAnyMethod))
                         {
                             corsPolicyBuilder.AllowAnyMethod();
                         }
 
-                        if (_wireMockMiddlewareOptions.CorsPolicyOptions.Value.HasFlag(CorsPolicyOptions.AllowAnyOrigin))
+                        if (wireMockMiddlewareOptions.CorsPolicyOptions.Value.HasFlag(CorsPolicyOptions.AllowAnyOrigin))
                         {
                             corsPolicyBuilder.AllowAnyOrigin();
                         }
@@ -39,7 +39,7 @@ internal partial class AspNetCoreSelfHost
 
     public void UseCors(IApplicationBuilder appBuilder)
     {
-        if (_wireMockMiddlewareOptions.CorsPolicyOptions > CorsPolicyOptions.None)
+        if (wireMockMiddlewareOptions.CorsPolicyOptions > CorsPolicyOptions.None)
         {
             /* Use Cors */
             appBuilder.UseCors(CorsPolicyName);

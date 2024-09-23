@@ -18,12 +18,12 @@ internal static class PathUtils
     }
 
     /// <summary>
-    /// Removes leading directory separator chars from the filepath, which could break Path.Combine
+    /// Removes leading directory separator chars from the filepath, which could break <see cref="Path.Combine(string,string)"/>
     /// </summary>
     /// <param name="path">The path to remove the loading DirectorySeparatorChars</param>
     public static string? RemoveLeadingDirectorySeparators(string? path)
     {
-        return path?.TrimStart(new[] { Path.DirectorySeparatorChar });
+        return path?.TrimStart([Path.DirectorySeparatorChar]);
     }
 
     /// <summary>

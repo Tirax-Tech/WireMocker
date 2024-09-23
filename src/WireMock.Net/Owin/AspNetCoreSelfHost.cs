@@ -1,16 +1,15 @@
 // Copyright © WireMock.Net
 
-#if USE_ASPNETCORE
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Stef.Validation;
 using WireMock.Logging;
 using WireMock.Owin.Mappers;
 using WireMock.Services;
@@ -18,17 +17,15 @@ using WireMock.Util;
 
 namespace WireMock.Owin;
 
-internal partial class AspNetCoreSelfHost : IOwinSelfHost
+internal partial class AspNetCoreSelfHost(IWireMockMiddlewareOptions wireMockMiddlewareOptions, HostUrlOptions urlOptions) : IOwinSelfHost
 {
-    private const string CorsPolicyName = "WireMock.Net - Policy";
+    const string CorsPolicyName = "WireMock.Net - Policy";
 
-    private readonly CancellationTokenSource _cts = new();
-    private readonly IWireMockMiddlewareOptions _wireMockMiddlewareOptions;
-    private readonly IWireMockLogger _logger;
-    private readonly HostUrlOptions _urlOptions;
+    readonly CancellationTokenSource cts = new();
+    readonly IWireMockLogger logger = wireMockMiddlewareOptions.Logger;
 
-    private Exception _runningException;
-    private IWebHost _host;
+    Exception? runningException;
+    IWebHost? host;
 
     public bool IsStarted { get; private set; }
 
@@ -36,18 +33,7 @@ internal partial class AspNetCoreSelfHost : IOwinSelfHost
 
     public List<int> Ports { get; } = new();
 
-    public Exception RunningException => _runningException;
-
-    public AspNetCoreSelfHost(IWireMockMiddlewareOptions wireMockMiddlewareOptions, HostUrlOptions urlOptions)
-    {
-        Guard.NotNull(wireMockMiddlewareOptions);
-        Guard.NotNull(urlOptions);
-
-        _logger = wireMockMiddlewareOptions.Logger ?? new WireMockConsoleLogger();
-
-        _wireMockMiddlewareOptions = wireMockMiddlewareOptions;
-        _urlOptions = urlOptions;
-    }
+    public Exception RunningException => runningException!;
 
     public Task StartAsync()
     {
@@ -58,115 +44,71 @@ internal partial class AspNetCoreSelfHost : IOwinSelfHost
         // specified (even though we don't actually use that base path mechanism, since we have our own way of configuring
         // a filesystem handler).
         if (string.IsNullOrEmpty(AppContext.BaseDirectory))
-        {
             builder.UseContentRoot(Directory.GetCurrentDirectory());
-        }
 
-        _host = builder
+        host = builder
             .UseSetting("suppressStatusMessages", "True") // https://andrewlock.net/suppressing-the-startup-and-shutdown-messages-in-asp-net-core/
             .ConfigureAppConfigurationUsingEnvironmentVariables()
             .ConfigureServices(services =>
             {
-                services.AddSingleton(_wireMockMiddlewareOptions);
+                services.AddSingleton(wireMockMiddlewareOptions);
                 services.AddSingleton<IMappingMatcher, MappingMatcher>();
                 services.AddSingleton<IRandomizerDoubleBetween0And1, RandomizerDoubleBetween0And1>();
                 services.AddSingleton<IOwinRequestMapper, OwinRequestMapper>();
                 services.AddSingleton<IOwinResponseMapper, OwinResponseMapper>();
                 services.AddSingleton<IGuidUtils, GuidUtils>();
 
-#if NETCOREAPP3_1 || NET5_0_OR_GREATER
                 AddCors(services);
-#endif
-                _wireMockMiddlewareOptions.AdditionalServiceRegistration?.Invoke(services);
+                wireMockMiddlewareOptions.AdditionalServiceRegistration?.Invoke(services);
             })
             .Configure(appBuilder =>
             {
                 appBuilder.UseMiddleware<GlobalExceptionMiddleware>();
 
-#if NETCOREAPP3_1 || NET5_0_OR_GREATER
                 UseCors(appBuilder);
-#endif
-                _wireMockMiddlewareOptions.PreWireMockMiddlewareInit?.Invoke(appBuilder);
+                wireMockMiddlewareOptions.PreWireMockMiddlewareInit?.Invoke(appBuilder);
 
                 appBuilder.UseMiddleware<WireMockMiddleware>();
 
-                _wireMockMiddlewareOptions.PostWireMockMiddlewareInit?.Invoke(appBuilder);
+                wireMockMiddlewareOptions.PostWireMockMiddlewareInit?.Invoke(appBuilder);
             })
             .UseKestrel(options =>
             {
                 SetKestrelOptionsLimits(options);
 
-                SetHttpsAndUrls(options, _wireMockMiddlewareOptions, _urlOptions.GetDetails());
+                SetHttpsAndUrls(options, wireMockMiddlewareOptions, urlOptions.GetDetails());
             })
             .ConfigureKestrelServerOptions()
-
-#if NETSTANDARD1_3
-            .UseUrls(_urlOptions.GetDetails().Select(u => u.Url).ToArray())
-#endif
             .Build();
 
-        return RunHost(_cts.Token);
+        return RunHost(host, cts.Token);
     }
 
-        private Task RunHost(CancellationToken token)
-        {
-            try
-            {
-#if NETCOREAPP3_1 || NET5_0_OR_GREATER
-                var appLifetime = _host.Services.GetRequiredService<Microsoft.Extensions.Hosting.IHostApplicationLifetime>();
-#else
-                var appLifetime = _host.Services.GetRequiredService<IApplicationLifetime>();
-#endif
-                appLifetime.ApplicationStarted.Register(() =>
-                {
-                    var addresses = _host.ServerFeatures
-                        .Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()!
-                        .Addresses;
+    Task RunHost(IWebHost h, CancellationToken token) {
+        try{
+            var appLifetime = h.Services.GetRequiredService<Microsoft.Extensions.Hosting.IHostApplicationLifetime>();
+            appLifetime.ApplicationStarted.Register(() => {
+                var addresses = h.ServerFeatures
+                                    .Get<Microsoft.AspNetCore.Hosting.Server.Features.IServerAddressesFeature>()!
+                                    .Addresses;
 
-                    foreach (var address in addresses)
-                    {
-                        Urls.Add(address.Replace("0.0.0.0", "localhost").Replace("[::]", "localhost"));
+                foreach (var address in addresses){
+                    Urls.Add(address.Replace("0.0.0.0", "localhost").Replace("[::]", "localhost"));
 
-                        PortUtils.TryExtract(address, out _, out _, out _, out _, out var port);
-                        Ports.Add(port);
-                    }
+                    PortUtils.TryExtract(address, out _, out _, out _, out _, out var port);
+                    Ports.Add(port);
+                }
 
                 IsStarted = true;
             });
 
-#if NETSTANDARD1_3
-            _logger.Info("Server using netstandard1.3");
-#elif NETSTANDARD2_0
-            _logger.Info("Server using netstandard2.0");
-#elif NETSTANDARD2_1
-            _logger.Info("Server using netstandard2.1");
-#elif NETCOREAPP3_1
-            _logger.Info("Server using .NET Core App 3.1");
-#elif NET5_0
-            _logger.Info("Server using .NET 5.0");
-#elif NET6_0
-            _logger.Info("Server using .NET 6.0");
-#elif NET7_0
-            _logger.Info("Server using .NET 7.0");
-#elif NET8_0
-            _logger.Info("Server using .NET 8.0");
-#elif NET46
-            _logger.Info("Server using .NET Framework 4.6.1 or higher");
-#endif
+            logger.Info("Server using .NET 8.0");
 
-#if NETSTANDARD1_3
-            return Task.Run(() =>
-            {
-                _host.Run(token);
-            });
-#else
-            return _host.RunAsync(token);
-#endif
+            return h.RunAsync(token);
         }
-        catch (Exception e)
-        {
-            _runningException = e;
-            _logger.Error(e.ToString());
+        catch (Exception e){
+            runningException = e;
+            logger.Error(e.ToString());
 
             IsStarted = false;
 
@@ -176,14 +118,10 @@ internal partial class AspNetCoreSelfHost : IOwinSelfHost
 
     public Task StopAsync()
     {
-        _cts.Cancel();
+        Debug.Assert(host is not null);
+        cts.Cancel();
 
         IsStarted = false;
-#if NETSTANDARD1_3
-        return Task.CompletedTask;
-#else
-        return _host.StopAsync();
-#endif
+        return host.StopAsync();
     }
 }
-#endif

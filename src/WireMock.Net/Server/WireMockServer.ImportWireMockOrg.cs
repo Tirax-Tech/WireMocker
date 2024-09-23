@@ -29,7 +29,7 @@ public partial class WireMockServer
 
         var filenameWithoutExtension = Path.GetFileNameWithoutExtension(path);
 
-        if (FileHelper.TryReadMappingFileWithRetryAndDelay(_settings.FileSystemHandler, path, out var value))
+        if (FileHelper.TryReadMappingFileWithRetryAndDelay(settings.FileSystemHandler, path, out var value))
         {
             var mappings = DeserializeJsonToArray<OrgMapping>(value);
             foreach (var mapping in mappings)
@@ -66,12 +66,12 @@ public partial class WireMockServer
         }
         catch (ArgumentException a)
         {
-            _settings.Logger.Error("HttpStatusCode set to 400 {0}", a);
+            settings.Logger.Error("HttpStatusCode set to 400 {0}", a);
             return ResponseMessageBuilder.Create(400, a.Message);
         }
         catch (Exception e)
         {
-            _settings.Logger.Error("HttpStatusCode set to 500 {0}", e);
+            settings.Logger.Error("HttpStatusCode set to 500 {0}", e);
             return ResponseMessageBuilder.Create(500, e.ToString());
         }
     }

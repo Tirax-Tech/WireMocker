@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,12 +8,8 @@ using System.Threading.Tasks;
 using WireMock.Http;
 using WireMock.Models;
 using WireMock.Util;
-#if !USE_ASPNETCORE
-using IRequest = Microsoft.Owin.IOwinRequest;
-#else
 using Microsoft.AspNetCore.Http.Extensions;
 using IRequest = Microsoft.AspNetCore.Http.HttpRequest;
-#endif
 
 namespace WireMock.Owin.Mappers;
 
@@ -36,22 +33,16 @@ internal class OwinRequestMapper : IOwinRequestMapper
             headers.Add(header.Key, header.Value!);
 
             if (string.Equals(header.Key, HttpKnownHeaderNames.ContentEncoding, StringComparison.OrdinalIgnoreCase))
-            {
                 contentEncodingHeader = header.Value;
-            }
         }
 
         var cookies = new Dictionary<string, string>();
         if (request.Cookies.Any())
-        {
             foreach (var cookie in request.Cookies)
-            {
                 cookies.Add(cookie.Key, cookie.Value);
-            }
-        }
 
         IBodyData? body = null;
-        if (request.Body != null && BodyParser.ShouldParseBody(method, options.AllowBodyForAllHttpMethods == true))
+        if (BodyParser.ShouldParseBody(method, options.AllowBodyForAllHttpMethods == true))
         {
             var bodyParserSettings = new BodyParserSettings
             {
@@ -62,50 +53,24 @@ internal class OwinRequestMapper : IOwinRequestMapper
                 DecompressGZipAndDeflate = !options.DisableRequestBodyDecompressing.GetValueOrDefault(false)
             };
 
-            body = await BodyParser.ParseAsync(bodyParserSettings).ConfigureAwait(false);
+            body = await BodyParser.ParseAsync(bodyParserSettings);
         }
 
-        return new RequestMessage(
-            options,
-            urlDetails,
-            method,
-            clientIP,
-            body,
-            headers,
-            cookies,
-            httpVersion
-#if USE_ASPNETCORE
-            , await request.HttpContext.Connection.GetClientCertificateAsync()
-#endif
-            )
-        {
+        return new RequestMessage(options, urlDetails, method, clientIP, body, headers, cookies, httpVersion
+                                , await request.HttpContext.Connection.GetClientCertificateAsync()) {
             DateTime = DateTime.UtcNow
         };
     }
 
-    private static (UrlDetails UrlDetails, string ClientIP) ParseRequest(IRequest request)
-    {
-#if !USE_ASPNETCORE
-        var urlDetails = UrlUtils.Parse(request.Uri, request.PathBase);
-        var clientIP = request.RemoteIpAddress;
-#else
+    static (UrlDetails UrlDetails, string ClientIP) ParseRequest(IRequest request) {
         var urlDetails = UrlUtils.Parse(new Uri(request.GetEncodedUrl()), request.PathBase);
 
         var connection = request.HttpContext.Connection;
-        string clientIP;
-        if (connection.RemoteIpAddress is null)
-        {
-            clientIP = string.Empty;
-        }
-        else if (connection.RemoteIpAddress.IsIPv4MappedToIPv6)
-        {
-            clientIP = connection.RemoteIpAddress.MapToIPv4().ToString();
-        }
-        else
-        {
-            clientIP = connection.RemoteIpAddress.ToString();
-        }
-#endif
+        var clientIP = connection.RemoteIpAddress is null
+                           ? string.Empty
+                           : connection.RemoteIpAddress.IsIPv4MappedToIPv6
+                               ? connection.RemoteIpAddress.MapToIPv4().ToString()
+                               : connection.RemoteIpAddress.ToString();
         return (urlDetails, clientIP);
     }
 }

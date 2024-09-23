@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System.Collections.Generic;
 using System.IO;
 using WireMock.Util;
@@ -12,10 +13,12 @@ namespace WireMock.Handlers;
 /// </summary>
 public class LocalFileSystemHandler : IFileSystemHandler
 {
-    private static readonly string AdminMappingsFolder = Path.Combine("__admin", "mappings");
-    private static readonly string UnmatchedRequestsFolder = Path.Combine("requests", "unmatched");
+    static readonly string AdminMappingsFolder = Path.Combine("__admin", "mappings");
+    static readonly string UnmatchedRequestsFolder = Path.Combine("requests", "unmatched");
 
-    private readonly string _rootFolder;
+    public static readonly LocalFileSystemHandler Instance = new();
+
+    readonly string rootFolder;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="LocalFileSystemHandler"/> class.
@@ -30,7 +33,7 @@ public class LocalFileSystemHandler : IFileSystemHandler
     /// <param name="rootFolder">The root folder.</param>
     public LocalFileSystemHandler(string rootFolder)
     {
-        _rootFolder = rootFolder;
+        this.rootFolder = rootFolder;
     }
 
     /// <inheritdoc cref="IFileSystemHandler.FolderExists"/>
@@ -60,7 +63,7 @@ public class LocalFileSystemHandler : IFileSystemHandler
     /// <inheritdoc cref="IFileSystemHandler.GetMappingFolder"/>
     public virtual string GetMappingFolder()
     {
-        return Path.Combine(_rootFolder, AdminMappingsFolder);
+        return Path.Combine(rootFolder, AdminMappingsFolder);
     }
 
     /// <inheritdoc cref="IFileSystemHandler.ReadMappingFile"/>
@@ -152,7 +155,7 @@ public class LocalFileSystemHandler : IFileSystemHandler
     /// <inheritdoc cref="IFileSystemHandler.GetUnmatchedRequestsFolder"/>
     public virtual string GetUnmatchedRequestsFolder()
     {
-        return Path.Combine(_rootFolder, UnmatchedRequestsFolder);
+        return Path.Combine(rootFolder, UnmatchedRequestsFolder);
     }
 
     /// <inheritdoc cref="IFileSystemHandler.WriteUnmatchedRequest"/>
@@ -175,7 +178,7 @@ public class LocalFileSystemHandler : IFileSystemHandler
     /// </summary>
     /// <param name="filename">The path.</param>
     /// <returns>Adjusted path</returns>
-    private string AdjustPathForMappingFolder(string filename)
+    string AdjustPathForMappingFolder(string filename)
     {
         return Path.Combine(GetMappingFolder(), filename);
     }

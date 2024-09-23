@@ -63,7 +63,7 @@ public class RequestModel
     /// Gets or sets the Params.
     /// </summary>
     public IList<ParamModel>? Params { get; set; }
-        
+
     /// <summary>
     /// Gets or sets the body.
     /// </summary>

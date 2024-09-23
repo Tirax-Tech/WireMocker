@@ -4,17 +4,19 @@
 
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using WireMock.Admin.Mappings;
 using WireMock.Logging;
 using WireMock.Types;
 
 namespace WireMock.Server;
 
+[PublicAPI]
 public abstract record HttpEvents
 {
     public sealed record Request(Guid Id, IRequestMessage Message): HttpEvents;
 
-    public sealed record Response(Guid Id, ILogEntry Log, TimeSpan Elasped) : HttpEvents;
+    public sealed record Response(Guid Id, ILogEntry Log, TimeSpan Elapsed) : HttpEvents;
 
     public bool IsAdmin { get; init; }
 }
@@ -22,6 +24,7 @@ public abstract record HttpEvents
 /// <summary>
 /// The fluent mock server interface.
 /// </summary>
+[PublicAPI]
 public interface IWireMockServer : IDisposable
 {
     /// <summary>
@@ -130,7 +133,7 @@ public interface IWireMockServer : IDisposable
 
     /// <summary>
     /// Reads the static mappings from a folder.
-    /// (This method is also used when WireMockServerSettings.ReadStaticMappings is set to true.
+    /// This method is also used when WireMockServerSettings.ReadStaticMappings is set to true.
     ///
     /// Calling this method manually forces WireMock.Net to read and apply all static mapping files in the specified folder.
     /// </summary>
@@ -221,7 +224,7 @@ public interface IWireMockServer : IDisposable
     /// <summary>
     /// Register the mappings (via json string).
     ///
-    /// This can be used if you the mappings as json string defined and want to register these in WireMock.Net directly instead of using the fluent syntax.
+    /// This can be used if you have the mappings as json string defined and want to register these in WireMock.Net directly instead of using the fluent syntax.
     /// </summary>
     /// <param name="mappings">The mapping(s) as json string.</param>
     IWireMockServer WithMapping(string mappings);

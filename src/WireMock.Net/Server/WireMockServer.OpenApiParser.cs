@@ -21,7 +21,7 @@ public partial class WireMockServer
         }
         catch (Exception e)
         {
-            _settings.Logger.Error("HttpStatusCode set to {0} {1}", HttpStatusCode.BadRequest, e);
+            settings.Logger.Error("HttpStatusCode set to {0} {1}", HttpStatusCode.BadRequest, e);
             return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, e.Message);
         }
 #else
@@ -46,7 +46,7 @@ public partial class WireMockServer
         }
         catch (Exception e)
         {
-            _settings.Logger.Error("HttpStatusCode set to {0} {1}", HttpStatusCode.BadRequest, e);
+            settings.Logger.Error("HttpStatusCode set to {0} {1}", HttpStatusCode.BadRequest, e);
             return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, e.Message);
         }
 #else

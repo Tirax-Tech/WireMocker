@@ -19,7 +19,7 @@ public partial class WireMockServer
     [PublicAPI]
     public IRespondWithAProvider Given(IRequestMatcher requestMatcher, bool saveToFile = false)
     {
-        return _mappingBuilder.Given(requestMatcher, saveToFile);
+        return mappingBuilder.Given(requestMatcher, saveToFile);
     }
 
     /// <summary>

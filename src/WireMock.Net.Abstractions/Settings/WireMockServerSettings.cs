@@ -16,6 +16,7 @@ using WireMock.Types;
 using System.Globalization;
 using WireMock.Models;
 using Microsoft.Extensions.DependencyInjection;
+using WireMock.RegularExpressions;
 
 namespace WireMock.Settings;
 
@@ -167,14 +168,14 @@ public class WireMockServerSettings
     /// </summary>
     [PublicAPI]
     [JsonIgnore]
-    public IWireMockLogger Logger { get; set; } = null!;
+    public IWireMockLogger Logger { get; set; } = WireMockNullLogger.Instance;
 
     /// <summary>
     /// Handler to interact with the file system to read and write static mapping files.
     /// </summary>
     [PublicAPI]
     [JsonIgnore]
-    public IFileSystemHandler FileSystemHandler { get; set; } = null!;
+    public IFileSystemHandler FileSystemHandler { get; set; } = LocalFileSystemHandler.Instance;
 
     /// <summary>
     /// Action which can be used to add additional Handlebars registrations. [Optional]

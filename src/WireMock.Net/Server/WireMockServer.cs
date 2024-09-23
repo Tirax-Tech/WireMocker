@@ -19,9 +19,7 @@ using WireMock.Admin.Mappings;
 using WireMock.Authentication;
 using WireMock.Constants;
 using WireMock.Exceptions;
-using WireMock.Handlers;
 using WireMock.Http;
-using WireMock.Logging;
 using WireMock.Models;
 using WireMock.Owin;
 using WireMock.RequestBuilders;
@@ -30,6 +28,7 @@ using WireMock.Serialization;
 using WireMock.Settings;
 using WireMock.Types;
 using WireMock.Util;
+// ReSharper disable UnusedMethodReturnValue.Local
 
 namespace WireMock.Server;
 
@@ -38,25 +37,25 @@ namespace WireMock.Server;
 /// </summary>
 public partial class WireMockServer : IWireMockServer
 {
-    private const int ServerStartDelayInMs = 100;
+    const int ServerStartDelayInMs = 100;
 
-    private readonly WireMockServerSettings _settings;
-    private readonly IOwinSelfHost? _httpServer;
-    private readonly IWireMockMiddlewareOptions _options = new WireMockMiddlewareOptions();
-    private readonly MappingConverter _mappingConverter;
-    private readonly MatcherMapper _matcherMapper;
-    private readonly MappingToFileSaver _mappingToFileSaver;
-    private readonly MappingBuilder _mappingBuilder;
-    private readonly IGuidUtils _guidUtils = new GuidUtils();
-    private readonly IDateTimeUtils _dateTimeUtils = new DateTimeUtils();
-
-    /// <inheritdoc />
-    [PublicAPI]
-    public bool IsStarted => _httpServer is { IsStarted: true };
+    readonly WireMockServerSettings settings;
+    readonly IOwinSelfHost? httpServer;
+    readonly IWireMockMiddlewareOptions options = new WireMockMiddlewareOptions();
+    readonly MappingConverter mappingConverter;
+    readonly MatcherMapper matcherMapper;
+    readonly MappingToFileSaver mappingToFileSaver;
+    readonly MappingBuilder mappingBuilder;
+    readonly IGuidUtils guidUtils = new GuidUtils();
+    readonly IDateTimeUtils dateTimeUtils = new DateTimeUtils();
 
     /// <inheritdoc />
     [PublicAPI]
-    public bool IsStartedWithAdminInterface => IsStarted && _settings.StartAdminInterface.GetValueOrDefault();
+    public bool IsStarted => httpServer is { IsStarted: true };
+
+    /// <inheritdoc />
+    [PublicAPI]
+    public bool IsStartedWithAdminInterface => IsStarted && settings.StartAdminInterface.GetValueOrDefault();
 
     /// <inheritdoc />
     [PublicAPI]
@@ -64,7 +63,7 @@ public partial class WireMockServer : IWireMockServer
 
     /// <inheritdoc />
     [PublicAPI]
-    public int Port => Ports?.FirstOrDefault() ?? default;
+    public int Port => Ports.FirstOrDefault();
 
     /// <inheritdoc />
     [PublicAPI]
@@ -72,7 +71,7 @@ public partial class WireMockServer : IWireMockServer
 
     /// <inheritdoc />
     [PublicAPI]
-    public string? Url => Urls?.FirstOrDefault();
+    public string? Url => Urls.FirstOrDefault();
 
     /// <inheritdoc />
     [PublicAPI]
@@ -86,7 +85,7 @@ public partial class WireMockServer : IWireMockServer
     /// Gets the mappings.
     /// </summary>
     [PublicAPI]
-    public IEnumerable<IMapping> Mappings => _options.Mappings.Values.ToArray();
+    public IEnumerable<IMapping> Mappings => options.Mappings.Values.ToArray();
 
     /// <inheritdoc cref="IWireMockServer.MappingModels" />
     [PublicAPI]
@@ -96,7 +95,7 @@ public partial class WireMockServer : IWireMockServer
     /// Gets the scenarios.
     /// </summary>
     [PublicAPI]
-    public ConcurrentDictionary<string, ScenarioState> Scenarios => new(_options.Scenarios);
+    public ConcurrentDictionary<string, ScenarioState> Scenarios => new(options.Scenarios);
 
     #region IDisposable Members
     /// <summary>
@@ -111,11 +110,10 @@ public partial class WireMockServer : IWireMockServer
     /// <summary>
     /// Releases unmanaged and - optionally - managed resources.
     /// </summary>
-    /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-    protected virtual void Dispose(bool disposing)
+    protected virtual void Dispose(bool _)
     {
         DisposeEnhancedFileSystemWatcher();
-        _httpServer?.StopAsync();
+        httpServer?.StopAsync();
     }
     #endregion
 
@@ -233,16 +231,16 @@ public partial class WireMockServer : IWireMockServer
     /// Start this WireMockServer.
     /// </summary>
     /// <param name="port">The port.</param>
-    /// <param name="useSSL">The SSL support.</param>
+    /// <param name="useSsl">The SSL support.</param>
     /// <param name="useHttp2">Use HTTP 2 (needed for Grpc).</param>
     /// <returns>The <see cref="WireMockServer"/>.</returns>
     [PublicAPI]
-    public static WireMockServer Start(int? port = 0, bool useSSL = false, bool useHttp2 = false)
+    public static WireMockServer Start(int? port = 0, bool useSsl = false, bool useHttp2 = false)
     {
         return new WireMockServer(new WireMockServerSettings
         {
             Port = port,
-            UseSSL = useSSL,
+            UseSSL = useSsl,
             UseHttp2 = useHttp2
         });
     }
@@ -267,16 +265,16 @@ public partial class WireMockServer : IWireMockServer
     /// Start this WireMockServer with the admin interface.
     /// </summary>
     /// <param name="port">The port.</param>
-    /// <param name="useSSL">The SSL support.</param>
+    /// <param name="useSsl">The SSL support.</param>
     /// <param name="useHttp2">Use HTTP 2 (needed for Grpc).</param>
     /// <returns>The <see cref="WireMockServer"/>.</returns>
     [PublicAPI]
-    public static WireMockServer StartWithAdminInterface(int? port = 0, bool useSSL = false, bool useHttp2 = false)
+    public static WireMockServer StartWithAdminInterface(int? port = 0, bool useSsl = false, bool useHttp2 = false)
     {
         return new WireMockServer(new WireMockServerSettings
         {
             Port = port,
-            UseSSL = useSSL,
+            UseSSL = useSsl,
             UseHttp2 = useHttp2,
             StartAdminInterface = true
         });
@@ -329,99 +327,68 @@ public partial class WireMockServer : IWireMockServer
     /// <exception cref="TimeoutException">Service start timed out after {TimeSpan.FromMilliseconds(settings.StartTimeout)}</exception>
     protected WireMockServer(WireMockServerSettings settings)
     {
-        _settings = Guard.NotNull(settings);
+        this.settings = Guard.NotNull(settings);
 
         // Set default values if not provided
-        _settings.Logger = settings.Logger ?? new WireMockNullLogger();
-        _settings.FileSystemHandler = settings.FileSystemHandler ?? new LocalFileSystemHandler();
+        this.settings.Logger = settings.Logger;
+        this.settings.FileSystemHandler = settings.FileSystemHandler;
 
-        _settings.Logger.Info("By Stef Heyenrath (https://github.com/WireMock-Net/WireMock.Net)");
-        _settings.Logger.Debug("Server settings {0}", JsonConvert.SerializeObject(settings, Formatting.Indented));
+        this.settings.Logger.Info("By Stef Heyenrath (https://github.com/WireMock-Net/WireMock.Net)");
+        this.settings.Logger.Debug("Server settings {0}", JsonConvert.SerializeObject(settings, Formatting.Indented));
 
-        HostUrlOptions urlOptions;
-        if (settings.Urls != null)
-        {
-            urlOptions = new HostUrlOptions
-            {
-                Urls = settings.Urls
-            };
-        }
-        else
-        {
-            if (settings.HostingScheme is not null)
-            {
-                urlOptions = new HostUrlOptions
-                {
-                    HostingScheme = settings.HostingScheme.Value,
-                    UseHttp2 = settings.UseHttp2,
-                    Port = settings.Port
-                };
-            }
-            else
-            {
-                urlOptions = new HostUrlOptions
-                {
-                    HostingScheme = settings.UseSSL == true ? HostingScheme.Https : HostingScheme.Http,
-                    UseHttp2 = settings.UseHttp2,
-                    Port = settings.Port
-                };
-            }
-        }
+        var urlOptions = settings.Urls is null
+                             ? new HostUrlOptions {
+                                 HostingScheme = settings.HostingScheme ?? (settings.UseSSL == true ? HostingScheme.Https : HostingScheme.Http),
+                                 UseHttp2 = settings.UseHttp2,
+                                 Port = settings.Port
+                             }
+                             : new HostUrlOptions { Urls = settings.Urls };
 
-        WireMockMiddlewareOptionsHelper.InitFromSettings(settings, _options);
+        WireMockMiddlewareOptionsHelper.InitFromSettings(settings, options);
 
-        _matcherMapper = new MatcherMapper(_settings);
-        _mappingConverter = new MappingConverter(_matcherMapper);
-        _mappingToFileSaver = new MappingToFileSaver(_settings, _mappingConverter);
-        _mappingBuilder = new MappingBuilder(
+        matcherMapper = new MatcherMapper(this.settings);
+        mappingConverter = new MappingConverter(matcherMapper);
+        mappingToFileSaver = new MappingToFileSaver(this.settings, mappingConverter);
+        mappingBuilder = new MappingBuilder(
             settings,
-            _options,
-            _mappingConverter,
-            _mappingToFileSaver,
-            _guidUtils,
-            _dateTimeUtils
+            options,
+            mappingConverter,
+            mappingToFileSaver,
+            guidUtils,
+            dateTimeUtils
         );
 
-#if USE_ASPNETCORE
-        _options.AdditionalServiceRegistration = _settings.AdditionalServiceRegistration;
-        _options.CorsPolicyOptions = _settings.CorsPolicyOptions;
-        _options.ClientCertificateMode = _settings.ClientCertificateMode;
-        _options.AcceptAnyClientCertificate = _settings.AcceptAnyClientCertificate;
+        options.AdditionalServiceRegistration = this.settings.AdditionalServiceRegistration;
+        options.CorsPolicyOptions = this.settings.CorsPolicyOptions;
+        options.ClientCertificateMode = this.settings.ClientCertificateMode;
+        options.AcceptAnyClientCertificate = this.settings.AcceptAnyClientCertificate;
 
-        _httpServer = new AspNetCoreSelfHost(_options, urlOptions);
-#else
-        _httpServer = new OwinSelfHost(_options, urlOptions);
-#endif
-        var startTask = _httpServer.StartAsync();
+        httpServer = new AspNetCoreSelfHost(options, urlOptions);
+        var startTask = httpServer.StartAsync();
 
-        using (var ctsStartTimeout = new CancellationTokenSource(settings.StartTimeout))
+        using var ctsStartTimeout = new CancellationTokenSource(settings.StartTimeout);
+
+        while (!httpServer.IsStarted)
         {
-            while (!_httpServer.IsStarted)
+            // Throw exception if service start fails
+            if (httpServer.RunningException != null)
+                throw new WireMockException($"Service start failed with error: {httpServer.RunningException.Message}", httpServer.RunningException);
+
+            if (ctsStartTimeout.IsCancellationRequested)
             {
-                // Throw exception if service start fails
-                if (_httpServer.RunningException != null)
-                {
-                    throw new WireMockException($"Service start failed with error: {_httpServer.RunningException.Message}", _httpServer.RunningException);
-                }
+                // In case of an aggregate exception, throw the exception.
+                if (startTask.Exception != null)
+                    throw new WireMockException($"Service start failed with error: {startTask.Exception.Message}", startTask.Exception);
 
-                if (ctsStartTimeout.IsCancellationRequested)
-                {
-                    // In case of an aggregate exception, throw the exception.
-                    if (startTask.Exception != null)
-                    {
-                        throw new WireMockException($"Service start failed with error: {startTask.Exception.Message}", startTask.Exception);
-                    }
-
-                    // Else throw TimeoutException
-                    throw new TimeoutException($"Service start timed out after {TimeSpan.FromMilliseconds(settings.StartTimeout)}");
-                }
-
-                ctsStartTimeout.Token.WaitHandle.WaitOne(ServerStartDelayInMs);
+                // Else throw TimeoutException
+                throw new TimeoutException($"Service start timed out after {TimeSpan.FromMilliseconds(settings.StartTimeout)}");
             }
 
-            Urls = _httpServer.Urls.ToArray();
-            Ports = _httpServer.Ports;
+            ctsStartTimeout.Token.WaitHandle.WaitOne(ServerStartDelayInMs);
         }
+
+        Urls = httpServer.Urls.ToArray();
+        Ports = httpServer.Ports;
 
         InitSettings(settings);
     }
@@ -430,7 +397,7 @@ public partial class WireMockServer : IWireMockServer
     [PublicAPI]
     public void Stop()
     {
-        var result = _httpServer?.StopAsync();
+        var result = httpServer?.StopAsync();
         result?.Wait(); // wait for stop to actually happen
     }
     #endregion
@@ -460,9 +427,9 @@ public partial class WireMockServer : IWireMockServer
     [PublicAPI]
     public void ResetMappings()
     {
-        foreach (var nonAdmin in _options.Mappings.ToArray().Where(m => !m.Value.IsAdminInterface))
+        foreach (var nonAdmin in options.Mappings.ToArray().Where(m => !m.Value.IsAdminInterface))
         {
-            _options.Mappings.TryRemove(nonAdmin.Key, out _);
+            options.Mappings.TryRemove(nonAdmin.Key, out _);
         }
     }
 
@@ -471,18 +438,18 @@ public partial class WireMockServer : IWireMockServer
     public bool DeleteMapping(Guid guid)
     {
         // Check a mapping exists with the same GUID, if so, remove it.
-        if (_options.Mappings.ContainsKey(guid))
+        if (options.Mappings.ContainsKey(guid))
         {
-            return _options.Mappings.TryRemove(guid, out _);
+            return options.Mappings.TryRemove(guid, out _);
         }
 
         return false;
     }
 
-    private bool DeleteMapping(string path)
+    bool DeleteMapping(string path)
     {
         // Check a mapping exists with the same path, if so, remove it.
-        var mapping = _options.Mappings.ToArray().FirstOrDefault(entry => string.Equals(entry.Value.Path, path, StringComparison.OrdinalIgnoreCase));
+        var mapping = options.Mappings.ToArray().FirstOrDefault(entry => string.Equals(entry.Value.Path, path, StringComparison.OrdinalIgnoreCase));
         return DeleteMapping(mapping.Key);
     }
 
@@ -490,15 +457,15 @@ public partial class WireMockServer : IWireMockServer
     [PublicAPI]
     public void AddGlobalProcessingDelay(TimeSpan delay)
     {
-        _options.RequestProcessingDelay = delay;
+        options.RequestProcessingDelay = delay;
     }
 
     /// <inheritdoc cref="IWireMockServer.AllowPartialMapping" />
     [PublicAPI]
     public void AllowPartialMapping(bool allow = true)
     {
-        _settings.Logger.Info("AllowPartialMapping is set to {0}", allow);
-        _options.AllowPartialMapping = allow;
+        settings.Logger.Info("AllowPartialMapping is set to {0}", allow);
+        options.AllowPartialMapping = allow;
     }
 
     /// <inheritdoc cref="IWireMockServer.SetAzureADAuthentication(string, string)" />
@@ -511,7 +478,7 @@ public partial class WireMockServer : IWireMockServer
 #if NETSTANDARD1_3
         throw new NotSupportedException("AzureADAuthentication is not supported for NETStandard 1.3");
 #else
-        _options.AuthenticationMatcher = new AzureADAuthenticationMatcher(tenant, audience);
+        options.AuthenticationMatcher = new AzureADAuthenticationMatcher(tenant, audience);
 #endif
     }
 
@@ -522,42 +489,42 @@ public partial class WireMockServer : IWireMockServer
         Guard.NotNull(username);
         Guard.NotNull(password);
 
-        _options.AuthenticationMatcher = new BasicAuthenticationMatcher(username, password);
+        options.AuthenticationMatcher = new BasicAuthenticationMatcher(username, password);
     }
 
     /// <inheritdoc cref="IWireMockServer.RemoveAuthentication" />
     [PublicAPI]
     public void RemoveAuthentication()
     {
-        _options.AuthenticationMatcher = null;
+        options.AuthenticationMatcher = null;
     }
 
     /// <inheritdoc cref="IWireMockServer.SetMaxRequestLogCount" />
     [PublicAPI]
     public void SetMaxRequestLogCount(int? maxRequestLogCount)
     {
-        _options.MaxRequestLogCount = maxRequestLogCount;
+        options.MaxRequestLogCount = maxRequestLogCount;
     }
 
     /// <inheritdoc cref="IWireMockServer.SetRequestLogExpirationDuration" />
     [PublicAPI]
     public void SetRequestLogExpirationDuration(int? requestLogExpirationDuration)
     {
-        _options.RequestLogExpirationDuration = requestLogExpirationDuration;
+        options.RequestLogExpirationDuration = requestLogExpirationDuration;
     }
 
     /// <inheritdoc cref="IWireMockServer.ResetScenarios" />
     [PublicAPI]
     public void ResetScenarios()
     {
-        _options.Scenarios.Clear();
+        options.Scenarios.Clear();
     }
 
     /// <inheritdoc />
     [PublicAPI]
     public bool ResetScenario(string name)
     {
-        return _options.Scenarios.ContainsKey(name) && _options.Scenarios.TryRemove(name, out _);
+        return options.Scenarios.ContainsKey(name) && options.Scenarios.TryRemove(name, out _);
     }
 
     /// <inheritdoc cref="IWireMockServer.WithMapping(MappingModel[])" />
@@ -597,9 +564,9 @@ public partial class WireMockServer : IWireMockServer
         Guard.NotNullOrWhiteSpace(id);
         Guard.NotNullOrWhiteSpace(protoDefinition);
 
-        _settings.ProtoDefinitions ??= new Dictionary<string, string>();
+        settings.ProtoDefinitions ??= new Dictionary<string, string>();
 
-        _settings.ProtoDefinitions[id] = protoDefinition;
+        settings.ProtoDefinitions[id] = protoDefinition;
 
         return this;
     }
@@ -608,20 +575,20 @@ public partial class WireMockServer : IWireMockServer
     /// Add a GraphQL Schema at server-level.
     /// </summary>
     /// <param name="id">Unique identifier for the GraphQL Schema.</param>
-    /// <param name="graphQLSchema">The GraphQL Schema as string or StringPattern.</param>
+    /// <param name="graphQlSchema">The GraphQL Schema as string or StringPattern.</param>
     /// <param name="customScalars">A dictionary defining the custom scalars used in this schema. [optional]</param>
     /// <returns><see cref="WireMockServer"/></returns>
     [PublicAPI]
-    public WireMockServer AddGraphQLSchema(string id, AnyOf<string, StringPattern> graphQLSchema, Dictionary<string, Type>? customScalars = null)
+    public WireMockServer AddGraphQlSchema(string id, AnyOf<string, StringPattern> graphQlSchema, Dictionary<string, Type>? customScalars = null)
     {
         Guard.NotNullOrWhiteSpace(id);
-        Guard.NotNullOrWhiteSpace(graphQLSchema);
+        Guard.NotNullOrWhiteSpace(graphQlSchema);
 
-        _settings.GraphQLSchemas ??= new Dictionary<string, GraphQLSchemaDetails>();
+        settings.GraphQLSchemas ??= new Dictionary<string, GraphQLSchemaDetails>();
 
-        _settings.GraphQLSchemas[id] = new GraphQLSchemaDetails
+        settings.GraphQLSchemas[id] = new GraphQLSchemaDetails
         {
-            SchemaAsString = graphQLSchema,
+            SchemaAsString = graphQlSchema,
             CustomScalars = customScalars
         };
 
@@ -632,68 +599,50 @@ public partial class WireMockServer : IWireMockServer
     [PublicAPI]
     public string? MappingToCSharpCode(Guid guid, MappingConverterType converterType)
     {
-        return _mappingBuilder.ToCSharpCode(guid, converterType);
+        return mappingBuilder.ToCSharpCode(guid, converterType);
     }
 
     /// <inheritdoc />
     [PublicAPI]
     public string MappingsToCSharpCode(MappingConverterType converterType)
     {
-        return _mappingBuilder.ToCSharpCode(converterType);
+        return mappingBuilder.ToCSharpCode(converterType);
     }
 
-    private void InitSettings(WireMockServerSettings settings)
+    void InitSettings(WireMockServerSettings settings)
     {
         if (settings.AllowBodyForAllHttpMethods == true)
-        {
-            _settings.Logger.Info("AllowBodyForAllHttpMethods is set to True");
-        }
+            this.settings.Logger.Info("AllowBodyForAllHttpMethods is set to True");
 
         if (settings.AllowOnlyDefinedHttpStatusCodeInResponse == true)
-        {
-            _settings.Logger.Info("AllowOnlyDefinedHttpStatusCodeInResponse is set to True");
-        }
+            this.settings.Logger.Info("AllowOnlyDefinedHttpStatusCodeInResponse is set to True");
 
         if (settings.AllowPartialMapping == true)
-        {
             AllowPartialMapping();
-        }
 
         if (settings.StartAdminInterface == true)
         {
             if (!string.IsNullOrEmpty(settings.AdminUsername) && !string.IsNullOrEmpty(settings.AdminPassword))
-            {
                 SetBasicAuthentication(settings.AdminUsername!, settings.AdminPassword!);
-            }
 
             if (!string.IsNullOrEmpty(settings.AdminAzureADTenant) && !string.IsNullOrEmpty(settings.AdminAzureADAudience))
-            {
                 SetAzureADAuthentication(settings.AdminAzureADTenant!, settings.AdminAzureADAudience!);
-            }
 
             InitAdmin();
         }
 
         if (settings.ReadStaticMappings == true)
-        {
             ReadStaticMappings();
-        }
 
         if (settings.WatchStaticMappings == true)
-        {
             WatchStaticMappings();
-        }
 
         InitProxyAndRecord(settings);
 
         if (settings.RequestLogExpirationDuration != null)
-        {
             SetRequestLogExpirationDuration(settings.RequestLogExpirationDuration);
-        }
 
         if (settings.MaxRequestLogCount != null)
-        {
             SetMaxRequestLogCount(settings.MaxRequestLogCount);
-        }
     }
 }

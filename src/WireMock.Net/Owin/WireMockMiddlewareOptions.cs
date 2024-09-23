@@ -19,7 +19,7 @@ namespace WireMock.Owin;
 
 internal class WireMockMiddlewareOptions : IWireMockMiddlewareOptions
 {
-    public IWireMockLogger Logger { get; set; }
+    public IWireMockLogger Logger { get; set; } = WireMockNullLogger.Instance;
 
     public TimeSpan? RequestProcessingDelay { get; set; }
 
@@ -27,7 +27,7 @@ internal class WireMockMiddlewareOptions : IWireMockMiddlewareOptions
 
     public bool? AllowPartialMapping { get; set; }
 
-    public ConcurrentDictionary<Guid, IMapping> Mappings { get; } = new ConcurrentDictionary<Guid, IMapping>();
+    public ConcurrentDictionary<Guid, IMapping> Mappings { get; } = new();
 
     public ConcurrentDictionary<string, ScenarioState> Scenarios { get; } = new(StringComparer.OrdinalIgnoreCase);
 

@@ -7,11 +7,9 @@
         <PackageTags>wiremock;openapi;OAS;raml;converter;parser;openapiparser</PackageTags>
         <ProjectGuid>{D3804228-91F4-4502-9595-39584E5AADAD}</ProjectGuid>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
-        <CodeAnalysisRuleSet>../WireMock.Net/WireMock.Net.ruleset</CodeAnalysisRuleSet>
-        <SignAssembly>true</SignAssembly>
-        <AssemblyOriginatorKeyFile>../WireMock.Net/WireMock.Net.snk</AssemblyOriginatorKeyFile>
-        <PublicSign Condition=" '$(OS)' != 'Windows_NT' ">true</PublicSign>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <LangVersion>preview</LangVersion>
+        <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">

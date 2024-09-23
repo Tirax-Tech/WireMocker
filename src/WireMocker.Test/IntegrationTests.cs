@@ -4,10 +4,13 @@ using System.Reactive.Disposables;
 using System.Text;
 using FluentAssertions;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Tirax.Test.WireMocker.Helpers;
+using WireMock.Net.Xunit;
 using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Server;
@@ -21,44 +24,47 @@ public sealed class IntegrationTests(ITestOutputHelper output)
     [Fact]
     public async Task Test1()
     {
-        using var _ = DebugTo.XUnit(output);
-
         // Given
-        using var server = await TestServer.New(5000).Run();
+        using var server = await TestServer.New().Run();
+        var port = server.GetPort();
+        output.WriteLine($"Server running on port {port}");
 
         var settings = new WireMockServerSettings {
-            Port = 9091,
-            StartAdminInterface = true,
-            Logger = new WireMockDebugLogger()
+            Port = 0,
+            Logger = new TestOutputHelperWireMockLogger(output)
         };
         using var mockServer = WireMockServer.Start(settings);
-        mockServer.Given(Request.Create().WithPath("/").UsingPatch())
-                  .RespondWith(Response.Create().WithProxy("http://localhost:5000/key"));
+        mockServer.Given(Request.Create().WithPath("/zipcode").UsingPatch())
+                  .RespondWith(Response.Create().WithProxy($"http://localhost:{port}"));
 
-        using var client = new HttpClient { BaseAddress = new Uri("http://localhost:9091") };
-        using var content = new ByteArrayContent("0x11"u8.ToArray());
+        using var client = new HttpClient();
+        client.BaseAddress = new Uri(mockServer.Urls[0]);
+
+        using var content = new ByteArrayContent("0123"u8.ToArray());
         content.Headers.ContentType = new MediaTypeHeaderValue("text/plain");
 
         // When
-        var response = await client.PatchAsync("/", content);
+        var response = await client.PatchAsync("/zipcode", content);
 
         // Then
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Content.Headers.GetValues("Content-Type").Should().BeEquivalentTo("text/plain; charset=utf-8");
         var result = await response.Content.ReadAsStringAsync();
-        result.Should().Be("0x11");
+        result.Should().Be("0123");
     }
 }
 
-sealed class TestServer(WebApplication app)
+sealed class TestServer(WebApplication app) : IDisposable
 {
-    public static TestServer New(int port) {
-        var builder = WebApplication.CreateBuilder(new WebApplicationOptions {
-            Args = [$"--urls=http://localhost:{port}"]
-        });
+    IDisposable disposable = Disposable.Empty;
+
+    public static TestServer New() {
+        var builder = WebApplication.CreateBuilder();
+        builder.WebHost.ConfigureKestrel(opts => opts.ListenAnyIP(0));
 
         var app = builder.Build();
 
-        app.MapPatch("/key", async (HttpRequest req) => {
+        app.MapPatch("/zipcode", async (HttpRequest req) => {
             var memory = new MemoryStream();
             await req.Body.CopyToAsync(memory);
             var content = Encoding.UTF8.GetString(memory.ToArray());
@@ -67,12 +73,22 @@ sealed class TestServer(WebApplication app)
         return new(app);
     }
 
-    public async ValueTask<IDisposable> Run() {
+    public int GetPort()
+        => app.Services.GetRequiredService<IServer>().Features.Get<IServerAddressesFeature>()!.Addresses
+              .Select(x => new Uri(x).Port)
+              .First();
+
+    public async ValueTask<TestServer> Run() {
         var started = new TaskCompletionSource();
         var host = app.Services.GetRequiredService<IHostApplicationLifetime>();
         host.ApplicationStarted.Register(() => started.SetResult());
         _ = Task.Run(() => app.RunAsync());
         await started.Task;
-        return Disposable.Create(host, h => h.StopApplication());
+        disposable = Disposable.Create(host, h => h.StopApplication());
+        return this;
+    }
+
+    public void Dispose() {
+        disposable.Dispose();
     }
 }

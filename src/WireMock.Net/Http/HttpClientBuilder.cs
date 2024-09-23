@@ -11,27 +11,13 @@ internal static class HttpClientBuilder
 {
     public static HttpClient Build(HttpClientSettings settings)
     {
-#if NETSTANDARD || NETCOREAPP3_1 || NET5_0_OR_GREATER
         var handler = new HttpClientHandler
         {
             CheckCertificateRevocationList = false,
-            SslProtocols = System.Security.Authentication.SslProtocols.Tls12 | System.Security.Authentication.SslProtocols.Tls11 | System.Security.Authentication.SslProtocols.Tls,
-            ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true,
+            SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+            ServerCertificateCustomValidationCallback = (_, _, _, _) => true,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
         };
-#elif NET46
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => true,
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-        };
-#else
-        var handler = new WebRequestHandler
-        {
-            ServerCertificateValidationCallback = (sender, certificate, chain, errors) => true,
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-        };
-#endif
 
         if (!string.IsNullOrEmpty(settings.ClientX509Certificate2ThumbprintOrSubjectName))
         {
@@ -57,15 +43,11 @@ internal static class HttpClientBuilder
 
             handler.Proxy = new WebProxy(settings.WebProxySettings.Address);
             if (settings.WebProxySettings.UserName != null && settings.WebProxySettings.Password != null)
-            {
                 handler.Proxy.Credentials = new NetworkCredential(settings.WebProxySettings.UserName, settings.WebProxySettings.Password);
-            }
         }
 
-#if !NETSTANDARD1_3
-        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | SecurityProtocolType.Tls11 | SecurityProtocolType.Tls;
-        ServicePointManager.ServerCertificateValidationCallback = (message, cert, chain, errors) => true;
-#endif
+        ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+        ServicePointManager.ServerCertificateValidationCallback = (_, _, _, _) => true;
 
         return HttpClientFactory2.Create(handler);
     }

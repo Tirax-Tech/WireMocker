@@ -18,11 +18,11 @@ public partial class WireMockServer
     /// <summary>
     /// HTTP Log events.
     /// </summary>
-    public IObservable<HttpEvents> HttpEvents => _options.HttpEvents;
+    public IObservable<HttpEvents> HttpEvents => options.HttpEvents;
 
     /// <inheritdoc cref="IWireMockServer.LogEntries" />
     [PublicAPI]
-    public IEnumerable<ILogEntry> LogEntries => new ReadOnlyCollection<LogEntry>(_options.LogEntries.ToList());
+    public IEnumerable<ILogEntry> LogEntries => new ReadOnlyCollection<LogEntry>(options.LogEntries.ToList());
 
     /// <summary>
     /// The search log-entries based on matchers.
@@ -36,7 +36,7 @@ public partial class WireMockServer
 
         var results = new Dictionary<LogEntry, RequestMatchResult>();
 
-        foreach (var log in _options.LogEntries.ToList())
+        foreach (var log in options.LogEntries.ToList())
         {
             var requestMatchResult = new RequestMatchResult();
             foreach (var matcher in matchers)
@@ -57,7 +57,7 @@ public partial class WireMockServer
     [PublicAPI]
     public void ResetLogEntries()
     {
-        _options.LogEntries.Clear();
+        options.LogEntries.Clear();
     }
 
     /// <inheritdoc cref="IWireMockServer.DeleteLogEntry" />
@@ -65,10 +65,10 @@ public partial class WireMockServer
     public bool DeleteLogEntry(Guid guid)
     {
         // Check a LogEntry exists with the same GUID, if so, remove it.
-        var existing = _options.LogEntries.ToList().FirstOrDefault(m => m.Guid == guid);
+        var existing = options.LogEntries.ToList().FirstOrDefault(m => m.Guid == guid);
         if (existing != null)
         {
-            _options.LogEntries.Remove(existing);
+            options.LogEntries.Remove(existing);
             return true;
         }
 
