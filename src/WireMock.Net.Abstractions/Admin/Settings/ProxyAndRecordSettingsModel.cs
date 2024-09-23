@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 namespace WireMock.Admin.Settings;
 
 [FluentBuilder.AutoGenerateBuilder]
@@ -9,12 +10,12 @@ public class ProxyAndRecordSettingsModel
     /// The clientCertificate thumbprint or subject name fragment to use.
     /// Example thumbprint : "D2DBF135A8D06ACCD0E1FAD9BFB28678DF7A9818". Example subject name: "www.google.com""
     /// </summary>
-    public string ClientX509Certificate2ThumbprintOrSubjectName { get; set; }
+    public string ClientX509Certificate2ThumbprintOrSubjectName { get; set; } = default!;
 
     /// <summary>
     /// Defines the WebProxySettings.
     /// </summary>
-    public WebProxySettingsModel WebProxySettings { get; set; }
+    public WebProxySettingsModel WebProxySettings { get; set; } = default!;
 
     /// <summary>
     /// Proxy requests should follow redirection (30x).
@@ -24,7 +25,7 @@ public class ProxyAndRecordSettingsModel
     /// <summary>
     /// The URL to proxy.
     /// </summary>
-    public string Url { get; set; }
+    public string Url { get; set; } = default!;
 
     /// <summary>
     /// Save the mapping for each request/response to the internal Mappings.
@@ -45,17 +46,12 @@ public class ProxyAndRecordSettingsModel
     /// <summary>
     /// Defines a list from headers which will be excluded from the saved mappings.
     /// </summary>
-    public string[] ExcludedHeaders { get; set; }
+    public string[] ExcludedHeaders { get; set; } = default!;
 
     /// <summary>
     /// Defines a list of cookies which will be excluded from the saved mappings.
     /// </summary>
-    public string[] ExcludedCookies { get; set; }
-
-    /// <summary>
-    /// Prefer the Proxy Mapping over the saved Mapping (in case SaveMapping is set to <c>true</c>).
-    /// </summary>
-    // public bool PreferProxyMapping { get; set; }
+    public string[] ExcludedCookies { get; set; } = default!;
 
     /// <summary>
     /// When SaveMapping is set to <c>true</c>, this setting can be used to control the behavior of the generated request matchers for the new mapping.
@@ -74,7 +70,7 @@ public class ProxyAndRecordSettingsModel
     /// <summary>
     /// Set prefix for saved mapping file.
     /// </summary>
-    public string PrefixForSavedMappingFile { get; set; }
+    public string PrefixForSavedMappingFile { get; set; } = default!;
 
     /// <summary>
     /// Defines the Replace Settings.
@@ -84,5 +80,5 @@ public class ProxyAndRecordSettingsModel
     /// <summary>
     /// Proxy all Api calls, irrespective of any condition
     /// </summary>
-    public bool ProxyAll { get; set; } = false;
+    public bool ProxyAll { get; set; }
 }

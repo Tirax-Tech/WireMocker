@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
 using WireMock.Admin.Mappings;
@@ -15,7 +16,7 @@ public class LogRequestModel
     /// <summary>
     /// The Client IP Address.
     /// </summary>
-    public string ClientIP { get; set; }
+    public required string ClientIP { get; set; }
 
     /// <summary>
     /// The DateTime.
@@ -25,22 +26,22 @@ public class LogRequestModel
     /// <summary>
     /// The Path.
     /// </summary>
-    public string Path { get; set; }
+    public required string Path { get; set; }
 
     /// <summary>
     /// The Absolute Path.
     /// </summary>
-    public string AbsolutePath { get; set; }
+    public required string AbsolutePath { get; set; }
 
     /// <summary>
     /// Gets the url (relative).
     /// </summary>
-    public string Url { get; set; }
+    public required string Url { get; set; }
 
     /// <summary>
     /// The absolute URL.
     /// </summary>
-    public string AbsoluteUrl { get; set; }
+    public required string AbsoluteUrl { get; set; }
 
     /// <summary>
     /// The ProxyUrl (if a proxy is used).
@@ -55,7 +56,7 @@ public class LogRequestModel
     /// <summary>
     /// The method.
     /// </summary>
-    public string Method { get; set; }
+    public required string Method { get; set; }
 
     /// <summary>
     /// The HTTP Version.
@@ -94,7 +95,7 @@ public class LogRequestModel
 
     /// <summary>
     /// The DetectedBodyType, valid values are:
-    /// 
+    ///
     /// - None
     /// - String
     /// - Json
@@ -104,7 +105,7 @@ public class LogRequestModel
 
     /// <summary>
     /// The DetectedBodyTypeFromContentType, valid values are:
-    /// 
+    ///
     /// - None
     /// - String
     /// - Json

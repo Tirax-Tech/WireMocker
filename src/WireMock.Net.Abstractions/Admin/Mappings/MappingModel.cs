@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using WireMock.Models;
 
@@ -60,12 +61,12 @@ public class MappingModel
     /// <summary>
     /// The request model.
     /// </summary>
-    public RequestModel Request { get; set; }
+    public RequestModel Request { get; set; } = default!;
 
     /// <summary>
     /// The response model.
     /// </summary>
-    public ResponseModel Response { get; set; }
+    public ResponseModel Response { get; set; } = default!;
 
     /// <summary>
     /// Saves this mapping as a static mapping file.
@@ -86,7 +87,7 @@ public class MappingModel
     /// Fire and forget for webhooks.
     /// </summary>
     public bool? UseWebhooksFireAndForget { get; set; }
-    
+
     /// <summary>
     /// Data Object which can be used when WithTransformer is used.
     /// e.g. lookup an path in this object using
@@ -96,7 +97,7 @@ public class MappingModel
     /// </summary>
     public object? Data { get; set; }
 
-    /// <summary> 
+    /// <summary>
     /// The probability when this request should be matched. Value is between 0 and 1. [Optional]
     /// </summary>
     public double? Probability { get; set; }

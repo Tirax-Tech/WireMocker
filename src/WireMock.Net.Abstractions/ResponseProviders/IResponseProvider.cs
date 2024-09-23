@@ -2,6 +2,8 @@
 
 // This source file is based on mock4net by Alexandre Victoor which is licensed under the Apache 2.0 License.
 // For more details see 'mock4net/LICENSE.txt' and 'mock4net/readme.md' in this project root.
+
+// Modified by Ruxo Zheng, 2024.
 using System.Threading.Tasks;
 using WireMock.Settings;
 
@@ -18,7 +20,7 @@ public interface IResponseProvider
     /// <param name="mapping">The used mapping.</param>
     /// <param name="requestMessage">The request.</param>
     /// <param name="settings">The WireMockServerSettings.</param>
-    /// <returns>The <see cref="ResponseMessage"/> including a new (optional) <see cref="IMapping"/>.</returns>
+    /// <returns>The ResponseMessage including a new (optional) <see cref="IMapping"/>.</returns>
     Task<(IResponseMessage Message, IMapping? Mapping)> ProvideResponseAsync(IMapping mapping, IRequestMessage requestMessage,
                                                                              WireMockServerSettings settings);
 }

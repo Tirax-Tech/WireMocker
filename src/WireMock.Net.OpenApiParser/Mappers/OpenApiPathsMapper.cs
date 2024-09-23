@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -340,15 +341,8 @@ internal class OpenApiPathsMapper(WireMockOpenApiParserSettings settings)
         };
     }
 
-    string GetExampleValueAsStringForSchemaType(OpenApiSchema? schema)
-    {
+    string GetExampleValueAsStringForSchemaType(OpenApiSchema? schema) {
         var value = exampleValueGenerator.GetExampleValue(schema);
-
-        return value switch
-        {
-            string valueAsString => valueAsString,
-
-            _ => value.ToString()
-        };
+        return value as string ?? (value.ToString() ?? string.Empty);
     }
 }

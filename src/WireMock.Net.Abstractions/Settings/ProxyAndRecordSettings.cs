@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using JetBrains.Annotations;
 
 namespace WireMock.Settings;
@@ -81,12 +82,6 @@ public class ProxyAndRecordSettings : HttpClientSettings
     /// </summary>
     [PublicAPI]
     public ProxyUrlReplaceSettings? ReplaceSettings { get; set; }
-
-    /// <summary>
-    /// Prefer the Proxy Mapping over the saved Mapping (in case SaveMapping is set to <c>true</c>).
-    /// </summary>
-    //[PublicAPI]
-    //public bool PreferProxyMapping { get; set; }
 
     /// <summary>
     /// When SaveMapping is set to <c>true</c>, this setting can be used to control the behavior of the generated request matchers for the new mapping.

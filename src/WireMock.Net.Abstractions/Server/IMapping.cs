@@ -1,17 +1,21 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using WireMock.Matchers.Request;
 using WireMock.Models;
 using WireMock.ResponseProviders;
 using WireMock.Settings;
+// ReSharper disable CheckNamespace
 
 namespace WireMock;
 
 /// <summary>
 /// The IMapping interface.
 /// </summary>
+[PublicAPI]
 public interface IMapping
 {
     /// <summary>
@@ -133,7 +137,7 @@ public interface IMapping
     /// </summary>
     object? Data { get; }
 
-    /// <summary> 
+    /// <summary>
     /// The probability when this request should be matched. Value is between 0 and 1. [Optional]
     /// </summary>
     double? Probability { get; }
@@ -147,7 +151,7 @@ public interface IMapping
     /// ProvideResponseAsync
     /// </summary>
     /// <param name="requestMessage">The request message.</param>
-    /// <returns>The <see cref="ResponseMessage"/> including a new (optional) <see cref="IMapping"/>.</returns>
+    /// <returns>The ResponseMessage including a new (optional) <see cref="IMapping"/>.</returns>
     Task<(IResponseMessage Message, IMapping? Mapping)> ProvideResponseAsync(IRequestMessage requestMessage);
 
     /// <summary>
@@ -188,8 +192,8 @@ public interface IMapping
     useWebhooksFireAndForget">Use Fire and Forget for the defined webhook(s). [Optional]
     timeSettings">The TimeSettings. [Optional]
     data">The data object. [Optional]
-    
- 
+
+
     string? executionConditionState,
     string? nextState,
     int? stateTimes,
