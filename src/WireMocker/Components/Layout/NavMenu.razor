@@ -1,4 +1,5 @@
-﻿@inherits ReactiveInjectableComponentBase<MainLayoutViewModel>
+﻿@using global::RZ.Foundation
+@inherits ReactiveInjectableComponentBase<MainLayoutViewModel>
 
 <MudDrawer Elevation="0" @bind-Open="ViewModel!.IsDrawerOpen">
     <MudNavMenu>
@@ -13,6 +14,9 @@
         <MudNavLink Href="/routes" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.AddChart">Route Plan</MudNavLink>
         <MudNavLink Href="/data" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.DiscFull">Load/Save</MudNavLink>
     </MudNavMenu>
+
+    <MudSpacer />
+    <MudText Typo="Typo.subtitle2" Style="text-align: right">Version: @AppVersion.Current</MudText>
 </MudDrawer>
 
 @code {
