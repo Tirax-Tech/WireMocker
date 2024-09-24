@@ -1,11 +1,8 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System.Threading.Tasks;
-#if !USE_ASPNETCORE
-using IResponse = Microsoft.Owin.IOwinResponse;
-#else
-using IResponse = Microsoft.AspNetCore.Http.HttpResponse;
-#endif
+using Microsoft.AspNetCore.Http;
 
 namespace WireMock.Owin.Mappers;
 
@@ -19,5 +16,5 @@ internal interface IOwinResponseMapper
     /// </summary>
     /// <param name="responseMessage">The ResponseMessage</param>
     /// <param name="response">The OwinResponse/HttpResponse</param>
-    Task MapAsync(IResponseMessage? responseMessage, IResponse response);
+    Task MapAsync(IResponseMessage responseMessage, HttpResponse response);
 }

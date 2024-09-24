@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
-using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -54,11 +53,8 @@ internal class OwinResponseMapper : IOwinResponseMapper
         => this.options = Guard.NotNull(options);
 
     /// <inheritdoc />
-    public async Task MapAsync(IResponseMessage? responseMessage, IResponse response)
+    public async Task MapAsync(IResponseMessage responseMessage, IResponse response)
     {
-        if (responseMessage == null)
-            return;
-
         byte[]? bytes;
         switch (responseMessage.FaultType)
         {
@@ -77,16 +73,7 @@ internal class OwinResponseMapper : IOwinResponseMapper
                 break;
         }
 
-        var statusCodeType = responseMessage.StatusCode?.GetType();
-        if (statusCodeType != null)
-            if (statusCodeType == typeof(int) || statusCodeType == typeof(int?) || statusCodeType.GetTypeInfo().IsEnum)
-                response.StatusCode = MapStatusCode((int)responseMessage.StatusCode!);
-            else if (statusCodeType == typeof(string))
-            {
-                // Note: this case will also match on null
-                int.TryParse(responseMessage.StatusCode as string, out var statusCodeTypeAsInt);
-                response.StatusCode = MapStatusCode(statusCodeTypeAsInt);
-            }
+        response.StatusCode = (int) MapStatusCode(responseMessage.StatusCode);
 
         SetResponseHeaders(responseMessage, bytes, response);
 
@@ -103,9 +90,9 @@ internal class OwinResponseMapper : IOwinResponseMapper
         SetResponseTrailingHeaders(responseMessage, response);
     }
 
-    int MapStatusCode(int code)
+    HttpStatusCode MapStatusCode(HttpStatusCode code)
         => options.AllowOnlyDefinedHttpStatusCodeInResponse == true && !Enum.IsDefined(typeof(HttpStatusCode), code)
-               ? (int)HttpStatusCode.OK
+               ? HttpStatusCode.OK
                : code;
 
     bool IsFault(IResponseMessage responseMessage)
@@ -151,13 +138,11 @@ internal class OwinResponseMapper : IOwinResponseMapper
         AppendResponseHeader(
                 response,
                 HttpKnownHeaderNames.Date,
-                [
-                    DateTime.UtcNow.ToString(CultureInfo.InvariantCulture.DateTimeFormat.RFC1123Pattern, CultureInfo.InvariantCulture)
-                ]
+                [DateTime.UtcNow.ToString(CultureInfo.InvariantCulture.DateTimeFormat.RFC1123Pattern, CultureInfo.InvariantCulture)]
             );
 
         // Set other headers
-        foreach (var item in responseMessage.Headers!)
+        foreach (var item in responseMessage.Headers)
         {
             var headerName = item.Key;
             var value = item.Value;

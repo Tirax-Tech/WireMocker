@@ -2,6 +2,8 @@
 
 // This source file is based on mock4net by Alexandre Victoor which is licensed under the Apache 2.0 License.
 // For more details see 'mock4net/LICENSE.txt' and 'mock4net/readme.md' in this project root.
+
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Net;
 using System.Threading;
@@ -25,9 +27,9 @@ namespace WireMock.ResponseBuilders;
 /// </summary>
 public partial class Response : IResponseBuilder
 {
-    private static readonly ThreadLocal<Random> Random = new(() => new Random(DateTime.UtcNow.Millisecond));
+    static readonly ThreadLocal<Random> Random = new(() => new Random(DateTime.UtcNow.Millisecond));
 
-    private TimeSpan? _delay;
+    TimeSpan? delay;
 
     /// <summary>
     /// The link back to the mapping.
@@ -52,14 +54,12 @@ public partial class Response : IResponseBuilder
         get
         {
             if (MinimumDelayMilliseconds != null && MaximumDelayMilliseconds != null)
-            {
                 return TimeSpan.FromMilliseconds(Random.Value!.Next(MinimumDelayMilliseconds.Value, MaximumDelayMilliseconds.Value));
-            }
 
-            return _delay;
+            return delay;
         }
 
-        private set => _delay = value;
+        private set => delay = value;
     }
 
     /// <summary>
@@ -116,7 +116,7 @@ public partial class Response : IResponseBuilder
     /// Initializes a new instance of the <see cref="Response"/> class.
     /// </summary>
     /// <param name="responseMessage">The response.</param>
-    private Response(ResponseMessage responseMessage)
+    Response(ResponseMessage responseMessage)
     {
         ResponseMessage = responseMessage;
     }
@@ -125,7 +125,7 @@ public partial class Response : IResponseBuilder
     [PublicAPI]
     public IResponseBuilder WithStatusCode(int code)
     {
-        ResponseMessage.StatusCode = code;
+        ResponseMessage.StatusCode = (HttpStatusCode) code;
         return this;
     }
 
@@ -133,7 +133,7 @@ public partial class Response : IResponseBuilder
     [PublicAPI]
     public IResponseBuilder WithStatusCode(string code)
     {
-        ResponseMessage.StatusCode = code;
+        ResponseMessage.StatusCode = int.TryParse(code, out var n)? (HttpStatusCode) n : Enum.Parse<HttpStatusCode>(code);
         return this;
     }
 
@@ -251,37 +251,17 @@ public partial class Response : IResponseBuilder
 
         ResponseMessage responseMessage;
         if (!WithCallbackUsed)
-        {
             responseMessage = ResponseMessage;
-        }
         else
         {
-            if (Callback != null)
-            {
-                responseMessage = Callback(requestMessage);
-            }
-            else
-            {
-                responseMessage = await CallbackAsync!(requestMessage).ConfigureAwait(false);
-            }
+            responseMessage = Callback != null ? Callback(requestMessage) : await CallbackAsync!(requestMessage).ConfigureAwait(false);
 
-            // Copy StatusCode from ResponseMessage (if defined)
-            if (ResponseMessage.StatusCode != null)
-            {
-                responseMessage.StatusCode = ResponseMessage.StatusCode;
-            }
-
-            // Copy Headers from ResponseMessage (if defined)
-            if (ResponseMessage.Headers?.Count > 0)
-            {
-                responseMessage.Headers = ResponseMessage.Headers;
-            }
+            responseMessage.StatusCode = ResponseMessage.StatusCode;
+            responseMessage.Headers = ResponseMessage.Headers;
 
             // Copy TrailingHeaders from ResponseMessage (if defined)
             if (ResponseMessage.TrailingHeaders?.Count > 0)
-            {
                 responseMessage.TrailingHeaders = ResponseMessage.TrailingHeaders;
-            }
         }
 
         if (UseTransformer)
@@ -294,9 +274,7 @@ public partial class Response : IResponseBuilder
                 {
                     var decoded = await protoBufMatcher.DecodeAsync(request.BodyData?.BodyAsBytes).ConfigureAwait(false);
                     if (decoded != null)
-                    {
                         request.BodyAsJson = JsonUtils.ConvertValueToJToken(decoded);
-                    }
                 }
             }
 
@@ -322,9 +300,7 @@ public partial class Response : IResponseBuilder
         }
 
         if (!UseTransformer && ResponseMessage.BodyData?.BodyAsFileIsCached == true && responseMessage.BodyData?.BodyAsFile is not null)
-        {
             ResponseMessage.BodyData.BodyAsBytes = settings.FileSystemHandler.ReadResponseBodyAsFile(responseMessage.BodyData.BodyAsFile);
-        }
 
         return (responseMessage, null);
     }

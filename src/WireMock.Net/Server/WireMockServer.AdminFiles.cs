@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -11,35 +12,30 @@ namespace WireMock.Server;
 
 public partial class WireMockServer
 {
-    private static readonly Encoding[] FileBodyIsString = { Encoding.UTF8, Encoding.ASCII };
+    static readonly Encoding[] FileBodyIsString = [Encoding.UTF8, Encoding.ASCII];
 
     #region Files/{filename}
-    private IResponseMessage FilePost(IRequestMessage requestMessage)
+
+    ResponseMessage FilePost(IRequestMessage requestMessage)
     {
         if (requestMessage.BodyAsBytes is null)
-        {
             return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, "Body is null");
-        }
 
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
         var mappingFolder = settings.FileSystemHandler.GetMappingFolder();
         if (!settings.FileSystemHandler.FolderExists(mappingFolder))
-        {
             settings.FileSystemHandler.CreateFolder(mappingFolder);
-        }
 
         settings.FileSystemHandler.WriteFile(filename, requestMessage.BodyAsBytes);
 
         return ResponseMessageBuilder.Create(HttpStatusCode.OK, "File created");
     }
 
-    private IResponseMessage FilePut(IRequestMessage requestMessage)
+    ResponseMessage FilePut(IRequestMessage requestMessage)
     {
         if (requestMessage.BodyAsBytes is null)
-        {
             return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, "Body is null");
-        }
 
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
@@ -54,7 +50,7 @@ public partial class WireMockServer
         return ResponseMessageBuilder.Create(HttpStatusCode.OK, "File updated");
     }
 
-    private IResponseMessage FileGet(IRequestMessage requestMessage)
+    ResponseMessage FileGet(IRequestMessage requestMessage)
     {
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
@@ -67,7 +63,7 @@ public partial class WireMockServer
         var bytes = settings.FileSystemHandler.ReadFile(filename);
         var response = new ResponseMessage
         {
-            StatusCode = 200,
+            StatusCode = HttpStatusCode.OK,
             BodyData = new BodyData
             {
                 BodyAsBytes = bytes,
@@ -90,7 +86,7 @@ public partial class WireMockServer
     /// Note: Response is returned with no body as a head request doesn't accept a body, only the status code.
     /// </summary>
     /// <param name="requestMessage">The request message.</param>
-    private IResponseMessage FileHead(IRequestMessage requestMessage)
+    ResponseMessage FileHead(IRequestMessage requestMessage)
     {
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
@@ -103,7 +99,7 @@ public partial class WireMockServer
         return ResponseMessageBuilder.Create(HttpStatusCode.NoContent);
     }
 
-    private IResponseMessage FileDelete(IRequestMessage requestMessage)
+    ResponseMessage FileDelete(IRequestMessage requestMessage)
     {
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
@@ -117,9 +113,8 @@ public partial class WireMockServer
         return ResponseMessageBuilder.Create(HttpStatusCode.OK, "File deleted.");
     }
 
-    private string GetFileNameFromRequestMessage(IRequestMessage requestMessage)
-    {
-        return Path.GetFileName(requestMessage.Path.Substring(_adminPaths!.Files.Length + 1));
-    }
+    string GetFileNameFromRequestMessage(IRequestMessage requestMessage)
+        => Path.GetFileName(requestMessage.Path[(adminPaths!.Files.Length + 1)..]);
+
     #endregion
 }

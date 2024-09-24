@@ -2,8 +2,11 @@
 
 // This source file is based on mock4net by Alexandre Victoor which is licensed under the Apache 2.0 License.
 // For more details see 'mock4net/LICENSE.txt' and 'mock4net/readme.md' in this project root.
+
+// Modified by Ruxo Zheng, 2024.
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using WireMock.ResponseBuilders;
 using WireMock.Types;
 using WireMock.Util;
@@ -17,13 +20,13 @@ namespace WireMock;
 public class ResponseMessage : IResponseMessage
 {
     /// <inheritdoc />
-    public IDictionary<string, WireMockList<string>>? Headers { get; set; } = new Dictionary<string, WireMockList<string>>();
+    public IDictionary<string, WireMockList<string>> Headers { get; set; } = new Dictionary<string, WireMockList<string>>();
 
     /// <inheritdoc />
     public IDictionary<string, WireMockList<string>>? TrailingHeaders { get; set; } = new Dictionary<string, WireMockList<string>>();
 
     /// <inheritdoc cref="IResponseMessage.StatusCode" />
-    public object? StatusCode { get; set; }
+    public HttpStatusCode StatusCode { get; set; }
 
     /// <inheritdoc cref="IResponseMessage.BodyOriginal" />
     public string? BodyOriginal { get; set; }
@@ -43,7 +46,6 @@ public class ResponseMessage : IResponseMessage
     /// <inheritdoc />
     public void AddHeader(string name, string value)
     {
-        Headers ??= new Dictionary<string, WireMockList<string>>();
         Headers.Add(name, value);
     }
 
@@ -52,7 +54,6 @@ public class ResponseMessage : IResponseMessage
     {
         Guard.NotNullOrEmpty(values);
 
-        Headers ??= new Dictionary<string, WireMockList<string>>();
         var newHeaderValues = Headers.TryGetValue(name, out var existingValues)
             ? values.Union(existingValues).ToArray()
             : values;

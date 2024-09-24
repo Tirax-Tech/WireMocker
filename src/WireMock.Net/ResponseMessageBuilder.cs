@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -15,7 +16,7 @@ internal static class ResponseMessageBuilder
 {
     private static readonly IDictionary<string, WireMockList<string>> ContentTypeJsonHeaders = new Dictionary<string, WireMockList<string>>
     {
-        { HttpKnownHeaderNames.ContentType, new WireMockList<string> { WireMockConstants.ContentTypeJson } }
+        { HttpKnownHeaderNames.ContentType, [WireMockConstants.ContentTypeJson] }
     };
 
     internal static ResponseMessage Create(HttpStatusCode statusCode, string? status, Guid? guid = null)
@@ -32,7 +33,7 @@ internal static class ResponseMessageBuilder
     {
         var response = new ResponseMessage
         {
-            StatusCode = statusCode,
+            StatusCode = (HttpStatusCode) statusCode,
             Headers = ContentTypeJsonHeaders
         };
 
@@ -54,10 +55,5 @@ internal static class ResponseMessageBuilder
     }
 
     internal static ResponseMessage Create(HttpStatusCode statusCode)
-    {
-        return new ResponseMessage
-        {
-            StatusCode = statusCode
-        };
-    }
+        => new() { StatusCode = statusCode };
 }

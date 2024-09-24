@@ -1,12 +1,11 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Text;
 using System.Threading;
-using Newtonsoft.Json;
 using Stef.Validation;
 using WireMock.Admin.Mappings;
 using WireMock.Constants;
@@ -25,18 +24,18 @@ namespace WireMock.Serialization;
 
 internal class MappingConverter(MatcherMapper mapper)
 {
-    private static readonly string AcceptOnMatch = MatchBehaviour.AcceptOnMatch.GetFullyQualifiedEnumValue();
+    static readonly string AcceptOnMatch = MatchBehaviour.AcceptOnMatch.GetFullyQualifiedEnumValue();
 
-    private readonly MatcherMapper _mapper = Guard.NotNull(mapper);
+    readonly MatcherMapper mapper = Guard.NotNull(mapper);
 
-    public string ToCSharpCode(IMapping mapping, MappingConverterSettings? settings = null)
+    public static string ToCSharpCode(IMapping mapping, MappingConverterSettings? settings = null)
     {
         settings ??= new MappingConverterSettings();
 
         var request = (Request)mapping.RequestMatcher;
         var response = (Response)mapping.Provider;
 
-        var clientIPMatcher = request.GetRequestMessageMatcher<RequestMessageClientIPMatcher>();
+        var clientIpMatcher = request.GetRequestMessageMatcher<RequestMessageClientIPMatcher>();
         var pathMatcher = request.GetRequestMessageMatcher<RequestMessagePathMatcher>();
         var urlMatcher = request.GetRequestMessageMatcher<RequestMessageUrlMatcher>();
         var headerMatchers = request.GetRequestMessageMatchers<RequestMessageHeaderMatcher>();
@@ -45,7 +44,7 @@ internal class MappingConverter(MatcherMapper mapper)
         var methodMatcher = request.GetRequestMessageMatcher<RequestMessageMethodMatcher>();
         var requestMessageBodyMatcher = request.GetRequestMessageMatcher<RequestMessageBodyMatcher>();
         var requestMessageHttpVersionMatcher = request.GetRequestMessageMatcher<RequestMessageHttpVersionMatcher>();
-        var requestMessageGraphQLMatcher = request.GetRequestMessageMatcher<RequestMessageGraphQLMatcher>();
+        var requestMessageGraphQlMatcher = request.GetRequestMessageMatcher<RequestMessageGraphQLMatcher>();
         var requestMessageMultiPartMatcher = request.GetRequestMessageMatcher<RequestMessageMultiPartMatcher>();
         var requestMessageProtoBufMatcher = request.GetRequestMessageMatcher<RequestMessageProtoBufMatcher>();
 
@@ -54,17 +53,13 @@ internal class MappingConverter(MatcherMapper mapper)
         if (settings.ConverterType == MappingConverterType.Server)
         {
             if (settings.AddStart)
-            {
                 sb.AppendLine("var server = WireMockServer.Start();");
-            }
             sb.AppendLine("server");
         }
         else
         {
             if (settings.AddStart)
-            {
                 sb.AppendLine("var builder = new MappingBuilder();");
-            }
             sb.AppendLine("builder");
         }
 
@@ -73,76 +68,41 @@ internal class MappingConverter(MatcherMapper mapper)
         sb.AppendLine($"        .UsingMethod({To1Or2Or3Arguments(methodMatcher?.MatchBehaviour, methodMatcher?.MatchOperator, methodMatcher?.Methods, HttpRequestMethod.GET)})");
 
         if (pathMatcher?.Matchers != null)
-        {
             sb.AppendLine($"        .WithPath({To1Or2Arguments(pathMatcher.MatchOperator, pathMatcher.Matchers)})");
-        }
         else if (urlMatcher?.Matchers != null)
-        {
             sb.AppendLine($"        .WithUrl({To1Or2Arguments(urlMatcher.MatchOperator, urlMatcher.Matchers)})");
-        }
 
         foreach (var paramsMatcher in paramsMatchers.Where(pm => pm.Matchers != null))
-        {
             sb.AppendLine($"        .WithParam({To2Or3Arguments(paramsMatcher.Key, paramsMatcher.MatchBehaviour, paramsMatcher.Matchers!)})");
-        }
 
-        if (clientIPMatcher?.Matchers != null)
-        {
-            sb.AppendLine($"        .WithClientIP({ToValueArguments(GetStringArray(clientIPMatcher.Matchers))})");
-        }
+        if (clientIpMatcher?.Matchers != null)
+            sb.AppendLine($"        .WithClientIP({ToValueArguments(GetStringArray(clientIpMatcher.Matchers))})");
 
         foreach (var headerMatcher in headerMatchers.Where(h => h.Matchers != null))
         {
             var headerBuilder = new StringBuilder($"\"{headerMatcher.Name}\", {ToValueArguments(GetStringArray(headerMatcher.Matchers!))}, true");
             if (headerMatcher.MatchOperator != MatchOperator.Or)
-            {
                 headerBuilder.Append($"{AcceptOnMatch}, {headerMatcher.MatchOperator.GetFullyQualifiedEnumValue()}");
-            }
             sb.AppendLine($"        .WithHeader({headerBuilder})");
         }
 
         foreach (var cookieMatcher in cookieMatchers.Where(c => c.Matchers != null))
-        {
             sb.AppendLine($"        .WithCookie(\"{cookieMatcher.Name}\", {ToValueArguments(GetStringArray(cookieMatcher.Matchers!))}, true)");
-        }
 
         if (requestMessageHttpVersionMatcher?.HttpVersion != null)
-        {
             sb.AppendLine($"        .WithHttpVersion({requestMessageHttpVersionMatcher.HttpVersion})");
-        }
 
-#if GRAPHQL
-        if (requestMessageGraphQLMatcher?.Matchers != null)
-        {
-            if (requestMessageGraphQLMatcher.Matchers.OfType<GraphQLMatcher>().FirstOrDefault() is { } graphQLMatcher && graphQLMatcher.GetPatterns().Any())
-            {
-                sb.AppendLine($"        .WithGraphQLSchema({GetString(graphQLMatcher)})");
-            }
-        }
-#endif
+        if (requestMessageGraphQlMatcher?.Matchers?.OfType<GraphQLMatcher>().FirstOrDefault() is { } graphQlMatcher && graphQlMatcher.GetPatterns().Length != 0)
+            sb.AppendLine($"        .WithGraphQLSchema({GetString(graphQlMatcher)})");
 
-#if MIMEKIT
-        if (requestMessageMultiPartMatcher?.Matchers != null)
-        {
-            if (requestMessageMultiPartMatcher.Matchers.OfType<MimePartMatcher>().Any())
-            {
+        if (requestMessageMultiPartMatcher?.Matchers != null && requestMessageMultiPartMatcher.Matchers.OfType<MimePartMatcher>().Any())
                 sb.AppendLine("        // .WithMultiPart() is not yet supported");
-            }
-        }
-#endif
 
-#if PROTOBUF
         if (requestMessageProtoBufMatcher?.Matcher != null)
-        {
             sb.AppendLine("        // .WithBodyAsProtoBuf() is not yet supported");
-        }
-#endif
 
         if (requestMessageBodyMatcher?.Matchers != null)
-        {
-            var firstMatcher = requestMessageBodyMatcher.Matchers.FirstOrDefault();
-
-            switch (firstMatcher)
+            switch (requestMessageBodyMatcher.Matchers.FirstOrDefault())
             {
                 case IStringMatcher stringMatcher when stringMatcher.GetPatterns().Length > 0:
                     sb.AppendLine($"        .WithBody({GetString(stringMatcher)})");
@@ -159,7 +119,6 @@ internal class MappingConverter(MatcherMapper mapper)
                         break;
                     }
             }
-        }
 
         sb.AppendLine(@"    )");
 
@@ -167,40 +126,20 @@ internal class MappingConverter(MatcherMapper mapper)
         sb.AppendLine($"    .WithGuid(\"{mapping.Guid}\")");
 
         if (mapping.Probability != null)
-        {
             sb.AppendLine($"    .WithProbability({mapping.Probability.Value.ToString(CultureInfoUtils.CultureInfoEnUS)})");
-        }
 
         // Response
         sb.AppendLine("    .RespondWith(Response.Create()");
+        sb.AppendLine($"        .WithStatusCode({(int)response.ResponseMessage.StatusCode})");
 
-        if (response.ResponseMessage.StatusCode is int or string)
-        {
-            sb.AppendLine($"        .WithStatusCode({JsonConvert.SerializeObject(response.ResponseMessage.StatusCode)})");
-        }
-        else if (response.ResponseMessage.StatusCode is HttpStatusCode httpStatusCode)
-        {
-            sb.AppendLine($"        .WithStatusCode({(int)httpStatusCode})");
-        }
+        foreach (var header in response.ResponseMessage.Headers)
+            sb.AppendLine($"        .WithHeader(\"{header.Key}\", {ToValueArguments(header.Value.ToArray())})");
 
-        if (response.ResponseMessage.Headers is { })
-        {
-            foreach (var header in response.ResponseMessage.Headers)
-            {
-                sb.AppendLine($"        .WithHeader(\"{header.Key}\", {ToValueArguments(header.Value.ToArray())})");
-            }
-        }
-
-        if (response.ResponseMessage.TrailingHeaders is { })
-        {
+        if (response.ResponseMessage.TrailingHeaders is not null)
             foreach (var header in response.ResponseMessage.TrailingHeaders)
-            {
                 sb.AppendLine($"        .WithTrailingHeader(\"{header.Key}\", {ToValueArguments(header.Value.ToArray())})");
-            }
-        }
 
         if (response.ResponseMessage.BodyData is { } bodyData)
-        {
             switch (response.ResponseMessage.BodyData.DetectedBodyType)
             {
                 case BodyType.String:
@@ -210,27 +149,19 @@ internal class MappingConverter(MatcherMapper mapper)
 
                 case BodyType.Json:
                     if (bodyData.BodyAsJson is string bodyStringValue)
-                    {
                         sb.AppendLine($"        .WithBody({ToCSharpStringLiteral(bodyStringValue)})");
-                    }
                     else if (bodyData.BodyAsJson is { } jsonBody)
                     {
                         var anonymousObjectDefinition = ConvertToAnonymousObjectDefinition(jsonBody);
                         sb.AppendLine($"        .WithBodyAsJson({anonymousObjectDefinition})");
                     }
-
                     break;
             }
-        }
 
-        if (response.Delay is { })
-        {
+        if (response.Delay is not null)
             sb.AppendLine($"        .WithDelay({response.Delay.Value.TotalMilliseconds})");
-        }
         else if (response is { MinimumDelayMilliseconds: > 0, MaximumDelayMilliseconds: > 0 })
-        {
             sb.AppendLine($"        .WithRandomDelay({response.MinimumDelayMilliseconds}, {response.MaximumDelayMilliseconds})");
-        }
 
         if (response.UseTransformer)
         {
@@ -247,7 +178,7 @@ internal class MappingConverter(MatcherMapper mapper)
         var request = (Request)mapping.RequestMatcher;
         var response = (Response)mapping.Provider;
 
-        var clientIPMatcher = request.GetRequestMessageMatcher<RequestMessageClientIPMatcher>();
+        var clientIpMatcher = request.GetRequestMessageMatcher<RequestMessageClientIPMatcher>();
         var pathMatcher = request.GetRequestMessageMatcher<RequestMessagePathMatcher>();
         var urlMatcher = request.GetRequestMessageMatcher<RequestMessageUrlMatcher>();
         var headerMatchers = request.GetRequestMessageMatchers<RequestMessageHeaderMatcher>();
@@ -255,7 +186,7 @@ internal class MappingConverter(MatcherMapper mapper)
         var paramsMatchers = request.GetRequestMessageMatchers<RequestMessageParamMatcher>();
         var methodMatcher = request.GetRequestMessageMatcher<RequestMessageMethodMatcher>();
         var bodyMatcher = request.GetRequestMessageMatcher<RequestMessageBodyMatcher>();
-        var graphQLMatcher = request.GetRequestMessageMatcher<RequestMessageGraphQLMatcher>();
+        var graphQlMatcher = request.GetRequestMessageMatcher<RequestMessageGraphQLMatcher>();
         var multiPartMatcher = request.GetRequestMessageMatcher<RequestMessageMultiPartMatcher>();
         var protoBufMatcher = request.GetRequestMessageMatcher<RequestMessageProtoBufMatcher>();
         var httpVersionMatcher = request.GetRequestMessageMatcher<RequestMessageHttpVersionMatcher>();
@@ -282,7 +213,7 @@ internal class MappingConverter(MatcherMapper mapper)
                     Name = hm.Name,
                     IgnoreCase = hm.IgnoreCase ? true : null,
                     RejectOnMatch = hm.MatchBehaviour == MatchBehaviour.RejectOnMatch ? true : null,
-                    Matchers = _mapper.Map(hm.Matchers),
+                    Matchers = mapper.Map(hm.Matchers),
                 }).ToList() : null,
 
                 Cookies = cookieMatchers.Any() ? cookieMatchers.Select(cm => new CookieModel
@@ -290,7 +221,7 @@ internal class MappingConverter(MatcherMapper mapper)
                     Name = cm.Name,
                     IgnoreCase = cm.IgnoreCase ? true : null,
                     RejectOnMatch = cm.MatchBehaviour == MatchBehaviour.RejectOnMatch ? true : null,
-                    Matchers = _mapper.Map(cm.Matchers)
+                    Matchers = mapper.Map(cm.Matchers)
                 }).ToList() : null,
 
                 Params = paramsMatchers.Any() ? paramsMatchers.Select(pm => new ParamModel
@@ -298,7 +229,7 @@ internal class MappingConverter(MatcherMapper mapper)
                     Name = pm.Key,
                     IgnoreCase = pm.IgnoreCase ? true : null,
                     RejectOnMatch = pm.MatchBehaviour == MatchBehaviour.RejectOnMatch ? true : null,
-                    Matchers = _mapper.Map(pm.Matchers)
+                    Matchers = mapper.Map(pm.Matchers)
                 }).ToList() : null
             },
             Response = new ResponseModel()
@@ -312,23 +243,21 @@ internal class MappingConverter(MatcherMapper mapper)
         }
 
         if (httpVersionMatcher?.HttpVersion != null)
-        {
             mappingModel.Request.HttpVersion = httpVersionMatcher.HttpVersion;
-        }
 
-        if (clientIPMatcher?.Matchers != null)
+        if (clientIpMatcher?.Matchers != null)
         {
-            var clientIPMatchers = _mapper.Map(clientIPMatcher.Matchers);
+            var clientIpMatchers = mapper.Map(clientIpMatcher.Matchers);
             mappingModel.Request.Path = new ClientIPModel
             {
-                Matchers = clientIPMatchers,
-                MatchOperator = clientIPMatchers?.Length > 1 ? clientIPMatcher.MatchOperator.ToString() : null
+                Matchers = clientIpMatchers,
+                MatchOperator = clientIpMatchers?.Length > 1 ? clientIpMatcher.MatchOperator.ToString() : null
             };
         }
 
         if (pathMatcher?.Matchers != null)
         {
-            var pathMatchers = _mapper.Map(pathMatcher.Matchers);
+            var pathMatchers = mapper.Map(pathMatcher.Matchers);
             mappingModel.Request.Path = new PathModel
             {
                 Matchers = pathMatchers,
@@ -337,7 +266,7 @@ internal class MappingConverter(MatcherMapper mapper)
         }
         else if (urlMatcher?.Matchers != null)
         {
-            var urlMatchers = _mapper.Map(urlMatcher.Matchers);
+            var urlMatchers = mapper.Map(urlMatcher.Matchers);
             mappingModel.Request.Url = new UrlModel
             {
                 Matchers = urlMatchers,
@@ -366,14 +295,15 @@ internal class MappingConverter(MatcherMapper mapper)
         }
 
         var bodyMatchers =
-            protoBufMatcher?.Matcher != null ? new[] { protoBufMatcher.Matcher } : null ??
-            multiPartMatcher?.Matchers ??
-            graphQLMatcher?.Matchers ??
-            bodyMatcher?.Matchers;
+            protoBufMatcher?.Matcher != null ? [protoBufMatcher.Matcher]
+                : null ??
+                  multiPartMatcher?.Matchers ??
+                  graphQlMatcher?.Matchers ??
+                  bodyMatcher?.Matchers;
 
         var matchOperator =
             multiPartMatcher?.MatchOperator ??
-            graphQLMatcher?.MatchOperator ??
+            graphQlMatcher?.MatchOperator ??
             bodyMatcher?.MatchOperator ??
             MatchOperator.Or;
 
@@ -381,24 +311,18 @@ internal class MappingConverter(MatcherMapper mapper)
         {
             void AfterMap(MatcherModel matcherModel)
             {
-#if PROTOBUF
                 // In case the ProtoDefinition is defined at the Mapping level, clear the Pattern at the Matcher level
-                if (bodyMatchers?.OfType<ProtoBufMatcher>().Any() == true && mappingModel.ProtoDefinition != null)
-                {
+                if (bodyMatchers.OfType<ProtoBufMatcher>().Any() && mappingModel.ProtoDefinition != null)
                     matcherModel.Pattern = null;
-                }
-#endif
             }
 
             mappingModel.Request.Body = new BodyModel();
 
             if (bodyMatchers.Length == 1)
-            {
-                mappingModel.Request.Body.Matcher = _mapper.Map(bodyMatchers[0], AfterMap);
-            }
+                mappingModel.Request.Body.Matcher = mapper.Map(bodyMatchers[0], AfterMap);
             else if (bodyMatchers.Length > 1)
             {
-                mappingModel.Request.Body.Matchers = _mapper.Map(bodyMatchers, AfterMap);
+                mappingModel.Request.Body.Matchers = mapper.Map(bodyMatchers, AfterMap);
                 mappingModel.Request.Body.MatchOperator = matchOperator.ToString();
             }
         }
@@ -432,14 +356,10 @@ internal class MappingConverter(MatcherMapper mapper)
             mappingModel.Response.StatusCode = response.ResponseMessage.StatusCode;
 
             if (response.ResponseMessage.Headers is { Count: > 0 })
-            {
                 mappingModel.Response.Headers = MapHeaders(response.ResponseMessage.Headers);
-            }
 
             if (response.ResponseMessage.TrailingHeaders is { Count: > 0 })
-            {
                 mappingModel.Response.TrailingHeaders = MapHeaders(response.ResponseMessage.TrailingHeaders);
-            }
 
             if (response.UseTransformer)
             {
@@ -449,31 +369,25 @@ internal class MappingConverter(MatcherMapper mapper)
             }
 
             if (response.UseTransformerForBodyAsFile)
-            {
                 mappingModel.Response.UseTransformerForBodyAsFile = response.UseTransformerForBodyAsFile;
-            }
 
             MapResponse(response, mappingModel);
 
             if (response.ResponseMessage.FaultType != FaultType.NONE)
-            {
                 mappingModel.Response.Fault = new FaultModel
                 {
                     Type = response.ResponseMessage.FaultType.ToString(),
                     Percentage = response.ResponseMessage.FaultPercentage
                 };
-            }
         }
 
         return mappingModel;
     }
 
-    private static void MapResponse(Response response, MappingModel mappingModel)
+    static void MapResponse(Response response, MappingModel mappingModel)
     {
         if (response.ResponseMessage.BodyData == null)
-        {
             return;
-        }
 
         switch (response.ResponseMessage.BodyData?.DetectedBodyType)
         {
@@ -485,17 +399,13 @@ internal class MappingConverter(MatcherMapper mapper)
             case BodyType.Json:
                 mappingModel.Response.BodyAsJson = response.ResponseMessage.BodyData.BodyAsJson;
                 if (response.ResponseMessage.BodyData.BodyAsJsonIndented == true)
-                {
                     mappingModel.Response.BodyAsJsonIndented = response.ResponseMessage.BodyData.BodyAsJsonIndented;
-                }
                 break;
 
             case BodyType.ProtoBuf:
                 // If the ProtoDefinition is not defined at the MappingModel, get the ProtoDefinition from the ResponseMessage.
                 if (mappingModel.ProtoDefinition == null)
-                {
                     mappingModel.Response.ProtoDefinition = response.ResponseMessage.BodyData.ProtoDefinition?.Invoke().Value;
-                }
 
                 mappingModel.Response.ProtoBufMessageType = response.ResponseMessage.BodyData.ProtoBufMessageType;
                 mappingModel.Response.BodyAsBytes = null;
@@ -513,98 +423,72 @@ internal class MappingConverter(MatcherMapper mapper)
         }
 
         if (response.ResponseMessage.BodyData?.Encoding != null && response.ResponseMessage.BodyData.Encoding.WebName != "utf-8")
-        {
             mappingModel.Response.BodyEncoding = new EncodingModel
             {
                 EncodingName = response.ResponseMessage.BodyData.Encoding.EncodingName,
                 CodePage = response.ResponseMessage.BodyData.Encoding.CodePage,
                 WebName = response.ResponseMessage.BodyData.Encoding.WebName
             };
-        }
     }
 
-    private static string GetString(IStringMatcher stringMatcher)
-    {
-        return stringMatcher.GetPatterns().Select(p => ToCSharpStringLiteral(p.GetPattern())).First();
-    }
+    static string GetString(IStringMatcher stringMatcher)
+        => stringMatcher.GetPatterns().Select(p => ToCSharpStringLiteral(p.GetPattern())).First();
 
-    private static string[] GetStringArray(IReadOnlyList<IStringMatcher> stringMatchers)
-    {
-        return stringMatchers.SelectMany(m => m.GetPatterns()).Select(p => p.GetPattern()).ToArray();
-    }
+    static string[] GetStringArray(IReadOnlyList<IStringMatcher> stringMatchers)
+        => stringMatchers.SelectMany(m => m.GetPatterns()).Select(p => p.GetPattern()).ToArray();
 
-    private static string To2Or3Arguments(string key, MatchBehaviour? matchBehaviour, IReadOnlyList<IStringMatcher> matchers)
+    static string To2Or3Arguments(string key, MatchBehaviour? matchBehaviour, IReadOnlyList<IStringMatcher> matchers)
     {
         var sb = new StringBuilder($"\"{key}\", ");
 
         if (matchBehaviour.HasValue && matchBehaviour != MatchBehaviour.AcceptOnMatch)
-        {
             sb.AppendFormat("{0}, ", matchBehaviour.Value.GetFullyQualifiedEnumValue());
-        }
 
         sb.AppendFormat("{0}", MappingConverterUtils.ToCSharpCodeArguments(matchers));
 
         return sb.ToString();
     }
 
-    private static string To1Or2Or3Arguments(MatchBehaviour? matchBehaviour, MatchOperator? matchOperator, string[]? values, string defaultValue)
+    static string To1Or2Or3Arguments(MatchBehaviour? matchBehaviour, MatchOperator? matchOperator, string[]? values, string defaultValue)
     {
         var sb = new StringBuilder();
 
         if (matchBehaviour.HasValue && matchBehaviour != MatchBehaviour.AcceptOnMatch)
-        {
             sb.AppendFormat("{0}, ", matchBehaviour.Value.GetFullyQualifiedEnumValue());
-        }
 
         return To1Or2Arguments(matchOperator, values, defaultValue);
     }
 
-    private static string To1Or2Arguments(MatchOperator? matchOperator, IReadOnlyList<IStringMatcher> matchers)
+    static string To1Or2Arguments(MatchOperator? matchOperator, IReadOnlyList<IStringMatcher> matchers)
     {
         var sb = new StringBuilder();
 
         if (matchOperator.HasValue && matchOperator != MatchOperator.Or)
-        {
             sb.AppendFormat("{0}, ", matchOperator.Value.GetFullyQualifiedEnumValue());
-        }
 
         sb.AppendFormat("{0}", MappingConverterUtils.ToCSharpCodeArguments(matchers));
 
         return sb.ToString();
     }
 
-    private static string To1Or2Arguments(MatchOperator? matchOperator, string[]? values, string defaultValue)
+    static string To1Or2Arguments(MatchOperator? matchOperator, string[]? values, string defaultValue)
     {
         var sb = new StringBuilder();
 
         if (matchOperator.HasValue && matchOperator != MatchOperator.Or)
-        {
             sb.AppendFormat("{0}, ", matchOperator.Value.GetFullyQualifiedEnumValue());
-        }
 
         return sb.Append(ToValueArguments(values, defaultValue)).ToString();
     }
 
-    private static string ToValueArguments(string[]? values, string defaultValue = "")
-    {
-        return values is { } ? string.Join(", ", values.Select(ToCSharpStringLiteral)) : ToCSharpStringLiteral(defaultValue);
-    }
+    static string ToValueArguments(string[]? values, string defaultValue = "")
+        => values is not null ? string.Join(", ", values.Select(ToCSharpStringLiteral)) : ToCSharpStringLiteral(defaultValue);
 
-    private static IDictionary<string, object> MapHeaders(IDictionary<string, WireMockList<string>> dictionary)
+    static Dictionary<string, object> MapHeaders(IDictionary<string, WireMockList<string>> dictionary)
     {
         var newDictionary = new Dictionary<string, object>();
         foreach (var entry in dictionary)
-        {
-            // ReSharper disable once ConvertIfStatementToConditionalTernaryExpression
-            if (entry.Value.Count == 1)
-            {
-                newDictionary.Add(entry.Key, entry.Value.ToString());
-            }
-            else
-            {
-                newDictionary.Add(entry.Key, entry.Value);
-            }
-        }
+            newDictionary.Add(entry.Key, entry.Value.Count == 1 ? entry.Value.ToString() : entry.Value);
 
         return newDictionary;
     }

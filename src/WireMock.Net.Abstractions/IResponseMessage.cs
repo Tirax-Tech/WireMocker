@@ -1,6 +1,8 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System.Collections.Generic;
+using System.Net;
 using WireMock.ResponseBuilders;
 using WireMock.Types;
 using WireMock.Util;
@@ -40,7 +42,7 @@ public interface IResponseMessage
     /// <summary>
     /// Gets the headers.
     /// </summary>
-    IDictionary<string, WireMockList<string>>? Headers { get; }
+    IDictionary<string, WireMockList<string>> Headers { get; }
 
     /// <summary>
     /// Gets the trailing headers.
@@ -50,7 +52,7 @@ public interface IResponseMessage
     /// <summary>
     /// Gets or sets the status code.
     /// </summary>
-    object? StatusCode { get; }
+    HttpStatusCode StatusCode { get; }
 
     /// <summary>
     /// Adds the header.
