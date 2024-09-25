@@ -22,6 +22,8 @@ public sealed class DashboardViewModel : ActivatableViewModel
         ClearLogEntries = ReactiveCommand.Create(() => {
             this.RaisePropertyChanging(nameof(HttpEntries));
             HttpEntries.Clear();
+            httpEntryLookup.Clear();
+            mockServer.ResetLogEntries();
             this.RaisePropertyChanged(nameof(HttpEntries));
         });
     }
@@ -48,7 +50,7 @@ public sealed class DashboardViewModel : ActivatableViewModel
                req.BodyData);
 
     static ResponsePanelViewModel ToResponseVm(IResponseMessage res, bool isMatched)
-        => new((int) res.StatusCode!,
+        => new((int) res.StatusCode,
                res.Headers.Map(h => (h.Key, (IReadOnlyList<string>)h.Value)).ToArray(),
                res.BodyData,
                 isMatched);

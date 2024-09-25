@@ -30,7 +30,7 @@
     <ItemGroup>
         <!-- See also https://mstack.nl/blog/20210801-source-generators -->
         <PackageReference Include="AnyOf" Version="0.4.0" />
-        <PackageReference Include="FluentBuilder" Version="0.9.0">
+        <PackageReference Include="FluentBuilder" Version="0.9.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -39,12 +39,12 @@
         <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
 
-        <PackageReference Include="PolySharp" Version="1.14.0">
+        <PackageReference Include="PolySharp" Version="1.14.1">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
 
         <PackageReference Include="RZ.Foundation" Version="7.0.0-beta.12" />
-        <PackageReference Include="System.Security.Cryptography.X509Certificates" Version="4.3.0" />
+        <PackageReference Include="System.Security.Cryptography.X509Certificates" Version="4.3.2" />
     </ItemGroup>
 </Project>
