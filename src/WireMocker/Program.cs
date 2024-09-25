@@ -28,6 +28,7 @@ var builder = WebApplication.CreateBuilder([]);
 
 builder.Services
        .AddSingleton<IChaotic, Chaotic>()
+       .AddSingleton(TimeProvider.System)
        .AddSingleton<IWireMockServer>(server)
        .AddSingleton<IViewLocator, ViewLocator>()
        .AddSingleton<IDataStore, InMemoryDataStore>()

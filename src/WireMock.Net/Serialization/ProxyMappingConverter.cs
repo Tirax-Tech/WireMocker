@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,28 +16,21 @@ using WireMock.Util;
 
 namespace WireMock.Serialization;
 
-internal class ProxyMappingConverter
+internal class ProxyMappingConverter(WireMockServerSettings settings, IGuidUtils guidUtils, TimeProvider dateTimeUtils)
 {
-    private readonly WireMockServerSettings _settings;
-    private readonly IGuidUtils _guidUtils;
-    private readonly IDateTimeUtils _dateTimeUtils;
+    readonly WireMockServerSettings settings = Guard.NotNull(settings);
+    readonly IGuidUtils guidUtils = Guard.NotNull(guidUtils);
+    readonly TimeProvider dateTimeUtils = Guard.NotNull(dateTimeUtils);
 
-    public ProxyMappingConverter(WireMockServerSettings settings, IGuidUtils guidUtils, IDateTimeUtils dateTimeUtils)
-    {
-        _settings = Guard.NotNull(settings);
-        _guidUtils = Guard.NotNull(guidUtils);
-        _dateTimeUtils = Guard.NotNull(dateTimeUtils);
-    }
-
-    public IMapping? ToMapping(IMapping? mapping, ProxyAndRecordSettings proxyAndRecordSettings, IRequestMessage requestMessage, ResponseMessage responseMessage)
+    public IMapping ToMapping(IMapping? mapping, ProxyAndRecordSettings proxyAndRecordSettings, IRequestMessage requestMessage, ResponseMessage responseMessage)
     {
         var useDefinedRequestMatchers = proxyAndRecordSettings.UseDefinedRequestMatchers;
-        var excludedHeaders = new List<string>(proxyAndRecordSettings.ExcludedHeaders ?? new string[] { }) { "Cookie" };
+        var excludedHeaders = new List<string>(proxyAndRecordSettings.ExcludedHeaders ?? []) { "Cookie" };
         var excludedCookies = proxyAndRecordSettings.ExcludedCookies ?? EmptyArray<string>.Value;
         var excludedParams = proxyAndRecordSettings.ExcludedParams ?? EmptyArray<string>.Value;
 
         var request = (Request?)mapping?.RequestMatcher;
-        var clientIPMatcher = request?.GetRequestMessageMatcher<RequestMessageClientIPMatcher>();
+        var clientIpMatcher = request?.GetRequestMessageMatcher<RequestMessageClientIPMatcher>();
         var pathMatcher = request?.GetRequestMessageMatcher<RequestMessagePathMatcher>();
         var headerMatchers = request?.GetRequestMessageMatchers<RequestMessageHeaderMatcher>();
         var cookieMatchers = request?.GetRequestMessageMatchers<RequestMessageCookieMatcher>();
@@ -48,9 +42,9 @@ internal class ProxyMappingConverter
         var newRequest = Request.Create();
 
         // ClientIP
-        if (useDefinedRequestMatchers && clientIPMatcher?.Matchers is not null)
+        if (useDefinedRequestMatchers && clientIpMatcher?.Matchers is not null)
         {
-            newRequest.WithClientIP(clientIPMatcher.MatchOperator, clientIPMatcher.Matchers.ToArray());
+            newRequest.WithClientIP(clientIpMatcher.MatchOperator, clientIpMatcher.Matchers.ToArray());
         }
 
         // Path
@@ -175,22 +169,22 @@ internal class ProxyMappingConverter
 
         // Title
         var title = useDefinedRequestMatchers && !string.IsNullOrEmpty(mapping?.Title) ?
-            mapping!.Title :
+            mapping.Title :
             $"Proxy Mapping for {requestMessage.Method} {requestMessage.Path}";
 
         // Description
         var description = useDefinedRequestMatchers && !string.IsNullOrEmpty(mapping?.Description) ?
-            mapping!.Description :
+            mapping.Description :
             $"Proxy Mapping for {requestMessage.Method} {requestMessage.Path}";
 
         return new Mapping
         (
-            guid: _guidUtils.NewGuid(),
-            updatedAt: _dateTimeUtils.UtcNow,
+            guid: guidUtils.NewGuid(),
+            updatedAt: dateTimeUtils.GetUtcNow(),
             title: title,
             description: description,
             path: null,
-            settings: _settings,
+            settings: settings,
             requestMatcher: newRequest,
             provider: Response.Create(responseMessage),
             priority: WireMockConstants.ProxyPriority, // This was 0

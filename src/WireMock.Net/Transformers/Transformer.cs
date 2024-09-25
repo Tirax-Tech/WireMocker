@@ -65,7 +65,7 @@ internal class Transformer(WireMockServerSettings settings, ITransformerContextF
 
     public ResponseMessage Transform(IMapping mapping, IRequestMessage requestMessage, IResponseMessage original, bool useTransformerForBodyAsFile, ReplaceNodeOptions options)
     {
-        var responseMessage = new ResponseMessage();
+        var responseMessage = new ResponseMessage{ Timestamp = DateTimeOffset.UtcNow};
 
         var (transformerContext, model) = Create(mapping, requestMessage, null);
 

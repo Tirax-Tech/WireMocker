@@ -19,7 +19,7 @@ public partial class WireMockServer
     ResponseMessage FilePost(IRequestMessage requestMessage)
     {
         if (requestMessage.BodyAsBytes is null)
-            return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, "Body is null");
+            return CreateResponse(HttpStatusCode.BadRequest, "Body is null");
 
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
@@ -29,25 +29,25 @@ public partial class WireMockServer
 
         settings.FileSystemHandler.WriteFile(filename, requestMessage.BodyAsBytes);
 
-        return ResponseMessageBuilder.Create(HttpStatusCode.OK, "File created");
+        return CreateResponse(HttpStatusCode.OK, "File created");
     }
 
     ResponseMessage FilePut(IRequestMessage requestMessage)
     {
         if (requestMessage.BodyAsBytes is null)
-            return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, "Body is null");
+            return CreateResponse(HttpStatusCode.BadRequest, "Body is null");
 
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
         if (!settings.FileSystemHandler.FileExists(filename))
         {
             settings.Logger.Info("The file '{0}' does not exist, updating file will be skipped.", filename);
-            return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "File is not found");
+            return CreateResponse(HttpStatusCode.NotFound, "File is not found");
         }
 
         settings.FileSystemHandler.WriteFile(filename, requestMessage.BodyAsBytes);
 
-        return ResponseMessageBuilder.Create(HttpStatusCode.OK, "File updated");
+        return CreateResponse(HttpStatusCode.OK, "File updated");
     }
 
     ResponseMessage FileGet(IRequestMessage requestMessage)
@@ -57,12 +57,13 @@ public partial class WireMockServer
         if (!settings.FileSystemHandler.FileExists(filename))
         {
             settings.Logger.Info("The file '{0}' does not exist.", filename);
-            return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "File is not found");
+            return CreateResponse(HttpStatusCode.NotFound, "File is not found");
         }
 
         var bytes = settings.FileSystemHandler.ReadFile(filename);
         var response = new ResponseMessage
         {
+            Timestamp = clock.GetUtcNow(),
             StatusCode = HttpStatusCode.OK,
             BodyData = new BodyData
             {
@@ -93,10 +94,10 @@ public partial class WireMockServer
         if (!settings.FileSystemHandler.FileExists(filename))
         {
             settings.Logger.Info("The file '{0}' does not exist.", filename);
-            return ResponseMessageBuilder.Create(HttpStatusCode.NotFound);
+            return CreateResponse(HttpStatusCode.NotFound);
         }
 
-        return ResponseMessageBuilder.Create(HttpStatusCode.NoContent);
+        return CreateResponse(HttpStatusCode.NoContent);
     }
 
     ResponseMessage FileDelete(IRequestMessage requestMessage)
@@ -106,11 +107,11 @@ public partial class WireMockServer
         if (!settings.FileSystemHandler.FileExists(filename))
         {
             settings.Logger.Info("The file '{0}' does not exist.", filename);
-            return ResponseMessageBuilder.Create(HttpStatusCode.NotFound, "File is not deleted");
+            return CreateResponse(HttpStatusCode.NotFound, "File is not deleted");
         }
 
         settings.FileSystemHandler.DeleteFile(filename);
-        return ResponseMessageBuilder.Create(HttpStatusCode.OK, "File deleted.");
+        return CreateResponse(HttpStatusCode.OK, "File deleted.");
     }
 
     string GetFileNameFromRequestMessage(IRequestMessage requestMessage)

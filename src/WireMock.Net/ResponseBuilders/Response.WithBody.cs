@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,21 +15,17 @@ namespace WireMock.ResponseBuilders;
 public partial class Response
 {
     /// <inheritdoc />
-    public IResponseBuilder WithBody(Func<IRequestMessage, string> bodyFactory, string? destination = BodyDestinationFormat.SameAsSource, Encoding? encoding = null)
-    {
-        Guard.NotNull(bodyFactory);
-
-        return WithCallbackInternal(true, req => new ResponseMessage
-        {
-            BodyData = new BodyData
-            {
+    public IResponseBuilder WithBody(Func<IRequestMessage, string> bodyFactory, string? destination = BodyDestinationFormat.SameAsSource,
+                                     Encoding? encoding = null)
+        => WithCallbackInternal(true, req => new ResponseMessage {
+            Timestamp = clock.GetUtcNow(),
+            BodyData = new BodyData {
                 DetectedBodyType = BodyType.String,
                 BodyAsString = bodyFactory(req),
                 Encoding = encoding ?? Encoding.UTF8,
                 IsFuncUsed = "Func<IRequestMessage, string>"
             }
         });
-    }
 
     /// <inheritdoc />
     public IResponseBuilder WithBody(Func<IRequestMessage, Task<string>> bodyFactory, string? destination = BodyDestinationFormat.SameAsSource, Encoding? encoding = null)
@@ -37,6 +34,7 @@ public partial class Response
 
         return WithCallbackInternal(true, async req => new ResponseMessage
         {
+            Timestamp = clock.GetUtcNow(),
             BodyData = new BodyData
             {
                 DetectedBodyType = BodyType.String,
@@ -84,14 +82,7 @@ public partial class Response
             BodyAsFile = filename
         };
 
-        if (cache && !UseTransformer)
-        {
-            ResponseMessage.BodyData.DetectedBodyType = BodyType.Bytes;
-        }
-        else
-        {
-            ResponseMessage.BodyData.DetectedBodyType = BodyType.File;
-        }
+        ResponseMessage.BodyData.DetectedBodyType = cache && !UseTransformer ? BodyType.Bytes : BodyType.File;
 
         return this;
     }
@@ -149,9 +140,7 @@ public partial class Response
 
     /// <inheritdoc />
     public IResponseBuilder WithBodyAsJson(object body, bool indented)
-    {
-        return WithBodyAsJson(body, null, indented);
-    }
+        => WithBodyAsJson(body, null, indented);
 
     /// <inheritdoc />
     public IResponseBuilder WithBodyAsJson(Func<IRequestMessage, object> bodyFactory, Encoding? encoding = null)
@@ -160,6 +149,7 @@ public partial class Response
 
         return WithCallbackInternal(true, req => new ResponseMessage
         {
+            Timestamp = clock.GetUtcNow(),
             BodyData = new BodyData
             {
                 Encoding = encoding ?? Encoding.UTF8,
@@ -177,6 +167,7 @@ public partial class Response
 
         return WithCallbackInternal(true, async req => new ResponseMessage
         {
+            Timestamp = clock.GetUtcNow(),
             BodyData = new BodyData
             {
                 Encoding = encoding ?? Encoding.UTF8,

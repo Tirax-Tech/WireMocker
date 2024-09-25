@@ -14,31 +14,24 @@ namespace WireMock;
 
 internal static class ResponseMessageBuilder
 {
-    private static readonly IDictionary<string, WireMockList<string>> ContentTypeJsonHeaders = new Dictionary<string, WireMockList<string>>
+    static readonly IDictionary<string, WireMockList<string>> ContentTypeJsonHeaders = new Dictionary<string, WireMockList<string>>
     {
         { HttpKnownHeaderNames.ContentType, [WireMockConstants.ContentTypeJson] }
     };
 
-    internal static ResponseMessage Create(HttpStatusCode statusCode, string? status, Guid? guid = null)
-    {
-        return Create((int)statusCode, status, guid);
-    }
+    internal static ResponseMessage Create(DateTimeOffset timestamp, int statusCode, string? status, Guid? guid = null)
+        => Create(timestamp, (HttpStatusCode)statusCode, status, error: null, guid);
 
-    internal static ResponseMessage Create(int statusCode, string? status, Guid? guid = null)
-    {
-        return Create(statusCode, status, null, guid);
-    }
-
-    internal static ResponseMessage Create(int statusCode, string? status, string? error, Guid? guid = null)
+    internal static ResponseMessage Create(DateTimeOffset timestamp, HttpStatusCode statusCode, string? status, string? error = null, Guid? guid = null)
     {
         var response = new ResponseMessage
         {
-            StatusCode = (HttpStatusCode) statusCode,
-            Headers = ContentTypeJsonHeaders
+            StatusCode = statusCode,
+            Headers = ContentTypeJsonHeaders,
+            Timestamp = timestamp
         };
 
         if (status != null || error != null)
-        {
             response.BodyData = new BodyData
             {
                 DetectedBodyType = BodyType.Json,
@@ -49,11 +42,10 @@ internal static class ResponseMessageBuilder
                     Error = error
                 }
             };
-        }
 
         return response;
     }
 
-    internal static ResponseMessage Create(HttpStatusCode statusCode)
-        => new() { StatusCode = statusCode };
+    internal static ResponseMessage Create(DateTimeOffset timestamp, HttpStatusCode statusCode)
+        => new() { StatusCode = statusCode, Timestamp = timestamp };
 }

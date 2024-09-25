@@ -50,9 +50,10 @@ public sealed class DashboardViewModel : ActivatableViewModel
                req.BodyData);
 
     static ResponsePanelViewModel ToResponseVm(IResponseMessage res, bool isMatched)
-        => new((int) res.StatusCode,
+        => new(res.StatusCode,
                res.Headers.Map(h => (h.Key, (IReadOnlyList<string>)h.Value)).ToArray(),
                res.BodyData,
+               res.Timestamp,
                 isMatched);
 
     static bool IsMatched(ILogEntry log)

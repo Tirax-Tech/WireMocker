@@ -3,7 +3,6 @@
         <Description>Lightweight Http Mocking Server for .Net, inspired by WireMock from the Java landscape.</Description>
         <AssemblyTitle>WireMock.Net</AssemblyTitle>
         <Authors>Stef Heyenrath;Ruxo Zheng</Authors>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <AssemblyName>WireMock.Net</AssemblyName>
         <PackageId>WireMock.Net</PackageId>
         <PackageTags>tdd;mock;http;wiremock;test;server;unittest</PackageTags>
@@ -21,7 +20,7 @@
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
         <PackageReference Include="Scriban.Signed" Version="5.10.0" />

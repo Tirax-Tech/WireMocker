@@ -21,7 +21,7 @@ internal static class HttpResponseMessageHelper
         bool deserializeJson,
         bool decompressGzipAndDeflate,
         bool deserializeFormUrlEncoded) {
-        var responseMessage = new ResponseMessage { StatusCode = httpResponseMessage.StatusCode };
+        var responseMessage = new ResponseMessage { Timestamp = DateTimeOffset.UtcNow, StatusCode = httpResponseMessage.StatusCode };
 
         // Set both content and response headers, replacing URLs in values
         var headers = httpResponseMessage.Content.Headers.Union(httpResponseMessage.Headers, KeyValueComparer.Instance).ToSeq();

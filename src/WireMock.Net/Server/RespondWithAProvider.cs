@@ -2,6 +2,8 @@
 
 // This source file is based on mock4net by Alexandre Victoor which is licensed under the Apache 2.0 License.
 // For more details see 'mock4net/LICENSE.txt' and 'mock4net/readme.md' in this project root.
+
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -21,24 +23,24 @@ namespace WireMock.Server;
 /// </summary>
 internal class RespondWithAProvider : IRespondWithAProvider
 {
-    private readonly RegistrationCallback _registrationCallback;
-    private readonly IRequestMatcher _requestMatcher;
-    private readonly WireMockServerSettings _settings;
-    private readonly IDateTimeUtils _dateTimeUtils;
-    private readonly bool _saveToFile;
+    readonly RegistrationCallback registrationCallback;
+    readonly IRequestMatcher requestMatcher;
+    readonly WireMockServerSettings settings;
+    readonly TimeProvider clock;
+    readonly bool saveToFile;
 
-    private int _priority;
-    private string? _title;
-    private string? _description;
-    private string? _path;
-    private string? _executionConditionState;
-    private string? _nextState;
-    private string? _scenario;
-    private int _timesInSameState = 1;
-    private bool? _useWebhookFireAndForget;
-    private double? _probability;
-    private IdOrText? _protoDefinition;
-    private GraphQLSchemaDetails? _graphQLSchemaDetails;
+    int priority;
+    string? title;
+    string? description;
+    string? path;
+    string? executionConditionState;
+    string? nextState;
+    string? scenario;
+    int timesInSameState = 1;
+    bool? useWebhookFireAndForget;
+    double? probability;
+    IdOrText? protoDefinition;
+    GraphQLSchemaDetails? graphQLSchemaDetails;
 
     public Guid Guid { get; private set; }
 
@@ -55,22 +57,22 @@ internal class RespondWithAProvider : IRespondWithAProvider
     /// <param name="requestMatcher">The request matcher.</param>
     /// <param name="settings">The WireMockServerSettings.</param>
     /// <param name="guidUtils">GuidUtils to make unit testing possible.</param>
-    /// <param name="dateTimeUtils">DateTimeUtils to make unit testing possible.</param>
+    /// <param name="clock">DateTimeUtils to make unit testing possible.</param>
     /// <param name="saveToFile">Optional boolean to indicate if this mapping should be saved as static mapping file.</param>
     public RespondWithAProvider(
         RegistrationCallback registrationCallback,
         IRequestMatcher requestMatcher,
         WireMockServerSettings settings,
         IGuidUtils guidUtils,
-        IDateTimeUtils dateTimeUtils,
+        TimeProvider clock,
         bool saveToFile = false
     )
     {
-        _registrationCallback = Guard.NotNull(registrationCallback);
-        _requestMatcher = Guard.NotNull(requestMatcher);
-        _settings = Guard.NotNull(settings);
-        _dateTimeUtils = Guard.NotNull(dateTimeUtils);
-        _saveToFile = saveToFile;
+        this.registrationCallback = Guard.NotNull(registrationCallback);
+        this.requestMatcher = Guard.NotNull(requestMatcher);
+        this.settings = Guard.NotNull(settings);
+        this.clock = Guard.NotNull(clock);
+        this.saveToFile = saveToFile;
 
         Guid = guidUtils.NewGuid();
     }
@@ -81,35 +83,31 @@ internal class RespondWithAProvider : IRespondWithAProvider
         var mapping = new Mapping
         (
             Guid,
-            _dateTimeUtils.UtcNow,
-            _title,
-            _description,
-            _path,
-            _settings,
-            _requestMatcher,
+            clock.GetUtcNow(),
+            title,
+            description,
+            path,
+            settings,
+            requestMatcher,
             provider,
-            _priority,
-            _scenario,
-            _executionConditionState,
-            _nextState,
-            _timesInSameState,
+            priority,
+            scenario,
+            executionConditionState,
+            nextState,
+            timesInSameState,
             Webhooks,
-            _useWebhookFireAndForget,
+            useWebhookFireAndForget,
             TimeSettings,
             Data
         );
 
-        if (_probability != null)
-        {
-            mapping.WithProbability(_probability.Value);
-        }
+        if (probability != null)
+            mapping.WithProbability(probability.Value);
 
-        if (_protoDefinition != null)
-        {
-            mapping.WithProtoDefinition(_protoDefinition.Value);
-        }
+        if (protoDefinition != null)
+            mapping.WithProtoDefinition(protoDefinition.Value);
 
-        _registrationCallback(mapping, _saveToFile);
+        registrationCallback(mapping, saveToFile);
     }
 
     /// <inheritdoc />
@@ -124,35 +122,19 @@ internal class RespondWithAProvider : IRespondWithAProvider
 
     /// <inheritdoc />
     public void ThenRespondWithOK()
-    {
-        var responseBuilder = Response.Create();
-
-        RespondWith(responseBuilder);
-    }
+        => RespondWith(Response.Create());
 
     /// <inheritdoc />
     public void ThenRespondWithStatusCode(int code)
-    {
-        var responseBuilder = Response.Create().WithStatusCode(code);
-
-        RespondWith(responseBuilder);
-    }
+        => RespondWith(Response.Create().WithStatusCode(code));
 
     /// <inheritdoc />
     public void ThenRespondWithStatusCode(string code)
-    {
-        var responseBuilder = Response.Create().WithStatusCode(code);
-
-        RespondWith(responseBuilder);
-    }
+        => RespondWith(Response.Create().WithStatusCode(code));
 
     /// <inheritdoc />
     public void ThenRespondWithStatusCode(HttpStatusCode code)
-    {
-        var responseBuilder = Response.Create().WithStatusCode(code);
-
-        RespondWith(responseBuilder);
-    }
+        => RespondWith(Response.Create().WithStatusCode(code));
 
     /// <inheritdoc />
     public IRespondWithAProvider WithData(object data)
@@ -163,9 +145,7 @@ internal class RespondWithAProvider : IRespondWithAProvider
 
     /// <inheritdoc />
     public IRespondWithAProvider WithGuid(string guid)
-    {
-        return WithGuid(Guid.Parse(guid));
-    }
+        => WithGuid(Guid.Parse(guid));
 
     /// <inheritdoc />
     public IRespondWithAProvider WithGuid(Guid guid)
@@ -176,20 +156,16 @@ internal class RespondWithAProvider : IRespondWithAProvider
 
     /// <inheritdoc />
     public IRespondWithAProvider DefineGuid(Guid guid)
-    {
-        return WithGuid(guid);
-    }
+        => WithGuid(guid);
 
     /// <inheritdoc />
     public IRespondWithAProvider DefineGuid(string guid)
-    {
-        return WithGuid(guid);
-    }
+        => WithGuid(guid);
 
     /// <inheritdoc />
     public IRespondWithAProvider WithTitle(string title)
     {
-        _title = title;
+        this.title = title;
 
         return this;
     }
@@ -197,75 +173,65 @@ internal class RespondWithAProvider : IRespondWithAProvider
     /// <inheritdoc />
     public IRespondWithAProvider WithDescription(string description)
     {
-        _description = description;
+        this.description = description;
         return this;
     }
 
     /// <inheritdoc />
     public IRespondWithAProvider WithPath(string path)
     {
-        _path = path;
+        this.path = path;
         return this;
     }
 
     /// <inheritdoc />
     public IRespondWithAProvider AtPriority(int priority)
     {
-        _priority = priority;
+        this.priority = priority;
         return this;
     }
 
     /// <inheritdoc />
     public IRespondWithAProvider InScenario(string scenario)
     {
-        _scenario = Guard.NotNullOrWhiteSpace(scenario);
+        this.scenario = Guard.NotNullOrWhiteSpace(scenario);
         return this;
     }
 
     /// <inheritdoc />
     public IRespondWithAProvider InScenario(int scenario)
-    {
-        return InScenario(scenario.ToString());
-    }
+        => InScenario(scenario.ToString());
 
     /// <inheritdoc />
     public IRespondWithAProvider WhenStateIs(string state)
     {
-        if (string.IsNullOrEmpty(_scenario))
-        {
+        if (string.IsNullOrEmpty(scenario))
             throw new NotSupportedException("Unable to set state condition when no scenario is defined.");
-        }
 
-        _executionConditionState = state;
+        executionConditionState = state;
 
         return this;
     }
 
     /// <inheritdoc />
     public IRespondWithAProvider WhenStateIs(int state)
-    {
-        return WhenStateIs(state.ToString());
-    }
+        => WhenStateIs(state.ToString());
 
     /// <inheritdoc />
     public IRespondWithAProvider WillSetStateTo(string state, int? times = 1)
     {
-        if (string.IsNullOrEmpty(_scenario))
-        {
+        if (string.IsNullOrEmpty(scenario))
             throw new NotSupportedException("Unable to set next state when no scenario is defined.");
-        }
 
-        _nextState = state;
-        _timesInSameState = times ?? 1;
+        nextState = state;
+        timesInSameState = times ?? 1;
 
         return this;
     }
 
     /// <inheritdoc />
     public IRespondWithAProvider WillSetStateTo(int state, int? times = 1)
-    {
-        return WillSetStateTo(state.ToString(), times);
-    }
+        => WillSetStateTo(state.ToString(), times);
 
     /// <inheritdoc />
     public IRespondWithAProvider WithTimeSettings(ITimeSettings timeSettings)
@@ -296,17 +262,15 @@ internal class RespondWithAProvider : IRespondWithAProvider
         Guard.NotNull(url);
         Guard.NotNull(method);
 
-        Webhooks = new[] { InitWebhook(url, method, headers, useTransformer, transformerType) };
+        Webhooks = [InitWebhook(url, method, headers, useTransformer, transformerType)];
 
         if (body != null)
-        {
             Webhooks[0].Request.BodyData = new BodyData
             {
                 BodyAsString = body,
                 DetectedBodyType = BodyType.String,
                 DetectedBodyTypeFromContentType = BodyType.String
             };
-        }
 
         return this;
     }
@@ -323,30 +287,28 @@ internal class RespondWithAProvider : IRespondWithAProvider
         Guard.NotNull(url);
         Guard.NotNull(method);
 
-        Webhooks = new[] { InitWebhook(url, method, headers, useTransformer, transformerType) };
+        Webhooks = [InitWebhook(url, method, headers, useTransformer, transformerType)];
 
         if (body != null)
-        {
             Webhooks[0].Request.BodyData = new BodyData
             {
                 BodyAsJson = body,
                 DetectedBodyType = BodyType.Json,
                 DetectedBodyTypeFromContentType = BodyType.Json
             };
-        }
 
         return this;
     }
 
     public IRespondWithAProvider WithWebhookFireAndForget(bool useWebhooksFireAndForget)
     {
-        _useWebhookFireAndForget = useWebhooksFireAndForget;
+        useWebhookFireAndForget = useWebhooksFireAndForget;
         return this;
     }
 
     public IRespondWithAProvider WithProbability(double probability)
     {
-        _probability = Guard.Condition(probability, p => p is >= 0 and <= 1.0);
+        this.probability = Guard.Condition(probability, p => p is >= 0 and <= 1.0);
         return this;
     }
 
@@ -355,28 +317,23 @@ internal class RespondWithAProvider : IRespondWithAProvider
     {
         Guard.NotNullOrWhiteSpace(protoDefinitionOrId);
 
-        if (_settings.ProtoDefinitions?.TryGetValue(protoDefinitionOrId, out var protoDefinition) == true)
-        {
-            _protoDefinition = new (protoDefinitionOrId, protoDefinition);
-        }
-        else
-        {
-            _protoDefinition = new(null, protoDefinitionOrId);
-        }
+        this.protoDefinition = settings.ProtoDefinitions?.TryGetValue(protoDefinitionOrId, out var protoDefinition) == true
+                                   ? new(protoDefinitionOrId, protoDefinition)
+                                   : new(null, protoDefinitionOrId);
 
         return this;
     }
 
     /// <inheritdoc />
-    public IRespondWithAProvider WithGraphQLSchema(string graphQLSchemaOrId, IDictionary<string, Type>? customScalars = null)
+    public IRespondWithAProvider WithGraphQLSchema(string graphQlSchemaOrId, IDictionary<string, Type>? customScalars = null)
     {
-        Guard.NotNullOrWhiteSpace(graphQLSchemaOrId);
+        Guard.NotNullOrWhiteSpace(graphQlSchemaOrId);
 
-        if (_settings.GraphQLSchemas?.TryGetValue(graphQLSchemaOrId, out _graphQLSchemaDetails) != true)
+        if (settings.GraphQLSchemas?.TryGetValue(graphQlSchemaOrId, out graphQLSchemaDetails) != true)
         {
-            _graphQLSchemaDetails = new GraphQLSchemaDetails
+            graphQLSchemaDetails = new GraphQLSchemaDetails
             {
-                SchemaAsString = graphQLSchemaOrId,
+                SchemaAsString = graphQlSchemaOrId,
                 CustomScalars = customScalars
             };
         }
@@ -384,18 +341,15 @@ internal class RespondWithAProvider : IRespondWithAProvider
         return this;
     }
 
-    private static IWebhook InitWebhook(
+    static IWebhook InitWebhook(
         string url,
         string method,
         IDictionary<string, WireMockList<string>>? headers,
         bool useTransformer,
         TransformerType transformerType
     )
-    {
-        return new Webhook
-        {
-            Request = new WebhookRequest
-            {
+        => new Webhook {
+            Request = new WebhookRequest {
                 Url = url,
                 Method = method,
                 Headers = headers,
@@ -403,5 +357,4 @@ internal class RespondWithAProvider : IRespondWithAProvider
                 TransformerType = transformerType
             }
         };
-    }
 }

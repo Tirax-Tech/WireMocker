@@ -52,6 +52,7 @@ internal partial class AspNetCoreSelfHost(IWireMockMiddlewareOptions wireMockMid
             .ConfigureServices(services =>
             {
                 services.AddSingleton(wireMockMiddlewareOptions);
+                services.AddSingleton(TimeProvider.System);
                 services.AddSingleton<IMappingMatcher, MappingMatcher>();
                 services.AddSingleton<IRandomizerDoubleBetween0And1, RandomizerDoubleBetween0And1>();
                 services.AddSingleton<IOwinRequestMapper, OwinRequestMapper>();

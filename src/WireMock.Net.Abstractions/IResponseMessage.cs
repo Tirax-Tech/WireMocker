@@ -1,6 +1,8 @@
 // Copyright © WireMock.Net
 
 // Modified by Ruxo Zheng, 2024.
+
+using System;
 using System.Collections.Generic;
 using System.Net;
 using WireMock.ResponseBuilders;
@@ -14,6 +16,11 @@ namespace WireMock;
 /// </summary>
 public interface IResponseMessage
 {
+    /// <summary>
+    /// Response time.
+    /// </summary>
+    DateTimeOffset Timestamp { get; }
+
     /// <summary>
     /// The Body.
     /// </summary>

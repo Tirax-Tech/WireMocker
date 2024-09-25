@@ -28,7 +28,6 @@ using WireMock.Serialization;
 using WireMock.Settings;
 using WireMock.Types;
 using WireMock.Util;
-// ReSharper disable UnusedMethodReturnValue.Local
 
 namespace WireMock.Server;
 
@@ -47,7 +46,7 @@ public partial class WireMockServer : IWireMockServer
     readonly MappingToFileSaver mappingToFileSaver;
     readonly MappingBuilder mappingBuilder;
     readonly IGuidUtils guidUtils = new GuidUtils();
-    readonly IDateTimeUtils dateTimeUtils = new DateTimeUtils();
+    readonly TimeProvider clock = TimeProvider.System;
 
     /// <inheritdoc />
     [PublicAPI]
@@ -355,7 +354,7 @@ public partial class WireMockServer : IWireMockServer
             mappingConverter,
             mappingToFileSaver,
             guidUtils,
-            dateTimeUtils
+            clock
         );
 
         options.AdditionalServiceRegistration = this.settings.AdditionalServiceRegistration;
@@ -404,12 +403,11 @@ public partial class WireMockServer : IWireMockServer
 
     /// <inheritdoc cref="IWireMockServer.AddCatchAllMapping" />
     [PublicAPI]
-    public void AddCatchAllMapping()
-    {
+    public void AddCatchAllMapping() {
         Given(Request.Create().WithPath("/*").UsingAnyMethod())
-            .WithGuid(Guid.Parse("90008000-0000-4444-a17e-669cd84f1f05"))
-            .AtPriority(1000)
-            .RespondWith(new DynamicResponseProvider(_ => ResponseMessageBuilder.Create(HttpStatusCode.NotFound, WireMockConstants.NoMatchingFound)));
+           .WithGuid(Guid.Parse("90008000-0000-4444-a17e-669cd84f1f05"))
+           .AtPriority(1000)
+           .RespondWith(new DynamicResponseProvider( _ => CreateResponse(HttpStatusCode.NotFound, WireMockConstants.NoMatchingFound)));
     }
 
     /// <inheritdoc cref="IWireMockServer.Reset" />
@@ -446,6 +444,7 @@ public partial class WireMockServer : IWireMockServer
         return false;
     }
 
+    // ReSharper disable once UnusedMethodReturnValue.Local
     bool DeleteMapping(string path)
     {
         // Check a mapping exists with the same path, if so, remove it.
@@ -645,4 +644,7 @@ public partial class WireMockServer : IWireMockServer
         if (settings.MaxRequestLogCount != null)
             SetMaxRequestLogCount(settings.MaxRequestLogCount);
     }
+
+    ResponseMessage CreateResponse(HttpStatusCode code, string? status = default, Guid? guid = default)
+        => ResponseMessageBuilder.Create(clock.GetUtcNow(), code, status, guid: guid);
 }

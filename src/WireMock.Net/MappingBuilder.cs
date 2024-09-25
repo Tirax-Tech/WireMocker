@@ -30,7 +30,7 @@ public class MappingBuilder : IMappingBuilder
     readonly MappingConverter mappingConverter;
     readonly MappingToFileSaver mappingToFileSaver;
     readonly IGuidUtils guidUtils;
-    readonly IDateTimeUtils dateTimeUtils;
+    readonly TimeProvider dateTimeUtils;
 
     /// <summary>
     /// Create a MappingBuilder
@@ -47,7 +47,7 @@ public class MappingBuilder : IMappingBuilder
         mappingToFileSaver = new MappingToFileSaver(this.settings, mappingConverter);
 
         guidUtils = new GuidUtils();
-        dateTimeUtils = new DateTimeUtils();
+        dateTimeUtils = TimeProvider.System;
     }
 
     internal MappingBuilder(
@@ -56,7 +56,7 @@ public class MappingBuilder : IMappingBuilder
         MappingConverter mappingConverter,
         MappingToFileSaver mappingToFileSaver,
         IGuidUtils guidUtils,
-        IDateTimeUtils dateTimeUtils
+        TimeProvider dateTimeUtils
     )
     {
         this.settings = Guard.NotNull(settings);
@@ -64,7 +64,7 @@ public class MappingBuilder : IMappingBuilder
         this.mappingConverter = Guard.NotNull(mappingConverter);
         this.mappingToFileSaver = Guard.NotNull(mappingToFileSaver);
         this.guidUtils = Guard.NotNull(guidUtils);
-        this.dateTimeUtils = Guard.NotNull(dateTimeUtils);
+        this.dateTimeUtils = dateTimeUtils;
     }
 
     /// <inheritdoc />
@@ -128,7 +128,7 @@ public class MappingBuilder : IMappingBuilder
         // Check a mapping exists with the same Guid. If so, update the datetime and replace it.
         if (options.Mappings.ContainsKey(mapping.Guid))
         {
-            mapping.UpdatedAt = dateTimeUtils.UtcNow;
+            mapping.UpdatedAt = dateTimeUtils.GetUtcNow();
             options.Mappings[mapping.Guid] = mapping;
         }
         else

@@ -32,6 +32,7 @@ namespace WireMock.Owin
         IOwinRequestMapper requestMapper,
         IOwinResponseMapper responseMapper,
         IMappingMatcher mappingMatcher,
+        TimeProvider clock,
         IGuidUtils guidUtils)
     {
         readonly object @lock = new();
@@ -79,7 +80,7 @@ namespace WireMock.Owin
                 if (targetMapping == null){
                     logRequest = true;
                     options.Logger.Warn("HttpStatusCode set to 404 : No matching mapping found");
-                    response = ResponseMessageBuilder.Create(HttpStatusCode.NotFound, WireMockConstants.NoMatchingFound);
+                    response = ResponseMessageBuilder.Create(clock.GetUtcNow(), HttpStatusCode.NotFound, WireMockConstants.NoMatchingFound);
                     return;
                 }
 
@@ -89,7 +90,7 @@ namespace WireMock.Owin
                     bool present = request.Headers.TryGetValue(HttpKnownHeaderNames.Authorization, out WireMockList<string>? authorization);
                     if (!present || options.AuthenticationMatcher.IsMatch(authorization!.ToString()).Score < MatchScores.Perfect){
                         options.Logger.Error("HttpStatusCode set to 401");
-                        response = ResponseMessageBuilder.Create(HttpStatusCode.Unauthorized, null);
+                        response = ResponseMessageBuilder.Create(clock.GetUtcNow(), HttpStatusCode.Unauthorized, null);
                         return;
                     }
                 }
@@ -126,7 +127,7 @@ namespace WireMock.Owin
             catch (Exception ex){
                 options.Logger.Error($"Providing a Response for Mapping '{result.Match?.Mapping.Guid}' failed. " +
                                      $"HttpStatusCode set to 500. Exception: {ex}");
-                response = ResponseMessageBuilder.Create(500, ex.Message);
+                response = ResponseMessageBuilder.Create(clock.GetUtcNow(), HttpStatusCode.InternalServerError, ex.Message);
             }
             finally{
                 var elapsed = stopwatch.Elapsed;
@@ -166,7 +167,7 @@ namespace WireMock.Owin
                 catch (Exception ex){
                     options.Logger.Error("HttpStatusCode set to 404 : No matching mapping found", ex);
 
-                    var notFoundResponse = ResponseMessageBuilder.Create(HttpStatusCode.NotFound, WireMockConstants.NoMatchingFound);
+                    var notFoundResponse = ResponseMessageBuilder.Create(clock.GetUtcNow(), HttpStatusCode.NotFound, WireMockConstants.NoMatchingFound);
                     await responseMapper.MapAsync(notFoundResponse, ctx.Response).ConfigureAwait(false);
                 }
             }

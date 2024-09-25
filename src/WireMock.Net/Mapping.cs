@@ -19,7 +19,7 @@ public class Mapping : IMapping
     public Guid Guid { get; }
 
     /// <inheritdoc />
-    public DateTime? UpdatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
 
     /// <inheritdoc />
     public string? Title { get; }
@@ -107,7 +107,7 @@ public class Mapping : IMapping
     public Mapping
     (
         Guid guid,
-        DateTime updatedAt,
+        DateTimeOffset updatedAt,
         string? title,
         string? description,
         string? path,

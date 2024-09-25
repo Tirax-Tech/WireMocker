@@ -26,7 +26,7 @@ public interface IMapping
     /// <summary>
     /// The datetime when this mapping was created or updated.
     /// </summary>
-    public DateTime? UpdatedAt { get; set; }
+    public DateTimeOffset? UpdatedAt { get; set; }
 
     /// <summary>
     /// Gets the TimeSettings (Start, End and TTL).

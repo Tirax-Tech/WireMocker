@@ -29,6 +29,8 @@ public partial class Response : IResponseBuilder
 {
     static readonly ThreadLocal<Random> Random = new(() => new Random(DateTime.UtcNow.Millisecond));
 
+    readonly TimeProvider clock = TimeProvider.System;
+
     TimeSpan? delay;
 
     /// <summary>
@@ -93,9 +95,8 @@ public partial class Response : IResponseBuilder
     /// <param name="responseMessage">ResponseMessage</param>
     /// <returns>A <see cref="IResponseBuilder"/>.</returns>
     [PublicAPI]
-    public static IResponseBuilder Create(ResponseMessage? responseMessage = null)
-    {
-        var message = responseMessage ?? new ResponseMessage();
+    public static IResponseBuilder Create(ResponseMessage? responseMessage = null) {
+        var message = responseMessage ?? new ResponseMessage { Timestamp = DateTimeOffset.UtcNow };
         return new Response(message);
     }
 

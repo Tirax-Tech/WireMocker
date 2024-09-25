@@ -4,6 +4,8 @@
 // For more details see 'mock4net/LICENSE.txt' and 'mock4net/readme.md' in this project root.
 
 // Modified by Ruxo Zheng, 2024.
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -33,6 +35,9 @@ public class ResponseMessage : IResponseMessage
 
     /// <inheritdoc cref="IResponseMessage.BodyDestination" />
     public string? BodyDestination { get; set; }
+
+    /// <inheritdoc />
+    public required DateTimeOffset Timestamp { get; init; }
 
     /// <inheritdoc cref="IResponseMessage.BodyData" />
     public IBodyData? BodyData { get; set; }

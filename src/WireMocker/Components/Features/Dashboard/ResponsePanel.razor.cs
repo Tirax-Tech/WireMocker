@@ -14,11 +14,12 @@ namespace Tirax.Application.WireMocker.Components.Features.Dashboard;
 
 public sealed class ResponsePanelViewModel : ViewModel
 {
-    public ResponsePanelViewModel(int statusCode, IReadOnlyList<HttpStringValues> headers, IBodyData? body, bool isMatched) {
-        var httpCode = (HttpStatusCode)statusCode;
-        StatusCode = statusCode.ToString();
+    public ResponsePanelViewModel(HttpStatusCode statusCode, IReadOnlyList<HttpStringValues> headers, IBodyData? body,DateTimeOffset timestamp,
+                                  bool isMatched) {
+        Timestamp = timestamp;
+        StatusCode = ((int)statusCode).ToString();
         StatusCodeColor = isMatched
-                              ? statusCode switch {
+                              ? (int)statusCode switch {
                                   < 200 => Color.Info,
                                   < 300 => Color.Success,
                                   < 400 => Color.Secondary,
@@ -26,7 +27,7 @@ public sealed class ResponsePanelViewModel : ViewModel
                                   _     => Color.Error
                               }
                               : Color.Dark;
-        StatusCodeText = isMatched? httpCode.ToString() : "NO MOCK MAPPING";
+        StatusCodeText = isMatched? statusCode.ToString() : "NO MOCK MAPPING";
         Headers = headers;
 
         Body = body?.GetBodyType() switch {
@@ -41,6 +42,7 @@ public sealed class ResponsePanelViewModel : ViewModel
     public string StatusCode { get; }
     public Color StatusCodeColor { get; }
     public string StatusCodeText { get; }
+    public DateTimeOffset Timestamp { get; }
     public IReadOnlyList<HttpStringValues> Headers { get; }
     public string? Body { get; }
 

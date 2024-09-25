@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System.Net;
 #if OPENAPIPARSER
 using System;
@@ -11,9 +12,8 @@ namespace WireMock.Server;
 
 public partial class WireMockServer
 {
-    private IResponseMessage OpenApiConvertToMappings(IRequestMessage requestMessage)
+    IResponseMessage OpenApiConvertToMappings(IRequestMessage requestMessage)
     {
-#if OPENAPIPARSER
         try
         {
             var mappingModels = new WireMockOpenApiParser().FromText(requestMessage.Body!, out var diagnostic);
@@ -22,35 +22,26 @@ public partial class WireMockServer
         catch (Exception e)
         {
             settings.Logger.Error("HttpStatusCode set to {0} {1}", HttpStatusCode.BadRequest, e);
-            return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, e.Message);
+            return CreateResponse(HttpStatusCode.BadRequest, e.Message);
         }
-#else
-        return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, "Not supported for .NETStandard 1.3 and .NET 4.5.2 or lower.");
-#endif
     }
 
-    private IResponseMessage OpenApiSaveToMappings(IRequestMessage requestMessage)
+    IResponseMessage OpenApiSaveToMappings(IRequestMessage requestMessage)
     {
-#if OPENAPIPARSER
         try
         {
             var mappingModels = new WireMockOpenApiParser().FromText(requestMessage.Body!, out var diagnostic);
             if (diagnostic.Errors.Any())
-            {
                 return ToJson(diagnostic, false, HttpStatusCode.BadRequest);
-            }
 
             ConvertMappingsAndRegisterAsRespondProvider(mappingModels);
 
-            return ResponseMessageBuilder.Create(HttpStatusCode.Created, "OpenApi document converted to Mappings");
+            return CreateResponse(HttpStatusCode.Created, "OpenApi document converted to Mappings");
         }
         catch (Exception e)
         {
             settings.Logger.Error("HttpStatusCode set to {0} {1}", HttpStatusCode.BadRequest, e);
-            return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, e.Message);
+            return CreateResponse(HttpStatusCode.BadRequest, e.Message);
         }
-#else
-        return ResponseMessageBuilder.Create(HttpStatusCode.BadRequest, "Not supported for .NETStandard 1.3 and .NET 4.5.2 or lower.");
-#endif
     }
 }

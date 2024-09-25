@@ -4,6 +4,11 @@
     <MudStack Row="true" AlignItems="AlignItems.Baseline">
         <MudChip T="string" Color="ViewModel!.StatusCodeColor" Class="pr-2">@ViewModel!.StatusCode</MudChip>
         <MudText Typo="Typo.body2" Color="ViewModel!.StatusCodeColor">@ViewModel!.StatusCodeText</MudText>
+        <MudSpacer />
+        <MudText Typo="Typo.body2">
+            @{ var d = ViewModel!.Timestamp; }
+            @d.LocalDateTime.ToLongDateString() @d.LocalDateTime.ToLongTimeString()
+        </MudText>
     </MudStack>
 
     <HeaderTable Headers="ViewModel!.Headers" />

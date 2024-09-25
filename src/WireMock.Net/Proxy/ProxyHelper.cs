@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Linq;
 using System.Net.Http;
@@ -15,13 +16,13 @@ namespace WireMock.Proxy;
 
 internal class ProxyHelper
 {
-    private readonly WireMockServerSettings _settings;
-    private readonly ProxyMappingConverter _proxyMappingConverter;
+    readonly WireMockServerSettings settings;
+    readonly ProxyMappingConverter proxyMappingConverter;
 
     public ProxyHelper(WireMockServerSettings settings)
     {
-        _settings = Guard.NotNull(settings);
-        _proxyMappingConverter = new ProxyMappingConverter(settings, new GuidUtils(), new DateTimeUtils());
+        this.settings = Guard.NotNull(settings);
+        proxyMappingConverter = new ProxyMappingConverter(settings, new GuidUtils(), TimeProvider.System);
     }
 
     public async Task<(IResponseMessage Message, IMapping? Mapping)> SendAsync(
@@ -57,9 +58,9 @@ internal class ProxyHelper
         var httpResponseMessage = await client.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
 
         // Create ResponseMessage
-        bool deserializeJson = !_settings.DisableJsonBodyParsing.GetValueOrDefault(false);
-        bool decompressGzipAndDeflate = !_settings.DisableRequestBodyDecompressing.GetValueOrDefault(false);
-        bool deserializeFormUrlEncoded = !_settings.DisableDeserializeFormUrlEncoded.GetValueOrDefault(false);
+        bool deserializeJson = !settings.DisableJsonBodyParsing.GetValueOrDefault(false);
+        bool decompressGzipAndDeflate = !settings.DisableRequestBodyDecompressing.GetValueOrDefault(false);
+        bool deserializeFormUrlEncoded = !settings.DisableDeserializeFormUrlEncoded.GetValueOrDefault(false);
 
         var responseMessage = await HttpResponseMessageHelper.CreateAsync(
             httpResponseMessage,
@@ -88,13 +89,13 @@ internal class ProxyHelper
 
         if (save && (proxyAndRecordSettings.SaveMapping || proxyAndRecordSettings.SaveMappingToFile))
         {
-            newMapping = _proxyMappingConverter.ToMapping(mapping, proxyAndRecordSettings, requestMessage, responseMessage);
+            newMapping = proxyMappingConverter.ToMapping(mapping, proxyAndRecordSettings, requestMessage, responseMessage);
         }
 
         return (responseMessage, newMapping);
     }
 
-    private static bool Check<T>(ProxySaveMappingSetting<T>? saveMappingSetting, Func<bool> action) where T : notnull
+    static bool Check<T>(ProxySaveMappingSetting<T>? saveMappingSetting, Func<bool> action) where T : notnull
     {
         var isMatch = saveMappingSetting is null || action();
         var matchBehaviour = saveMappingSetting?.MatchBehaviour ?? MatchBehaviour.AcceptOnMatch;
