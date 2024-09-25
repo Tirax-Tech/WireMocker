@@ -1,24 +1,38 @@
-﻿<MudSimpleTable Dense="true">
-    @{ var title = Title ?? "Headers"; }
-    <thead>
-    <tr>
-        <th>@title</th><th>Value</th>
-    </tr>
-    </thead>
-    <tbody>
-    @foreach (var header in Headers){
-        <tr @key="header.Key">
-            <td>@header.Key</td>
-            <td>@header.Values.Join(';')</td>
+﻿<div>
+    <MudSimpleTable Dense="true" Class="@tableColorClass">
+        @{ var title = Title ?? "Headers"; }
+        <thead>
+        <tr>
+            <th>@title</th><th>Value</th>
         </tr>
-    }
-    </tbody>
-</MudSimpleTable>
+        </thead>
+        <tbody>
+        @foreach (var header in Headers){
+            <tr @key="header.Key">
+                <td>@header.Key</td>
+                <td>@header.Values.Join(';')</td>
+            </tr>
+        }
+        </tbody>
+    </MudSimpleTable>
+</div>
 
 @code {
     [Parameter]
     public string? Title { get; set; }
 
     [Parameter]
+    public Color? Color { get; set; }
+
+    [Parameter]
     public required IReadOnlyList<HttpStringValues> Headers { get; set; }
+
+    string tableColorClass = string.Empty;
+
+    protected override void OnParametersSet() {
+        if (Color is not null)
+            tableColorClass = $"mud-{Color.ToString()!.ToLower()}";
+        base.OnParametersSet();
+    }
+
 }
