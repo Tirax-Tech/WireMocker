@@ -133,6 +133,7 @@ namespace WireMock.Owin
                 var elapsed = stopwatch.Elapsed;
 
                 Debug.Assert(response is not null);
+                response.ElapsedTime = elapsed;
                 var log = new LogEntry {
                     Guid = logId,
                     RequestMessage = request,

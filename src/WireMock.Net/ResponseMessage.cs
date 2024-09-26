@@ -39,6 +39,9 @@ public class ResponseMessage : IResponseMessage
     /// <inheritdoc />
     public required DateTimeOffset Timestamp { get; init; }
 
+    /// <inheritdoc />
+    public TimeSpan ElapsedTime { get; set; }
+
     /// <inheritdoc cref="IResponseMessage.BodyData" />
     public IBodyData? BodyData { get; set; }
 

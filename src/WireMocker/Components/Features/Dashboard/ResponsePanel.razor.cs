@@ -12,39 +12,37 @@ using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace Tirax.Application.WireMocker.Components.Features.Dashboard;
 
-public sealed class ResponsePanelViewModel : ViewModel
+public sealed class ResponsePanelViewModel(
+    HttpStatusCode statusCode,
+    IReadOnlyList<HttpStringValues> headers,
+    IBodyData? body,
+    DateTimeOffset timestamp,
+    TimeSpan elapsedTime,
+    bool isMatched)
+    : ViewModel
 {
-    public ResponsePanelViewModel(HttpStatusCode statusCode, IReadOnlyList<HttpStringValues> headers, IBodyData? body,DateTimeOffset timestamp,
-                                  bool isMatched) {
-        Timestamp = timestamp;
-        StatusCode = ((int)statusCode).ToString();
-        StatusCodeColor = isMatched
-                              ? (int)statusCode switch {
-                                  < 200 => Color.Info,
-                                  < 300 => Color.Success,
-                                  < 400 => Color.Secondary,
-                                  < 500 => Color.Warning,
-                                  _     => Color.Error
-                              }
-                              : Color.Dark;
-        StatusCodeText = isMatched? statusCode.ToString() : "NO MOCK MAPPING";
-        Headers = headers;
+    public string StatusCode { get; } = ((int)statusCode).ToString();
+    public Color StatusCodeColor { get; } = isMatched
+                                                ? (int)statusCode switch {
+                                                    < 200 => Color.Info,
+                                                    < 300 => Color.Success,
+                                                    < 400 => Color.Secondary,
+                                                    < 500 => Color.Warning,
+                                                    _     => Color.Error
+                                                }
+                                                : Color.Dark;
 
-        Body = body?.GetBodyType() switch {
-            null            => null,
-            BodyType.String => body.BodyAsString,
-            BodyType.Json   => ParseJsonBody(body.BodyAsJson!),
+    public string StatusCodeText { get; } = isMatched? statusCode.ToString() : "NO MOCK MAPPING";
+    public TimeSpan ElapsedTime => elapsedTime;
+    public DateTimeOffset Timestamp => timestamp;
+    public IReadOnlyList<HttpStringValues> Headers { get; } = headers;
+    public string? Body { get; } = body?.GetBodyType() switch {
+        null            => null,
+        BodyType.String => body.BodyAsString,
+        BodyType.Json   => ParseJsonBody(body.BodyAsJson!),
 
-            _ => $"({body.GetBodyType()})"
-        };
-    }
-
-    public string StatusCode { get; }
-    public Color StatusCodeColor { get; }
-    public string StatusCodeText { get; }
-    public DateTimeOffset Timestamp { get; }
-    public IReadOnlyList<HttpStringValues> Headers { get; }
-    public string? Body { get; }
+        _ => $"({body.GetBodyType()})"
+    };
 
     static readonly JsonSerializerOptions JsonOptions = new() {
         WriteIndented = true,

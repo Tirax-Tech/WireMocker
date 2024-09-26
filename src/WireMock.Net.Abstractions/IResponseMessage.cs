@@ -22,6 +22,11 @@ public interface IResponseMessage
     DateTimeOffset Timestamp { get; }
 
     /// <summary>
+    /// Elapsed time since request.
+    /// </summary>
+    TimeSpan ElapsedTime { get; set; }
+
+    /// <summary>
     /// The Body.
     /// </summary>
     IBodyData? BodyData { get; }

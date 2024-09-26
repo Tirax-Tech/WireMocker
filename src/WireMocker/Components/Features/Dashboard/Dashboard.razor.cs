@@ -54,6 +54,7 @@ public sealed class DashboardViewModel : ActivatableViewModel
                res.Headers.Map(h => (h.Key, (IReadOnlyList<string>)h.Value)).ToArray(),
                res.BodyData,
                res.Timestamp,
+               res.ElapsedTime,
                 isMatched);
 
     static bool IsMatched(ILogEntry log)
