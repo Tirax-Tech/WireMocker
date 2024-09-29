@@ -27,7 +27,7 @@ public partial class WireMockServer
 
         _httpClientForProxy = HttpClientBuilder.Build(settings.ProxyAndRecordSettings);
 
-        var proxyRespondProvider = Given(Request.Create().WithPath("/*").UsingAnyMethod()).WithGuid(ProxyMappingGuid).WithTitle("Default Proxy Mapping on /*");
+        var proxyRespondProvider = Given(RequestBuilders.Request.Create().WithPath("/*").UsingAnyMethod()).WithGuid(ProxyMappingGuid).WithTitle("Default Proxy Mapping on /*");
         if (settings.StartAdminInterface == true)
         {
             proxyRespondProvider.AtPriority(WireMockConstants.ProxyPriority);

@@ -34,7 +34,6 @@ public class RequestMessageGraphQLMatcher : IRequestMatcher
     {
     }
 
-#if GRAPHQL
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestMessageGraphQLMatcher"/> class.
     /// </summary>
@@ -45,7 +44,6 @@ public class RequestMessageGraphQLMatcher : IRequestMatcher
         this(CreateMatcherArray(matchBehaviour, new AnyOfTypes.AnyOf<string, WireMock.Models.StringPattern, GraphQL.Types.ISchema>(schema), customScalars))
     {
     }
-#endif
 
     /// <summary>
     /// Initializes a new instance of the <see cref="RequestMessageGraphQLMatcher"/> class.
@@ -76,35 +74,19 @@ public class RequestMessageGraphQLMatcher : IRequestMatcher
         return requestMatchResult.AddScore(GetType(), score, exception);
     }
 
-    private static MatchResult CalculateMatchResult(IRequestMessage requestMessage, IMatcher matcher)
-    {
+    static MatchResult CalculateMatchResult(IRequestMessage requestMessage, IMatcher matcher)
         // In case the matcher is a IStringMatcher and the body is a Json or a String, use the BodyAsString to match on.
-        if (matcher is IStringMatcher stringMatcher && requestMessage.BodyData?.DetectedBodyType is BodyType.Json or BodyType.String or BodyType.FormUrlEncoded)
-        {
-            return stringMatcher.IsMatch(requestMessage.BodyData.BodyAsString);
-        }
+        => matcher is IStringMatcher stringMatcher &&
+           requestMessage.BodyData?.BodyType is BodyType.Json or BodyType.String or BodyType.FormUrlEncoded
+               ? stringMatcher.IsMatch(requestMessage.BodyData.BodyAsString)
+               : default;
 
-        return default;
-    }
+    IReadOnlyList<MatchResult> CalculateMatchResults(IRequestMessage requestMessage)
+        => Matchers == null ? [new MatchResult()] : Matchers.Select(matcher => CalculateMatchResult(requestMessage, matcher)).ToArray();
 
-    private IReadOnlyList<MatchResult> CalculateMatchResults(IRequestMessage requestMessage)
-    {
-        return Matchers == null ? new[] { new MatchResult() } : Matchers.Select(matcher => CalculateMatchResult(requestMessage, matcher)).ToArray();
-    }
-
-#if GRAPHQL
-    private static IMatcher[] CreateMatcherArray(
+    static IMatcher[] CreateMatcherArray(
         MatchBehaviour matchBehaviour,
         AnyOfTypes.AnyOf<string, WireMock.Models.StringPattern, GraphQL.Types.ISchema> schema,
-        IDictionary<string, Type>? customScalars
-    )
-    {
-        return new[] { new GraphQLMatcher(schema, customScalars, matchBehaviour) }.Cast<IMatcher>().ToArray();
-    }
-#else
-    private static IMatcher[] CreateMatcherArray(MatchBehaviour matchBehaviour, object schema, IDictionary<string, Type>? customScalars)
-    {
-        throw new System.NotSupportedException("The GrapQLMatcher can not be used for .NETStandard1.3 or .NET Framework 4.6.1 or lower.");
-    }
-#endif
+        IDictionary<string, Type>? customScalars)
+        => new[] { new GraphQLMatcher(schema, customScalars, matchBehaviour) }.Cast<IMatcher>().ToArray();
 }

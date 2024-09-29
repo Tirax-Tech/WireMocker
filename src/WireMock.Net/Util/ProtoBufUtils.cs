@@ -1,7 +1,5 @@
 // Copyright © WireMock.Net
 
-#if PROTOBUF
-using System;
 using System.Threading;
 using System.Threading.Tasks;
 using JsonConverter.Abstractions;
@@ -22,9 +20,7 @@ internal static class ProtoBufUtils
     )
     {
         if (string.IsNullOrWhiteSpace(protoDefinition) || string.IsNullOrWhiteSpace(messageType) || value is null)
-        {
-            return Array.Empty<byte>();
-        }
+            return [];
 
         var request = new ConvertToProtoBufRequest(protoDefinition, messageType, value, true);
 
@@ -32,12 +28,9 @@ internal static class ProtoBufUtils
         {
             request = request.WithJsonConverter(jsonConverter);
             if (options != null)
-            {
                 request = request.WithJsonConverterOptions(options);
-            }
         }
 
-        return await SingletonFactory<Converter>.GetInstance().ConvertAsync(request, cancellationToken).ConfigureAwait(false);
+        return await SingletonFactory<Converter>.GetInstance().ConvertAsync(request, cancellationToken);
     }
 }
-#endif

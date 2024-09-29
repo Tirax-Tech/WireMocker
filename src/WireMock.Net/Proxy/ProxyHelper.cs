@@ -14,16 +14,10 @@ using WireMock.Util;
 
 namespace WireMock.Proxy;
 
-internal class ProxyHelper
+internal class ProxyHelper(WireMockServerSettings settings)
 {
-    readonly WireMockServerSettings settings;
-    readonly ProxyMappingConverter proxyMappingConverter;
-
-    public ProxyHelper(WireMockServerSettings settings)
-    {
-        this.settings = Guard.NotNull(settings);
-        proxyMappingConverter = new ProxyMappingConverter(settings, new GuidUtils(), TimeProvider.System);
-    }
+    readonly WireMockServerSettings settings = Guard.NotNull(settings);
+    readonly ProxyMappingConverter proxyMappingConverter = new(settings, new GuidUtils(), TimeProvider.System);
 
     public async Task<(IResponseMessage Message, IMapping? Mapping)> SendAsync(
         IMapping? mapping,
@@ -48,9 +42,7 @@ internal class ProxyHelper
             proxyUrl = url.Replace(replaceSettings.OldValue, replaceSettings.NewValue, stringComparison);
         }
         else
-        {
             proxyUrl = url;
-        }
 
         var httpRequestMessage = HttpRequestMessageHelper.Create(requestMessage, proxyUrl);
 
@@ -58,9 +50,9 @@ internal class ProxyHelper
         var httpResponseMessage = await client.SendAsync(httpRequestMessage, HttpCompletionOption.ResponseContentRead).ConfigureAwait(false);
 
         // Create ResponseMessage
-        bool deserializeJson = !settings.DisableJsonBodyParsing.GetValueOrDefault(false);
-        bool decompressGzipAndDeflate = !settings.DisableRequestBodyDecompressing.GetValueOrDefault(false);
-        bool deserializeFormUrlEncoded = !settings.DisableDeserializeFormUrlEncoded.GetValueOrDefault(false);
+        var deserializeJson = settings.TryJsonDetection;
+        var decompressGzipAndDeflate = !settings.DisableRequestBodyDecompressing.GetValueOrDefault(false);
+        var deserializeFormUrlEncoded = !settings.DisableDeserializeFormUrlEncoded.GetValueOrDefault(false);
 
         var responseMessage = await HttpResponseMessageHelper.CreateAsync(
             httpResponseMessage,
@@ -69,13 +61,13 @@ internal class ProxyHelper
             deserializeJson,
             decompressGzipAndDeflate,
             deserializeFormUrlEncoded
-        ).ConfigureAwait(false);
+        );
 
         IMapping? newMapping = null;
 
         var saveMappingSettings = proxyAndRecordSettings.SaveMappingSettings;
 
-        bool save = true;
+        var save = true;
         if (saveMappingSettings != null)
         {
             save &= Check(saveMappingSettings.StatusCodePattern,
@@ -88,9 +80,7 @@ internal class ProxyHelper
         }
 
         if (save && (proxyAndRecordSettings.SaveMapping || proxyAndRecordSettings.SaveMappingToFile))
-        {
             newMapping = proxyMappingConverter.ToMapping(mapping, proxyAndRecordSettings, requestMessage, responseMessage);
-        }
 
         return (responseMessage, newMapping);
     }

@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -26,10 +27,9 @@ namespace WireMock.Owin.Mappers;
 /// </summary>
 internal class OwinResponseMapper : IOwinResponseMapper
 {
-    readonly IRandomizerNumber<double> randomizerDouble = RandomizerFactory.GetRandomizer(new FieldOptionsDouble { Min = 0, Max = 1 });
-    readonly IRandomizerBytes randomizerBytes = RandomizerFactory.GetRandomizer(new FieldOptionsBytes { Min = 100, Max = 200 });
+    static readonly IRandomizerBytes RandomizerBytes = RandomizerFactory.GetRandomizer(new FieldOptionsBytes { Min = 100, Max = 200 });
     readonly IWireMockMiddlewareOptions options;
-    readonly Encoding utf8NoBom = new UTF8Encoding(false);
+    static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
     // https://msdn.microsoft.com/en-us/library/78h415ay(v=vs.110).aspx
     static readonly IDictionary<string, Action<IResponse, bool, WireMockList<string>>> ResponseHeadersToFix =
@@ -54,26 +54,29 @@ internal class OwinResponseMapper : IOwinResponseMapper
 
     /// <inheritdoc />
     public async Task MapAsync(IResponseMessage responseMessage, IResponse response)
+        => await MapAsync(options, response, responseMessage);
+
+    public static async ValueTask MapAsync(IWireMockMiddlewareOptions options, IResponse response, IResponseMessage responseMessage)
     {
         byte[]? bytes;
         switch (responseMessage.FaultType)
         {
             case FaultType.EMPTY_RESPONSE:
-                bytes = IsFault(responseMessage) ? EmptyArray<byte>.Value : await GetNormalBodyAsync(responseMessage).ConfigureAwait(false);
+                bytes = IsFault(responseMessage) ? EmptyArray<byte>.Value : await GetNormalBodyAsync(options, responseMessage);
                 break;
 
             case FaultType.MALFORMED_RESPONSE_CHUNK:
-                bytes = await GetNormalBodyAsync(responseMessage).ConfigureAwait(false) ?? EmptyArray<byte>.Value;
+                bytes = await GetNormalBodyAsync(options, responseMessage).ConfigureAwait(false) ?? EmptyArray<byte>.Value;
                 if (IsFault(responseMessage))
-                    bytes = bytes.Take(bytes.Length / 2).Union(randomizerBytes.Generate()).ToArray();
+                    bytes = bytes.Take(bytes.Length / 2).Union(RandomizerBytes.Generate()).ToArray();
                 break;
 
             default:
-                bytes = await GetNormalBodyAsync(responseMessage).ConfigureAwait(false);
+                bytes = await GetNormalBodyAsync(options, responseMessage);
                 break;
         }
 
-        response.StatusCode = (int) MapStatusCode(responseMessage.StatusCode);
+        response.StatusCode = (int) MapStatusCode(responseMessage.StatusCode, options.AllowOnlyDefinedHttpStatusCodeInResponse);
 
         SetResponseHeaders(responseMessage, bytes, response);
 
@@ -90,26 +93,28 @@ internal class OwinResponseMapper : IOwinResponseMapper
         SetResponseTrailingHeaders(responseMessage, response);
     }
 
-    HttpStatusCode MapStatusCode(HttpStatusCode code)
-        => options.AllowOnlyDefinedHttpStatusCodeInResponse == true && !Enum.IsDefined(typeof(HttpStatusCode), code)
-               ? HttpStatusCode.OK
-               : code;
+    static HttpStatusCode MapStatusCode(HttpStatusCode code, bool allowOnlyValidHttpStatusCode)
+        => allowOnlyValidHttpStatusCode && !Enum.IsDefined(typeof(HttpStatusCode), code) ? HttpStatusCode.OK : code;
 
-    bool IsFault(IResponseMessage responseMessage)
-        => responseMessage.FaultPercentage == null || randomizerDouble.Generate() <= responseMessage.FaultPercentage;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static double RandomizeDouble()
+        => Random.Shared.NextDouble();
 
-    async Task<byte[]?> GetNormalBodyAsync(IResponseMessage responseMessage) {
+    static bool IsFault(IResponseMessage responseMessage)
+        => responseMessage.FaultPercentage == null || RandomizeDouble() <= responseMessage.FaultPercentage;
+
+    static async Task<byte[]?> GetNormalBodyAsync(IWireMockMiddlewareOptions options, IResponseMessage responseMessage) {
         var bodyData = responseMessage.BodyData;
-        switch (bodyData?.GetBodyType())
+        switch (bodyData?.BodyType)
         {
             case BodyType.String:
             case BodyType.FormUrlEncoded:
-                return (bodyData.Encoding ?? utf8NoBom).GetBytes(bodyData.BodyAsString!);
+                return (bodyData.Encoding ?? Utf8NoBom).GetBytes(bodyData.BodyAsString!);
 
             case BodyType.Json:
                 var formatting = bodyData.BodyAsJsonIndented == true ? Formatting.Indented : Formatting.None;
                 var jsonBody = JsonConvert.SerializeObject(bodyData.BodyAsJson, new JsonSerializerSettings { Formatting = formatting, NullValueHandling = NullValueHandling.Ignore });
-                return (bodyData.Encoding ?? utf8NoBom).GetBytes(jsonBody);
+                return (bodyData.Encoding ?? Utf8NoBom).GetBytes(jsonBody);
 
             case BodyType.ProtoBuf:
                 var protoDefinition = bodyData.ProtoDefinition?.Invoke().Text;
@@ -123,13 +128,11 @@ internal class OwinResponseMapper : IOwinResponseMapper
 
             case BodyType.MultiPart:
                 options.Logger.Warn("MultiPart body type is not handled!");
-                break;
+                return null;
 
-            case BodyType.None:
-                break;
+            default:
+                return null;
         }
-
-        return null;
     }
 
     static void SetResponseHeaders(IResponseMessage responseMessage, byte[]? bytes, IResponse response)

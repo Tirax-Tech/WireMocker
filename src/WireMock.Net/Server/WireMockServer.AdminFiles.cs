@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using WireMock.Models;
 using WireMock.Types;
 using WireMock.Util;
 
@@ -61,25 +62,18 @@ public partial class WireMockServer
         }
 
         var bytes = settings.FileSystemHandler.ReadFile(filename);
-        var response = new ResponseMessage
-        {
+        var isText = BytesEncodingUtils.TryGetEncoding(bytes, out var encoding) && FileBodyIsString.Select(x => x.Equals(encoding)).Any();
+
+        return new ResponseMessage {
             Timestamp = clock.GetUtcNow(),
             StatusCode = HttpStatusCode.OK,
-            BodyData = new BodyData
-            {
+            BodyData = new BodyData {
                 BodyAsBytes = bytes,
-                DetectedBodyType = BodyType.Bytes,
-                DetectedBodyTypeFromContentType = BodyType.None
+                BodyType = isText ? BodyType.String : BodyType.Bytes,
+                ContentType = isText ? ContentTypes.Text : ContentTypes.OctetStream,
+                BodyAsString = isText ? encoding!.GetString(bytes) : null
             }
         };
-
-        if (BytesEncodingUtils.TryGetEncoding(bytes, out var encoding) && FileBodyIsString.Select(x => x.Equals(encoding)).Any())
-        {
-            response.BodyData.DetectedBodyType = BodyType.String;
-            response.BodyData.BodyAsString = encoding.GetString(bytes);
-        }
-
-        return response;
     }
 
     /// <summary>

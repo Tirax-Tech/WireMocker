@@ -1,12 +1,9 @@
 // Copyright © WireMock.Net
 
-#if MIMEKIT
+// Modified by Ruxo Zheng, 2024.
 using System;
 using MimeKit;
-using WireMock.Extensions;
-using WireMock.Matchers;
 using WireMock.Matchers.Helpers;
-using WireMock.Models;
 using WireMock.Util;
 
 namespace WireMock.Matchers;
@@ -16,7 +13,7 @@ namespace WireMock.Matchers;
 /// </summary>
 public class MimePartMatcher : IMatcher
 {
-    private readonly Func<MimePart, MatchResult>[] _funcs;
+    readonly Func<MimePart, MatchResult>[] funcs;
 
     /// <inheritdoc />
     public string Name => nameof(MimePartMatcher);
@@ -61,7 +58,7 @@ public class MimePartMatcher : IMatcher
         ContentTransferEncodingMatcher = contentTransferEncodingMatcher;
         ContentMatcher = contentMatcher;
 
-        _funcs =
+        funcs =
         [
             mp => ContentTypeMatcher?.IsMatch(GetContentTypeAsString(mp.ContentType)) ?? MatchScores.Perfect,
             mp => ContentDispositionMatcher?.IsMatch(mp.ContentDisposition.ToString().Replace("Content-Disposition: ", string.Empty)) ?? MatchScores.Perfect,
@@ -82,10 +79,8 @@ public class MimePartMatcher : IMatcher
 
         try
         {
-            if (Array.TrueForAll(_funcs, func => func(mimePart).IsPerfect()))
-            {
+            if (System.Array.TrueForAll(funcs, func => func(mimePart).IsPerfect()))
                 score = MatchScores.Perfect;
-            }
         }
         catch (Exception ex)
         {
@@ -96,23 +91,18 @@ public class MimePartMatcher : IMatcher
     }
 
     /// <inheritdoc />
-    public string GetCSharpCodeArguments()
-    {
-        return "NotImplemented";
-    }
+    public string GetCSharpCodeArguments() => "NotImplemented";
 
-    private MatchResult MatchOnContent(MimePart mimePart)
+    MatchResult MatchOnContent(MimePart mimePart)
     {
         if (ContentMatcher == null)
-        {
             return MatchScores.Perfect;
-        }
 
         var bodyParserSettings = new BodyParserSettings
         {
             Stream = mimePart.Content.Open(),
             ContentType = GetContentTypeAsString(mimePart.ContentType),
-            DeserializeJson = true,
+            TryJsonDetection = true,
             ContentEncoding = null, // mimePart.ContentType.CharsetEncoding.ToString(),
             DecompressGZipAndDeflate = true
         };
@@ -121,9 +111,6 @@ public class MimePartMatcher : IMatcher
         return BodyDataMatchScoreCalculator.CalculateMatchScore(bodyData, ContentMatcher);
     }
 
-    private static string? GetContentTypeAsString(ContentType? contentType)
-    {
-        return contentType?.ToString().Replace("Content-Type: ", string.Empty);
-    }
+    static string? GetContentTypeAsString(ContentType? contentType)
+        => contentType?.ToString().Replace("Content-Type: ", string.Empty);
 }
-#endif

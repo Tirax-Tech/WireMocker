@@ -36,19 +36,18 @@ builder.Services
        .AddRzBlazorSettings<AppMainLayoutViewModel>()
 
        .AddTransient<XPortViewModel>()
-       .AddTransient<DashboardViewModel>();
+       .AddTransient<DashboardViewModel>()
 
-builder.Services.AddMudServices(config => {
-    var snackbar = config.SnackbarConfiguration;
+       .AddMudServices(config => {
+            var snackbar = config.SnackbarConfiguration;
 
-    snackbar.VisibleStateDuration = 5_000 /* ms */;
-    snackbar.HideTransitionDuration = 1000 /* ms */;
-    snackbar.ShowTransitionDuration = 500 /* ms */;
-});
+            snackbar.VisibleStateDuration = 5_000 /* ms */;
+            snackbar.HideTransitionDuration = 1000 /* ms */;
+            snackbar.ShowTransitionDuration = 500 /* ms */;
+        })
 
-// Add services to the container.
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
+       .AddRazorComponents()
+       .AddInteractiveServerComponents();
 
 var app = builder.Build();
 
@@ -64,6 +63,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
 
+app.MapGet("/system/version", () => AppVersion.Current);
+app.InitAdmin(server);
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

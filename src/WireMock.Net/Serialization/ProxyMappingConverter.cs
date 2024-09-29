@@ -150,7 +150,7 @@ internal class ProxyMappingConverter(WireMockServerSettings settings, IGuidUtils
         }
         else
         {
-            switch (requestMessage.BodyData?.DetectedBodyType)
+            switch (requestMessage.BodyData?.BodyType)
             {
                 case BodyType.Json:
                     newRequest.WithBody(new JsonMatcher(MatchBehaviour.AcceptOnMatch, requestMessage.BodyData.BodyAsJson!, true));

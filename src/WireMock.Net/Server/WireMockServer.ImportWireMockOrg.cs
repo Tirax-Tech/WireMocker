@@ -72,7 +72,7 @@ public partial class WireMockServer
 
     Guid? ConvertWireMockOrgMappingAndRegisterAsRespondProvider(Org.Abstractions.Mapping mapping, Guid? guid = null, string? path = null)
     {
-        var requestBuilder = Request.Create();
+        var requestBuilder = RequestBuilders.Request.Create();
 
         var request = mapping.Request;
         if (request != null)

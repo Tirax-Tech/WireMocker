@@ -1,20 +1,21 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System.IO;
 
 namespace WireMock.Util;
 
 internal class BodyParserSettings
 {
-    public Stream Stream { get; set; } = null!;
+    public Stream Stream { get; init; } = null!;
 
-    public string? ContentType { get; set; }
+    public string? ContentType { get; init; }
 
-    public string? ContentEncoding { get; set; }
+    public string? ContentEncoding { get; init; }
 
-    public bool DecompressGZipAndDeflate { get; set; } = true;
+    public bool DecompressGZipAndDeflate { get; init; } = true;
 
-    public bool DeserializeJson { get; set; } = true;
+    public bool TryJsonDetection { get; init; } = true;
 
-    public bool DeserializeFormUrlEncoded { get; set; } = true;
+    public bool TryFormUrlEncodedDetection { get; init; }
 }

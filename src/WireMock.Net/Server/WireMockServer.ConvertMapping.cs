@@ -124,7 +124,7 @@ public partial class WireMockServer
 
     private IRequestBuilder InitRequestBuilder(RequestModel requestModel)
     {
-        var requestBuilder = Request.Create();
+        var requestBuilder = RequestBuilders.Request.Create();
 
         if (requestModel.ClientIP != null)
         {

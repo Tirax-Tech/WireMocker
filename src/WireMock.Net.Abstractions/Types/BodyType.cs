@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 namespace WireMock.Types;
 
 /// <summary>
@@ -8,9 +9,9 @@ namespace WireMock.Types;
 public enum BodyType
 {
     /// <summary>
-    /// No body present
+    /// Body is a Byte array
     /// </summary>
-    None,
+    Bytes,
 
     /// <summary>
     /// Body is a String
@@ -21,11 +22,6 @@ public enum BodyType
     /// Body is a Json object
     /// </summary>
     Json,
-
-    /// <summary>
-    /// Body is a Byte array
-    /// </summary>
-    Bytes,
 
     /// <summary>
     /// Body is a File

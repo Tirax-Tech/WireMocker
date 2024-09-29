@@ -1,0 +1,33 @@
+@admin-url=https://localhost:7240
+@mock-url=http://localhost:9091
+
+### Get version
+GET {{admin-url}}/system/version
+
+### Get log
+GET {{mock-url}}/log
+X-Service-Name: auditlog
+
+### Post a sample mappings
+POST {{admin-url}}/__admin/mappings
+Content-Type: application/json
+
+{
+  "Guid": "C753CB18-B67D-4F11-A0A3-52F96B9EA093",
+  "Title": "Audit Log API",
+  "Request": {
+    "Path": "/log",
+    "Headers": [
+      {
+        "Name": "X-Service-Name",
+        "Matchers": [
+          { "Name": "ExactMatcher", "Pattern": "auditlog" }
+        ]
+      }
+    ]
+  },
+  "Response": {
+    "UseTransformer": false,
+    "ProxyUrl": "https://localhost:7140"
+  }
+}

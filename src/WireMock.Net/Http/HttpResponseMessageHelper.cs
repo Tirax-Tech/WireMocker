@@ -35,10 +35,10 @@ internal static class HttpResponseMessageHelper
             var bodyParserSettings = new BodyParserSettings {
                 Stream = stream,
                 ContentType = contentTypeHeader.FirstOrDefault(),
-                DeserializeJson = deserializeJson,
+                TryJsonDetection = deserializeJson,
                 ContentEncoding = contentEncodingHeader.FirstOrDefault(),
                 DecompressGZipAndDeflate = decompressGzipAndDeflate,
-                DeserializeFormUrlEncoded = deserializeFormUrlEncoded
+                TryFormUrlEncodedDetection = deserializeFormUrlEncoded
             };
             responseMessage.BodyData = await BodyParser.ParseAsync(bodyParserSettings).ConfigureAwait(false);
         }

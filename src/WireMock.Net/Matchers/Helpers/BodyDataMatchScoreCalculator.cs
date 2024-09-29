@@ -1,6 +1,6 @@
 // Copyright © WireMock.Net
 
-using Stef.Validation;
+// Modified by Ruxo Zheng, 2024.
 using WireMock.Types;
 using WireMock.Util;
 
@@ -10,16 +10,11 @@ internal static class BodyDataMatchScoreCalculator
 {
     public static MatchResult CalculateMatchScore(IBodyData? requestMessage, IMatcher matcher)
     {
-        Guard.NotNull(matcher);
-
         if (requestMessage == null)
-        {
             return default;
-        }
 
         if (matcher is NotNullOrEmptyMatcher notNullOrEmptyMatcher)
-        {
-            switch (requestMessage.DetectedBodyType)
+            switch (requestMessage.BodyType)
             {
                 case BodyType.Json:
                 case BodyType.String:
@@ -32,39 +27,30 @@ internal static class BodyDataMatchScoreCalculator
                 default:
                     return default;
             }
-        }
 
         if (matcher is ExactObjectMatcher exactObjectMatcher)
         {
             // If the body is a byte array, try to match.
-            var detectedBodyType = requestMessage.DetectedBodyType;
+            var detectedBodyType = requestMessage.BodyType;
             if (detectedBodyType is BodyType.Bytes or BodyType.String or BodyType.FormUrlEncoded)
-            {
                 return exactObjectMatcher.IsMatch(requestMessage.BodyAsBytes);
-            }
         }
 
         // Check if the matcher is a IObjectMatcher
         if (matcher is IObjectMatcher objectMatcher)
         {
             // If the body is a JSON object, try to match.
-            if (requestMessage.DetectedBodyType == BodyType.Json)
-            {
+            if (requestMessage.BodyType == BodyType.Json)
                 return objectMatcher.IsMatch(requestMessage.BodyAsJson);
-            }
 
             // If the body is a byte array, try to match.
-            if (requestMessage.DetectedBodyType == BodyType.Bytes)
-            {
+            if (requestMessage.BodyType == BodyType.Bytes)
                 return objectMatcher.IsMatch(requestMessage.BodyAsBytes);
-            }
         }
 
         // In case the matcher is a IStringMatcher and If  body is a Json or a String, use the BodyAsString to match on.
-        if (matcher is IStringMatcher stringMatcher && requestMessage.DetectedBodyType is BodyType.Json or BodyType.String or BodyType.FormUrlEncoded)
-        {
+        if (matcher is IStringMatcher stringMatcher && requestMessage.BodyType is BodyType.Json or BodyType.String or BodyType.FormUrlEncoded)
             return stringMatcher.IsMatch(requestMessage.BodyAsString);
-        }
 
         return default;
     }

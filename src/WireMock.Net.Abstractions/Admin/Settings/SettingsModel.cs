@@ -45,12 +45,12 @@ public class SettingsModel
     /// - false : also null, 0, empty or invalid HttpStatus codes are allowed.
     /// - true  : only codes defined in <see cref="System.Net.HttpStatusCode"/> are allowed.
     /// </summary>
-    public bool? AllowOnlyDefinedHttpStatusCodeInResponse { get; set; }
+    public bool AllowOnlyDefinedHttpStatusCodeInResponse { get; set; }
 
     /// <summary>
-    /// Set to true to disable Json deserialization when processing requests. (default set to <c>false</c>).
+    /// Set to true to try detecting JSON content when processing requests. (default set to <c>true</c>).
     /// </summary>
-    public bool? DisableJsonBodyParsing { get; set; }
+    public bool TryJsonDetection { get; set; } = true;
 
     /// <summary>
     /// Disable support for GZip and Deflate request body decompression. (default set to <c>false</c>).

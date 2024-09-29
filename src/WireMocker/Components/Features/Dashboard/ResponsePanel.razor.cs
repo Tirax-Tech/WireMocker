@@ -36,12 +36,12 @@ public sealed class ResponsePanelViewModel(
     public TimeSpan ElapsedTime => elapsedTime;
     public DateTimeOffset Timestamp => timestamp;
     public IReadOnlyList<HttpStringValues> Headers { get; } = headers;
-    public string? Body { get; } = body?.GetBodyType() switch {
+    public string? Body { get; } = body?.BodyType switch {
         null            => null,
         BodyType.String => body.BodyAsString,
         BodyType.Json   => ParseJsonBody(body.BodyAsJson!),
 
-        _ => $"({body.GetBodyType()})"
+        _ => $"({body.BodyType})"
     };
 
     static readonly JsonSerializerOptions JsonOptions = new() {

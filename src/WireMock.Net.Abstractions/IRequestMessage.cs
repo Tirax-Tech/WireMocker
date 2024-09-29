@@ -1,7 +1,9 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 #if NETSTANDARD1_3_OR_GREATER || NET461
 using System.Security.Cryptography.X509Certificates;
 #endif
@@ -38,7 +40,7 @@ public interface IRequestMessage
     /// <summary>
     /// Gets the DateTime.
     /// </summary>
-    DateTime DateTime { get; }
+    DateTimeOffset DateTime { get; }
 
     /// <summary>
     /// Gets the path (relative).
@@ -118,23 +120,16 @@ public interface IRequestMessage
     /// </summary>
     byte[]? BodyAsBytes { get; }
 
-#if MIMEKIT
     /// <summary>
     /// The original body as MimeMessage.
     /// Convenience getter for Handlebars and WireMockAssertions.
     /// </summary>
     object? BodyAsMimeMessage { get; }
-#endif
 
     /// <summary>
     /// The detected body type. Convenience getter for Handlebars.
     /// </summary>
-    string? DetectedBodyType { get; }
-
-    /// <summary>
-    /// The detected body type from the Content-Type header. Convenience getter for Handlebars.
-    /// </summary>
-    string? DetectedBodyTypeFromContentType { get; }
+    string? BodyType { get; }
 
     /// <summary>
     /// The detected compression from the Content-Encoding header. Convenience getter for Handlebars.
@@ -169,10 +164,8 @@ public interface IRequestMessage
     /// <returns>The query parameter value as WireMockList or null when not found.</returns>
     WireMockList<string>? GetParameter(string key, bool ignoreCase = false);
 
-#if NETSTANDARD1_3_OR_GREATER || NET461
     /// <summary>
     /// Gets the connection's client certificate
     /// </summary>
     X509Certificate2? ClientCertificate { get; }
-#endif
 }

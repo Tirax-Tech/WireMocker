@@ -54,9 +54,9 @@ internal interface IWireMockMiddlewareOptions
 
     bool? AllowBodyForAllHttpMethods { get; set; }
 
-    bool? AllowOnlyDefinedHttpStatusCodeInResponse { get; set; }
+    bool AllowOnlyDefinedHttpStatusCodeInResponse { get; set; }
 
-    bool? DisableJsonBodyParsing { get; set; }
+    bool? TryJsonDetection { get; set; }
 
     bool? DisableRequestBodyDecompressing { get; set; }
 

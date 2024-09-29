@@ -21,7 +21,7 @@ public class LogRequestModel
     /// <summary>
     /// The DateTime.
     /// </summary>
-    public DateTime DateTime { get; set; }
+    public DateTimeOffset DateTime { get; set; }
 
     /// <summary>
     /// The Path.
@@ -93,23 +93,5 @@ public class LogRequestModel
     /// </summary>
     public EncodingModel? BodyEncoding { get; set; }
 
-    /// <summary>
-    /// The DetectedBodyType, valid values are:
-    ///
-    /// - None
-    /// - String
-    /// - Json
-    /// - Bytes
-    /// </summary>
-    public string? DetectedBodyType { get; set; }
-
-    /// <summary>
-    /// The DetectedBodyTypeFromContentType, valid values are:
-    ///
-    /// - None
-    /// - String
-    /// - Json
-    /// - Bytes
-    /// </summary>
-    public string? DetectedBodyTypeFromContentType { get; set; }
+    public string? BodyType { get; set; }
 }

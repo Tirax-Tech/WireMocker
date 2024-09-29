@@ -21,7 +21,7 @@ internal static class WireMockMiddlewareOptionsHelper
         options.AllowBodyForAllHttpMethods = settings.AllowBodyForAllHttpMethods;
         options.AllowOnlyDefinedHttpStatusCodeInResponse = settings.AllowOnlyDefinedHttpStatusCodeInResponse;
         options.AllowPartialMapping = settings.AllowPartialMapping;
-        options.DisableJsonBodyParsing = settings.DisableJsonBodyParsing;
+        options.TryJsonDetection = settings.TryJsonDetection;
         options.DisableRequestBodyDecompressing = settings.DisableRequestBodyDecompressing;
         options.DoNotSaveDynamicResponseInLogEntry = settings.DoNotSaveDynamicResponseInLogEntry;
         options.FileSystemHandler = settings.FileSystemHandler;

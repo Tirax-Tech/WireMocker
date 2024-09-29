@@ -1,13 +1,12 @@
 // Copyright © WireMock.Net
 
-#if MIMEKIT
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Text;
 using MimeKit;
-using Stef.Validation;
 using WireMock.Http;
 using WireMock.Types;
 
@@ -17,14 +16,12 @@ internal static class MimeKitUtils
 {
     public static bool TryGetMimeMessage(IRequestMessage requestMessage, [NotNullWhen(true)] out MimeMessage? mimeMessage)
     {
-        Guard.NotNull(requestMessage);
-
         if (requestMessage.BodyData != null &&
             requestMessage.Headers?.TryGetValue(HttpKnownHeaderNames.ContentType, out var contentTypeHeader) == true &&
             StartsWithMultiPart(contentTypeHeader) // Only parse when "multipart/mixed"
         )
         {
-            var bytes = requestMessage.BodyData?.DetectedBodyType switch
+            var bytes = requestMessage.BodyData?.BodyType switch
             {
                 // If the body is bytes, use the BodyAsBytes to match on.
                 BodyType.Bytes => requestMessage.BodyData.BodyAsBytes!,
@@ -45,12 +42,10 @@ internal static class MimeKitUtils
         return false;
     }
 
-    private static bool StartsWithMultiPart(WireMockList<string> contentTypeHeader)
-    {
-        return contentTypeHeader.Any(ct => ct.TrimStart().StartsWith("multipart/", StringComparison.OrdinalIgnoreCase));
-    }
+    static bool StartsWithMultiPart(WireMockList<string> contentTypeHeader)
+        => contentTypeHeader.Any(ct => ct.TrimStart().StartsWith("multipart/", StringComparison.OrdinalIgnoreCase));
 
-    private static byte[] FixBytes(byte[] bytes, WireMockList<string> contentType)
+    static byte[] FixBytes(byte[] bytes, WireMockList<string> contentType)
     {
         var contentTypeBytes = Encoding.UTF8.GetBytes($"{HttpKnownHeaderNames.ContentType}: {contentType}\r\n\r\n");
 
@@ -62,4 +57,3 @@ internal static class MimeKitUtils
         return result;
     }
 }
-#endif

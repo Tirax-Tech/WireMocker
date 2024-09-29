@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using JsonConverter.Abstractions;
 using Stef.Validation;
 using WireMock.Exceptions;
+using WireMock.Models;
 using WireMock.Types;
 using WireMock.Util;
 
@@ -20,7 +21,9 @@ public partial class Response
         => WithCallbackInternal(true, req => new ResponseMessage {
             Timestamp = clock.GetUtcNow(),
             BodyData = new BodyData {
-                DetectedBodyType = BodyType.String,
+                BodyType = BodyType.String,
+                ContentType = ContentTypes.Text,
+
                 BodyAsString = bodyFactory(req),
                 Encoding = encoding ?? Encoding.UTF8,
                 IsFuncUsed = "Func<IRequestMessage, string>"
@@ -28,109 +31,90 @@ public partial class Response
         });
 
     /// <inheritdoc />
-    public IResponseBuilder WithBody(Func<IRequestMessage, Task<string>> bodyFactory, string? destination = BodyDestinationFormat.SameAsSource, Encoding? encoding = null)
-    {
-        Guard.NotNull(bodyFactory);
-
-        return WithCallbackInternal(true, async req => new ResponseMessage
-        {
+    public IResponseBuilder WithBody(Func<IRequestMessage, Task<string>> bodyFactory,
+                                     string? destination = BodyDestinationFormat.SameAsSource, Encoding? encoding = null)
+        => WithCallbackInternal(true, async req => new ResponseMessage {
             Timestamp = clock.GetUtcNow(),
-            BodyData = new BodyData
-            {
-                DetectedBodyType = BodyType.String,
-                BodyAsString = await bodyFactory(req).ConfigureAwait(false),
+            BodyData = new BodyData {
+                BodyType = BodyType.String,
+                ContentType = ContentTypes.Text,
+
+                BodyAsString = await bodyFactory(req),
                 Encoding = encoding ?? Encoding.UTF8,
                 IsFuncUsed = "Func<IRequestMessage, Task<string>>"
             }
         });
-    }
 
     /// <inheritdoc />
     public IResponseBuilder WithBody(byte[] body, string? destination = BodyDestinationFormat.SameAsSource, Encoding? encoding = null)
     {
-        Guard.NotNull(body);
-
         ResponseMessage.BodyDestination = destination;
-        ResponseMessage.BodyData = new BodyData();
-
-        switch (destination)
-        {
-            case BodyDestinationFormat.String:
-                var enc = encoding ?? Encoding.UTF8;
-                ResponseMessage.BodyData.DetectedBodyType = BodyType.String;
-                ResponseMessage.BodyData.BodyAsString = enc.GetString(body);
-                ResponseMessage.BodyData.Encoding = enc;
-                break;
-
-            default:
-                ResponseMessage.BodyData.DetectedBodyType = BodyType.Bytes;
-                ResponseMessage.BodyData.BodyAsBytes = body;
-                break;
-        }
-
+        ResponseMessage.BodyData = destination == BodyDestinationFormat.String
+            ? new BodyData
+            {
+                BodyType = BodyType.String, ContentType = ContentTypes.Text,
+                BodyAsString = encoding?.GetString(body) ?? Encoding.UTF8.GetString(body),
+                Encoding = encoding ?? Encoding.UTF8
+            }
+            : new BodyData
+            {
+                BodyType = BodyType.Bytes, ContentType = ContentTypes.OctetStream,
+                BodyAsBytes = body
+            };
         return this;
     }
 
     /// <inheritdoc />
     public IResponseBuilder WithBodyFromFile(string filename, bool cache = true)
     {
-        Guard.NotNull(filename);
-
         ResponseMessage.BodyData = new BodyData
         {
+            BodyType = cache && !UseTransformer ? BodyType.Bytes : BodyType.File,
+            ContentType = ContentTypes.OctetStream,
             BodyAsFileIsCached = cache,
             BodyAsFile = filename
         };
-
-        ResponseMessage.BodyData.DetectedBodyType = cache && !UseTransformer ? BodyType.Bytes : BodyType.File;
-
         return this;
     }
 
     /// <inheritdoc />
-    public IResponseBuilder WithBody(string body, string? destination = BodyDestinationFormat.SameAsSource, Encoding? encoding = null)
-    {
-        Guard.NotNull(body);
-
+    public IResponseBuilder WithBody(string body, string? destination = BodyDestinationFormat.SameAsSource, Encoding? encoding = null) {
         encoding ??= Encoding.UTF8;
 
         ResponseMessage.BodyDestination = destination;
-        ResponseMessage.BodyData = new BodyData
-        {
-            Encoding = encoding
-        };
+        ResponseMessage.BodyData =
+            destination switch {
+                BodyDestinationFormat.Bytes => new BodyData {
+                    BodyType = BodyType.Bytes,
+                    ContentType = ContentTypes.OctetStream,
+                    BodyAsBytes = encoding.GetBytes(body)
+                },
+                BodyDestinationFormat.Json => new BodyData {
+                    BodyType = BodyType.Json,
+                    ContentType = ContentTypes.Json,
+                    BodyAsJson = JsonUtils.DeserializeObject(body),
+                    Encoding = encoding
+                },
 
-        switch (destination)
-        {
-            case BodyDestinationFormat.Bytes:
-                ResponseMessage.BodyData.DetectedBodyType = BodyType.Bytes;
-                ResponseMessage.BodyData.BodyAsBytes = encoding.GetBytes(body);
-                break;
-
-            case BodyDestinationFormat.Json:
-                ResponseMessage.BodyData.DetectedBodyType = BodyType.Json;
-                ResponseMessage.BodyData.BodyAsJson = JsonUtils.DeserializeObject(body);
-                break;
-
-            default:
-                ResponseMessage.BodyData.DetectedBodyType = BodyType.String;
-                ResponseMessage.BodyData.BodyAsString = body;
-                break;
-        }
-
+                _ => new BodyData {
+                    BodyType = BodyType.String,
+                    ContentType = ContentTypes.Text,
+                    BodyAsString = body,
+                    Encoding = encoding
+                }
+            };
         return this;
     }
 
     /// <inheritdoc />
     public IResponseBuilder WithBodyAsJson(object body, Encoding? encoding = null, bool? indented = null)
     {
-        Guard.NotNull(body);
-
         ResponseMessage.BodyDestination = null;
         ResponseMessage.BodyData = new BodyData
         {
             Encoding = encoding,
-            DetectedBodyType = BodyType.Json,
+            BodyType = BodyType.Json,
+            ContentType = ContentTypes.Json,
             BodyAsJson = body,
             BodyAsJsonIndented = indented
         };
@@ -144,57 +128,45 @@ public partial class Response
 
     /// <inheritdoc />
     public IResponseBuilder WithBodyAsJson(Func<IRequestMessage, object> bodyFactory, Encoding? encoding = null)
-    {
-        Guard.NotNull(bodyFactory);
-
-        return WithCallbackInternal(true, req => new ResponseMessage
+        => WithCallbackInternal(true, req => new ResponseMessage
         {
             Timestamp = clock.GetUtcNow(),
             BodyData = new BodyData
             {
                 Encoding = encoding ?? Encoding.UTF8,
-                DetectedBodyType = BodyType.Json,
+                BodyType = BodyType.Json,
+                ContentType = ContentTypes.Json,
                 BodyAsJson = bodyFactory(req),
                 IsFuncUsed = "Func<IRequestMessage, object>"
             }
         });
-    }
 
     /// <inheritdoc />
     public IResponseBuilder WithBodyAsJson(Func<IRequestMessage, Task<object>> bodyFactory, Encoding? encoding = null)
-    {
-        Guard.NotNull(bodyFactory);
-
-        return WithCallbackInternal(true, async req => new ResponseMessage
-        {
+        => WithCallbackInternal(true, async req => new ResponseMessage {
             Timestamp = clock.GetUtcNow(),
-            BodyData = new BodyData
-            {
+            BodyData = new BodyData {
                 Encoding = encoding ?? Encoding.UTF8,
-                DetectedBodyType = BodyType.Json,
+                BodyType = BodyType.Json,
+                ContentType = ContentTypes.Json,
                 BodyAsJson = await bodyFactory(req).ConfigureAwait(false),
                 IsFuncUsed = "Func<IRequestMessage, Task<object>>"
             }
         });
-    }
 
     /// <inheritdoc />
     public IResponseBuilder WithBody(object body, IJsonConverter jsonConverter, JsonConverterOptions? options = null)
-    {
-        return WithBody(body, null, jsonConverter, options);
-    }
+        => WithBody(body, null, jsonConverter, options);
 
     /// <inheritdoc />
     public IResponseBuilder WithBody(object body, Encoding? encoding, IJsonConverter jsonConverter, JsonConverterOptions? options = null)
     {
-        Guard.NotNull(body);
-        Guard.NotNull(jsonConverter);
-
         ResponseMessage.BodyDestination = null;
         ResponseMessage.BodyData = new BodyData
         {
             Encoding = encoding,
-            DetectedBodyType = BodyType.String,
+            BodyType = BodyType.String,
+            ContentType = ContentTypes.Text,
             BodyAsString = jsonConverter.Serialize(body, options)
         };
 
@@ -214,18 +186,15 @@ public partial class Response
         Guard.NotNullOrWhiteSpace(messageType);
         Guard.NotNull(value);
 
-#if !PROTOBUF
-        throw new System.NotSupportedException("The WithBodyAsProtoBuf method can not be used for .NETStandard1.3 or .NET Framework 4.6.1 or lower.");
-#else
         ResponseMessage.BodyDestination = null;
         ResponseMessage.BodyData = new BodyData
         {
-            DetectedBodyType = BodyType.ProtoBuf,
+            BodyType = BodyType.ProtoBuf,
+            ContentType = ContentTypes.Json,
             BodyAsJson = value,
             ProtoDefinition = () => new (null, protoDefinition),
             ProtoBufMessageType = messageType
         };
-#endif
         return this;
     }
 
@@ -237,21 +206,15 @@ public partial class Response
         JsonConverterOptions? options = null
     )
     {
-        Guard.NotNullOrWhiteSpace(messageType);
-        Guard.NotNull(value);
-
-#if !PROTOBUF
-        throw new System.NotSupportedException("The WithBodyAsProtoBuf method can not be used for .NETStandard1.3 or .NET Framework 4.6.1 or lower.");
-#else
         ResponseMessage.BodyDestination = null;
         ResponseMessage.BodyData = new BodyData
         {
-            DetectedBodyType = BodyType.ProtoBuf,
+            BodyType = BodyType.ProtoBuf,
+            ContentType = ContentTypes.Json,
             BodyAsJson = value,
             ProtoDefinition = () => Mapping.ProtoDefinition ?? throw new WireMockException("ProtoDefinition cannot be resolved. You probably forgot to call .WithProtoDefinition(...) on the mapping."),
             ProtoBufMessageType = messageType
         };
-#endif
         return this;
     }
 }

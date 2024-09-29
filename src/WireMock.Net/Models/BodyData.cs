@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -24,11 +25,17 @@ public class BodyData : IBodyData
     public IDictionary<string, string>? BodyAsFormUrlEncoded { get; set; }
 
     /// <inheritdoc />
+    public required BodyType BodyType { get; init; }
+
+    /// <inheritdoc />
+    public required string ContentType { get; init; }
+
+    /// <inheritdoc />
     public object? BodyAsJson { get; set; }
 
     /// <inheritdoc />
     public byte[]? BodyAsBytes { get; set; }
-    
+
     /// <inheritdoc />
     public bool? BodyAsJsonIndented { get; set; }
 
@@ -37,12 +44,6 @@ public class BodyData : IBodyData
 
     /// <inheritdoc />
     public bool? BodyAsFileIsCached { get; set; }
-
-    /// <inheritdoc />
-    public BodyType? DetectedBodyType { get; set; }
-
-    /// <inheritdoc />
-    public BodyType? DetectedBodyTypeFromContentType { get; set; }
 
     /// <inheritdoc />
     public string? DetectedCompression { get; set; }

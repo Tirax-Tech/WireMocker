@@ -53,7 +53,7 @@ public static class WireMockServerSettingsParser
             AllowOnlyDefinedHttpStatusCodeInResponse = parser.GetBoolValue(nameof(WireMockServerSettings.AllowOnlyDefinedHttpStatusCodeInResponse)),
             AllowPartialMapping = parser.GetBoolValue(nameof(WireMockServerSettings.AllowPartialMapping)),
             Culture = parser.GetValue(nameof(WireMockServerSettings.Culture), strings => CultureInfoUtils.Parse(strings.FirstOrDefault()), CultureInfo.CurrentCulture),
-            DisableJsonBodyParsing = parser.GetBoolValue(nameof(WireMockServerSettings.DisableJsonBodyParsing)),
+            TryJsonDetection = parser.GetBoolValue(nameof(WireMockServerSettings.TryJsonDetection)),
             DisableRequestBodyDecompressing = parser.GetBoolValue(nameof(WireMockServerSettings.DisableRequestBodyDecompressing)),
             DisableDeserializeFormUrlEncoded = parser.GetBoolValue(nameof(WireMockServerSettings.DisableDeserializeFormUrlEncoded)),
             DoNotSaveDynamicResponseInLogEntry = parser.GetBoolValue(nameof(WireMockServerSettings.DoNotSaveDynamicResponseInLogEntry)),

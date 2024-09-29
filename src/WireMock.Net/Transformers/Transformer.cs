@@ -31,7 +31,7 @@ internal class Transformer(WireMockServerSettings settings, ITransformerContextF
         var (transformerContext, model) = Create(mapping, originalRequestMessage, originalResponseMessage);
 
         IBodyData? newBodyData = null;
-        if (bodyData?.DetectedBodyType != null)
+        if (bodyData?.BodyType is not null)
             newBodyData = TransformBodyData(transformerContext, options, model, bodyData, false);
 
         return newBodyData;
@@ -69,11 +69,11 @@ internal class Transformer(WireMockServerSettings settings, ITransformerContextF
 
         var (transformerContext, model) = Create(mapping, requestMessage, null);
 
-        if (original.BodyData?.DetectedBodyType != null)
+        if (original.BodyData?.BodyType != null)
         {
             responseMessage.BodyData = TransformBodyData(transformerContext, options, model, original.BodyData, useTransformerForBodyAsFile);
 
-            if (original.BodyData.DetectedBodyType is BodyType.String or BodyType.FormUrlEncoded)
+            if (original.BodyData.BodyType is BodyType.String or BodyType.FormUrlEncoded)
                 responseMessage.BodyOriginal = original.BodyData.BodyAsString;
         }
 
@@ -97,24 +97,15 @@ internal class Transformer(WireMockServerSettings settings, ITransformerContextF
                    data = mapping.Data ?? new { }
                });
 
-    IBodyData? TransformBodyData(ITransformerContext transformerContext, ReplaceNodeOptions options, TransformModel model, IBodyData original, bool useTransformerForBodyAsFile)
-    {
-        switch (original.DetectedBodyType)
-        {
-            case BodyType.Json:
-            case BodyType.ProtoBuf:
-                return TransformBodyAsJson(transformerContext, options, model, original);
+    IBodyData? TransformBodyData(ITransformerContext transformerContext, ReplaceNodeOptions options, TransformModel model,
+                                 IBodyData original, bool useTransformerForBodyAsFile)
+        => original.BodyType switch {
+            BodyType.Json or BodyType.ProtoBuf => TransformBodyAsJson(transformerContext, options, model, original),
+            BodyType.File => TransformBodyAsFile(transformerContext, model, original, useTransformerForBodyAsFile),
+            BodyType.String or BodyType.FormUrlEncoded => TransformBodyAsString(transformerContext, model, original),
 
-            case BodyType.File:
-                return TransformBodyAsFile(transformerContext, model, original, useTransformerForBodyAsFile);
-
-            case BodyType.String or BodyType.FormUrlEncoded:
-                return TransformBodyAsString(transformerContext, model, original);
-
-            default:
-                return null;
-        }
-    }
+            _ => null
+        };
 
     static Dictionary<string, WireMockList<string>> TransformHeaders(ITransformerContext transformerContext, TransformModel model, IDictionary<string, WireMockList<string>>? original)
     {
@@ -133,7 +124,7 @@ internal class Transformer(WireMockServerSettings settings, ITransformerContextF
         return newHeaders;
     }
 
-    IBodyData TransformBodyAsJson(ITransformerContext transformerContext, ReplaceNodeOptions options, object model, IBodyData original)
+    BodyData TransformBodyAsJson(ITransformerContext transformerContext, ReplaceNodeOptions options, object model, IBodyData original)
     {
         JToken? jToken = null;
         switch (original.BodyAsJson)
@@ -166,8 +157,8 @@ internal class Transformer(WireMockServerSettings settings, ITransformerContextF
         return new BodyData
         {
             Encoding = original.Encoding,
-            DetectedBodyType = original.DetectedBodyType,
-            DetectedBodyTypeFromContentType = original.DetectedBodyTypeFromContentType,
+            BodyType = original.BodyType,
+            ContentType = original.ContentType,
             ProtoDefinition = original.ProtoDefinition,
             ProtoBufMessageType = original.ProtoBufMessageType,
             BodyAsJson = jToken
@@ -281,8 +272,8 @@ internal class Transformer(WireMockServerSettings settings, ITransformerContextF
     static IBodyData TransformBodyAsString(ITransformerContext transformerContext, object model, IBodyData original)
         => new BodyData {
             Encoding = original.Encoding,
-            DetectedBodyType = original.DetectedBodyType,
-            DetectedBodyTypeFromContentType = original.DetectedBodyTypeFromContentType,
+            BodyType = original.BodyType,
+            ContentType = original.ContentType,
             BodyAsString = transformerContext.ParseAndRender(original.BodyAsString!, model)
         };
 
@@ -293,16 +284,16 @@ internal class Transformer(WireMockServerSettings settings, ITransformerContextF
         if (!useTransformerForBodyAsFile)
             return new BodyData
             {
-                DetectedBodyType = original.DetectedBodyType,
-                DetectedBodyTypeFromContentType = original.DetectedBodyTypeFromContentType,
+                BodyType = original.BodyType,
+                ContentType = original.ContentType,
                 BodyAsFile = transformedBodyAsFilename
             };
 
         string text = transformerContext.FileSystemHandler.ReadResponseBodyAsString(transformedBodyAsFilename);
         return new BodyData
         {
-            DetectedBodyType = BodyType.String,
-            DetectedBodyTypeFromContentType = original.DetectedBodyTypeFromContentType,
+            BodyType = BodyType.String,
+            ContentType = original.ContentType,
             BodyAsFile = transformedBodyAsFilename,
             BodyAsString = transformerContext.ParseAndRender(text, model)
         };

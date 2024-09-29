@@ -51,14 +51,14 @@ public interface IBodyData
     IDictionary<string, string>? BodyAsFormUrlEncoded { get; set; }
 
     /// <summary>
-    /// The detected body type (detection based on body content).
+    /// The known body type.
     /// </summary>
-    BodyType? DetectedBodyType { get; set; }
+    BodyType BodyType { get; }
 
     /// <summary>
-    /// The detected body type (detection based on Content-Type).
+    /// Actual body MIME type.
     /// </summary>
-    BodyType? DetectedBodyTypeFromContentType { get; set; }
+    string ContentType { get; }
 
     /// <summary>
     /// The detected compression.

@@ -140,7 +140,7 @@ internal class MappingConverter(MatcherMapper mapper)
                 sb.AppendLine($"        .WithTrailingHeader(\"{header.Key}\", {ToValueArguments(header.Value.ToArray())})");
 
         if (response.ResponseMessage.BodyData is { } bodyData)
-            switch (response.ResponseMessage.BodyData.DetectedBodyType)
+            switch (response.ResponseMessage.BodyData.BodyType)
             {
                 case BodyType.String:
                 case BodyType.FormUrlEncoded:
@@ -389,7 +389,7 @@ internal class MappingConverter(MatcherMapper mapper)
         if (response.ResponseMessage.BodyData == null)
             return;
 
-        switch (response.ResponseMessage.BodyData?.DetectedBodyType)
+        switch (response.ResponseMessage.BodyData?.BodyType)
         {
             case BodyType.String:
             case BodyType.FormUrlEncoded:

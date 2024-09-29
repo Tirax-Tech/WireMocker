@@ -40,6 +40,7 @@ internal class RespondWithAProvider : IRespondWithAProvider
     bool? useWebhookFireAndForget;
     double? probability;
     IdOrText? protoDefinition;
+    // ReSharper disable once NotAccessedField.Local
     GraphQLSchemaDetails? graphQLSchemaDetails;
 
     public Guid Guid { get; private set; }
@@ -268,8 +269,8 @@ internal class RespondWithAProvider : IRespondWithAProvider
             Webhooks[0].Request.BodyData = new BodyData
             {
                 BodyAsString = body,
-                DetectedBodyType = BodyType.String,
-                DetectedBodyTypeFromContentType = BodyType.String
+                BodyType = BodyType.String,
+                ContentType = ContentTypes.Text
             };
 
         return this;
@@ -293,8 +294,8 @@ internal class RespondWithAProvider : IRespondWithAProvider
             Webhooks[0].Request.BodyData = new BodyData
             {
                 BodyAsJson = body,
-                DetectedBodyType = BodyType.Json,
-                DetectedBodyTypeFromContentType = BodyType.Json
+                BodyType = BodyType.Json,
+                ContentType = ContentTypes.Json
             };
 
         return this;

@@ -16,10 +16,13 @@ namespace WireMock.Owin.Mappers;
 /// <summary>
 /// OwinRequestMapper
 /// </summary>
-internal class OwinRequestMapper : IOwinRequestMapper
+internal class OwinRequestMapper(TimeProvider clock) : IOwinRequestMapper
 {
     /// <inheritdoc />
     public async Task<RequestMessage> MapAsync(IRequest request, IWireMockMiddlewareOptions options)
+        => await MapAsync(clock, options, request);
+
+    public static async ValueTask<RequestMessage> MapAsync(TimeProvider clock, IWireMockMiddlewareOptions options, IRequest request)
     {
         var (urlDetails, clientIP) = ParseRequest(request);
 
@@ -43,26 +46,23 @@ internal class OwinRequestMapper : IOwinRequestMapper
 
         IBodyData? body = null;
         if (BodyParser.ShouldParseBody(method, options.AllowBodyForAllHttpMethods == true))
-        {
-            var bodyParserSettings = new BodyParserSettings
+            body = await BodyParser.ParseAsync(new BodyParserSettings
             {
                 Stream = request.Body,
                 ContentType = request.ContentType,
-                DeserializeJson = !options.DisableJsonBodyParsing.GetValueOrDefault(false),
+                TryJsonDetection = options.TryJsonDetection ?? false,
                 ContentEncoding = contentEncodingHeader?.FirstOrDefault(),
-                DecompressGZipAndDeflate = !options.DisableRequestBodyDecompressing.GetValueOrDefault(false)
-            };
+                DecompressGZipAndDeflate = !options.DisableRequestBodyDecompressing ?? false
+            });
 
-            body = await BodyParser.ParseAsync(bodyParserSettings);
-        }
-
-        return new RequestMessage(options, urlDetails, method, clientIP, body, headers, cookies, httpVersion
-                                , await request.HttpContext.Connection.GetClientCertificateAsync()) {
-            DateTime = DateTime.UtcNow
+        return new RequestMessage(urlDetails, method, clientIP, body, headers, cookies,
+                                  options.QueryParameterMultipleValueSupport, httpVersion,
+                                  await request.HttpContext.Connection.GetClientCertificateAsync()) {
+            DateTime = clock.GetUtcNow()
         };
     }
 
-    static (UrlDetails UrlDetails, string ClientIP) ParseRequest(IRequest request) {
+    internal static (UrlDetails UrlDetails, string ClientIP) ParseRequest(IRequest request) {
         var urlDetails = UrlUtils.Parse(new Uri(request.GetEncodedUrl()), request.PathBase);
 
         var connection = request.HttpContext.Connection;

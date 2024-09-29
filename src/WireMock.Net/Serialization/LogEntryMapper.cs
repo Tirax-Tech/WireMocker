@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+// Modified by Ruxo Zheng, 2024.
 using System.Linq;
 using Stef.Validation;
 using WireMock.Admin.Mappings;
@@ -12,14 +13,9 @@ using WireMock.Types;
 
 namespace WireMock.Serialization;
 
-internal class LogEntryMapper
+internal class LogEntryMapper(IWireMockMiddlewareOptions options)
 {
-    private readonly IWireMockMiddlewareOptions _options;
-
-    public LogEntryMapper(IWireMockMiddlewareOptions options)
-    {
-        _options = Guard.NotNull(options);
-    }
+    readonly IWireMockMiddlewareOptions options = Guard.NotNull(options);
 
     public LogEntryModel Map(ILogEntry logEntry)
     {
@@ -41,10 +37,9 @@ internal class LogEntryMapper
 
         if (logEntry.RequestMessage.BodyData != null)
         {
-            logRequestModel.DetectedBodyType = logEntry.RequestMessage.BodyData.DetectedBodyType?.ToString();
-            logRequestModel.DetectedBodyTypeFromContentType = logEntry.RequestMessage.BodyData.DetectedBodyTypeFromContentType?.ToString();
+            logRequestModel.BodyType = logEntry.RequestMessage.BodyData.BodyType.ToString();
 
-            switch (logEntry.RequestMessage.BodyData.DetectedBodyType)
+            switch (logEntry.RequestMessage.BodyData.BodyType)
             {
                 case BodyType.String:
                 case BodyType.FormUrlEncoded:
@@ -88,8 +83,7 @@ internal class LogEntryMapper
             logResponseModel.BodyOriginal = logEntry.ResponseMessage.BodyOriginal;
             logResponseModel.BodyDestination = logEntry.ResponseMessage.BodyDestination;
 
-            logResponseModel.DetectedBodyType = logEntry.ResponseMessage.BodyData.DetectedBodyType;
-            logResponseModel.DetectedBodyTypeFromContentType = logEntry.ResponseMessage.BodyData.DetectedBodyTypeFromContentType;
+            logResponseModel.BodyType = logEntry.ResponseMessage.BodyData.BodyType;
 
             MapBody(logEntry, logResponseModel);
 
@@ -119,20 +113,17 @@ internal class LogEntryMapper
         };
     }
 
-    private void MapBody(ILogEntry logEntry, LogResponseModel logResponseModel)
+    void MapBody(ILogEntry logEntry, LogResponseModel logResponseModel)
     {
-        switch (logEntry.ResponseMessage.BodyData!.DetectedBodyType)
+        switch (logEntry.ResponseMessage.BodyData!.BodyType)
         {
             case BodyType.String:
             case BodyType.FormUrlEncoded:
-                if (!string.IsNullOrEmpty(logEntry.ResponseMessage.BodyData.IsFuncUsed) && _options.DoNotSaveDynamicResponseInLogEntry == true)
-                {
+                if (!string.IsNullOrEmpty(logEntry.ResponseMessage.BodyData.IsFuncUsed) &&
+                    options.DoNotSaveDynamicResponseInLogEntry == true)
                     logResponseModel.Body = logEntry.ResponseMessage.BodyData.IsFuncUsed;
-                }
                 else
-                {
                     logResponseModel.Body = logEntry.ResponseMessage.BodyData.BodyAsString;
-                }
                 break;
 
             case BodyType.Json:
@@ -147,18 +138,13 @@ internal class LogEntryMapper
                 logResponseModel.BodyAsFile = logEntry.ResponseMessage.BodyData.BodyAsFile;
                 logResponseModel.BodyAsFileIsCached = logEntry.ResponseMessage.BodyData.BodyAsFileIsCached;
                 break;
-
-            default:
-                break;
         }
     }
 
-    private static LogRequestMatchModel? Map(IRequestMatchResult? matchResult)
+    static LogRequestMatchModel? Map(IRequestMatchResult? matchResult)
     {
         if (matchResult == null)
-        {
             return null;
-        }
 
         return new LogRequestMatchModel
         {

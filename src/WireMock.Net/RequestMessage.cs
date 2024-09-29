@@ -6,12 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-#if USE_ASPNETCORE
 using System.Security.Cryptography.X509Certificates;
-#endif
 using Stef.Validation;
 using WireMock.Models;
-using WireMock.Owin;
 using WireMock.Types;
 using WireMock.Util;
 
@@ -35,7 +32,7 @@ public class RequestMessage : IRequestMessage
     public string? ProxyUrl { get; set; }
 
     /// <inheritdoc />
-    public DateTime DateTime { get; set; }
+    public DateTimeOffset DateTime { get; set; }
 
     /// <inheritdoc />
     public string Path { get; }
@@ -82,17 +79,12 @@ public class RequestMessage : IRequestMessage
     /// <inheritdoc />
     public byte[]? BodyAsBytes { get; }
 
-#if MIMEKIT
     /// <inheritdoc />
     [Newtonsoft.Json.JsonIgnore] // Issue 1001
     public object? BodyAsMimeMessage { get; }
-#endif
 
     /// <inheritdoc />
-    public string? DetectedBodyType { get; }
-
-    /// <inheritdoc />
-    public string? DetectedBodyTypeFromContentType { get; }
+    public string? BodyType { get; }
 
     /// <inheritdoc />
     public string? DetectedCompression { get; }
@@ -109,37 +101,18 @@ public class RequestMessage : IRequestMessage
     /// <inheritdoc />
     public string Origin { get; }
 
-#if USE_ASPNETCORE
     /// <inheritdoc />
     public X509Certificate2? ClientCertificate { get; }
-#endif
 
-    /// <summary>
-    /// Used for Unit Testing
-    /// </summary>
-    internal RequestMessage(
-        UrlDetails urlDetails,
-        string method,
-        string clientIP,
-        IBodyData? bodyData = null,
-        IDictionary<string, string[]>? headers = null,
-        IDictionary<string, string>? cookies = null) : this(null, urlDetails, method, clientIP, bodyData, headers, cookies)
-    {
-    }
-
-    internal RequestMessage(
-        IWireMockMiddlewareOptions? options,
-        UrlDetails urlDetails,
-        string method,
-        string clientIP,
-        IBodyData? bodyData = null,
-        IDictionary<string, string[]>? headers = null,
-        IDictionary<string, string>? cookies = null,
-        string httpVersion = "1.1"
-#if USE_ASPNETCORE
-        , X509Certificate2? clientCertificate = null
-#endif
-    )
+    internal RequestMessage(UrlDetails urlDetails,
+                            string method,
+                            string clientIP,
+                            IBodyData? bodyData = null,
+                            IDictionary<string, string[]>? headers = null,
+                            IDictionary<string, string>? cookies = null,
+                            QueryParameterMultipleValueSupport? multipleQuerySupport = null,
+                            string httpVersion = "1.1"
+                          , X509Certificate2? clientCertificate = null)
     {
         Guard.NotNull(urlDetails);
         Guard.NotNull(method);
@@ -168,45 +141,36 @@ public class RequestMessage : IRequestMessage
         BodyAsJson = BodyData?.BodyAsJson;
         BodyAsBytes = BodyData?.BodyAsBytes;
 
-        DetectedBodyType = BodyData?.DetectedBodyType.ToString();
-        DetectedBodyTypeFromContentType = BodyData?.DetectedBodyTypeFromContentType.ToString();
+        BodyType = BodyData?.BodyType.ToString();
         DetectedCompression = BodyData?.DetectedCompression;
 
         Headers = headers?.ToDictionary(header => header.Key, header => new WireMockList<string>(header.Value));
         Cookies = cookies;
         RawQuery = urlDetails.Url.Query;
-        Query = QueryStringParser.Parse(RawQuery, options?.QueryParameterMultipleValueSupport);
+        Query = QueryStringParser.Parse(RawQuery, multipleQuerySupport);
         QueryIgnoreCase = new Dictionary<string, WireMockList<string>>(Query, StringComparer.OrdinalIgnoreCase);
 
-#if USE_ASPNETCORE
         ClientCertificate = clientCertificate;
-#endif
 
-#if MIMEKIT
         try
         {
             if (MimeKitUtils.TryGetMimeMessage(this, out var mimeMessage))
-            {
                 BodyAsMimeMessage = mimeMessage;
-            }
         }
         catch
         {
             // Ignore exception from MimeMessage.Load
         }
-#endif
     }
 
     /// <inheritdoc />
     public WireMockList<string>? GetParameter(string key, bool ignoreCase = false)
     {
         if (Query == null)
-        {
             return null;
-        }
 
         var query = !ignoreCase ? Query : new Dictionary<string, WireMockList<string>>(Query, StringComparer.OrdinalIgnoreCase);
 
-        return query.ContainsKey(key) ? query[key] : null;
+        return query.TryGetValue(key, out var value) ? value : null;
     }
 }

@@ -33,7 +33,7 @@ public partial class WireMockServer
     {
         Guard.NotNull(action);
 
-        var requestBuilder = Request.Create();
+        var requestBuilder = RequestBuilders.Request.Create();
 
         action(requestBuilder);
 

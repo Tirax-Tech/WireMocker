@@ -198,17 +198,17 @@ public class WireMockServerSettings
 
     /// <summary>
     /// Allow only a HttpStatus Code in the response which is defined. (default set to <c>false</c>).
-    /// - false : also null, 0, empty or invalid HttpStatus codes are allowed.
+    /// - false (default) : also null, 0, empty or invalid HttpStatus codes are allowed.
     /// - true  : only codes defined in <see cref="System.Net.HttpStatusCode"/> are allowed.
     /// </summary>
     [PublicAPI]
-    public bool? AllowOnlyDefinedHttpStatusCodeInResponse { get; set; }
+    public bool AllowOnlyDefinedHttpStatusCodeInResponse { get; set; }
 
     /// <summary>
-    /// Set to true to disable Json deserialization when processing requests. (default set to <c>false</c>).
+    /// Set to true to trying to detect JSON content when processing requests. (default set to <c>true</c>).
     /// </summary>
     [PublicAPI]
-    public bool? DisableJsonBodyParsing { get; set; }
+    public bool TryJsonDetection { get; set; } = true;
 
     /// <summary>
     /// Disable support for GZip and Deflate request body decompression. (default set to <c>false</c>).

@@ -59,10 +59,10 @@ internal class WireMockMiddlewareOptions : IWireMockMiddlewareOptions
     public bool? AllowBodyForAllHttpMethods { get; set; }
 
     /// <inheritdoc cref="IWireMockMiddlewareOptions.AllowOnlyDefinedHttpStatusCodeInResponse"/>
-    public bool? AllowOnlyDefinedHttpStatusCodeInResponse { get; set; }
+    public bool AllowOnlyDefinedHttpStatusCodeInResponse { get; set; }
 
-    /// <inheritdoc cref="IWireMockMiddlewareOptions.DisableJsonBodyParsing"/>
-    public bool? DisableJsonBodyParsing { get; set; }
+    /// <inheritdoc cref="IWireMockMiddlewareOptions.TryJsonDetection"/>
+    public bool? TryJsonDetection { get; set; }
 
     /// <inheritdoc cref="IWireMockMiddlewareOptions.DisableRequestBodyDecompressing"/>
     public bool? DisableRequestBodyDecompressing { get; set; }

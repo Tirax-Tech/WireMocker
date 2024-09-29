@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using WireMock.Admin.Mappings;
-using WireMock.Constants;
 using WireMock.Http;
+using WireMock.Models;
 using WireMock.Types;
 using WireMock.Util;
 
@@ -16,11 +16,8 @@ internal static class ResponseMessageBuilder
 {
     static readonly IDictionary<string, WireMockList<string>> ContentTypeJsonHeaders = new Dictionary<string, WireMockList<string>>
     {
-        { HttpKnownHeaderNames.ContentType, [WireMockConstants.ContentTypeJson] }
+        { HttpKnownHeaderNames.ContentType, [ContentTypes.Json] }
     };
-
-    internal static ResponseMessage Create(DateTimeOffset timestamp, int statusCode, string? status, Guid? guid = null)
-        => Create(timestamp, (HttpStatusCode)statusCode, status, error: null, guid);
 
     internal static ResponseMessage Create(DateTimeOffset timestamp, HttpStatusCode statusCode, string? status, string? error = null, Guid? guid = null)
     {
@@ -34,7 +31,8 @@ internal static class ResponseMessageBuilder
         if (status != null || error != null)
             response.BodyData = new BodyData
             {
-                DetectedBodyType = BodyType.Json,
+                BodyType = BodyType.Json,
+                ContentType = ContentTypes.Json,
                 BodyAsJson = new StatusModel
                 {
                     Guid = guid,
@@ -45,7 +43,4 @@ internal static class ResponseMessageBuilder
 
         return response;
     }
-
-    internal static ResponseMessage Create(DateTimeOffset timestamp, HttpStatusCode statusCode)
-        => new() { StatusCode = statusCode, Timestamp = timestamp };
 }

@@ -7,7 +7,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Stef.Validation;
@@ -19,133 +21,118 @@ using WireMock.Http;
 using WireMock.Logging;
 using WireMock.Matchers;
 using WireMock.Matchers.Request;
+using WireMock.Models;
 using WireMock.Owin;
+using WireMock.Owin.Mappers;
 using WireMock.RequestBuilders;
 using WireMock.ResponseProviders;
 using WireMock.Serialization;
-using WireMock.Settings;
 using WireMock.Types;
 using WireMock.Util;
 
 namespace WireMock.Server;
 
+public interface IWireMockLegacyAdmin
+{
+    ValueTask<RequestMessage> Request(HttpRequest req);
+    ValueTask                 Respond(IResponseMessage response, HttpResponse res);
+
+    ResponseMessage MappingsPost(IRequestMessage requestMessage);
+}
+
 /// <summary>
 /// The fluent mock server.
 /// </summary>
-public partial class WireMockServer
+public partial class WireMockServer : IWireMockLegacyAdmin
 {
     const int EnhancedFileSystemWatcherTimeoutMs = 1000;
-    const string DefaultAdminPathPrefix = "/__admin";
     const string QueryParamReloadStaticMappings = "reloadStaticMappings";
     static readonly Guid ProxyMappingGuid = new("e59914fd-782e-428e-91c1-4810ffb86567");
-    static readonly RegexMatcher AdminRequestContentTypeJson = new ContentTypeMatcher(WireMockConstants.ContentTypeJson, true);
+    static readonly RegexMatcher AdminRequestContentTypeJson = new ContentTypeMatcher(ContentTypes.Json, true);
     EnhancedFileSystemWatcher? enhancedFileSystemWatcher;
     AdminPaths? adminPaths;
 
-    sealed class AdminPaths
-    {
-        readonly string prefix;
-        readonly string prefixEscaped;
+    public ValueTask<RequestMessage> Request(HttpRequest req)
+        => OwinRequestMapper.MapAsync(clock, options, req);
 
-        public AdminPaths(WireMockServerSettings settings)
-        {
-            prefix = settings.AdminPath ?? DefaultAdminPathPrefix;
-            prefixEscaped = prefix.Replace("/", "\\/");
-        }
-
-        public string Files => $"{prefix}/files";
-        public string Health => $"{prefix}/health";
-        public string Mappings => $"{prefix}/mappings";
-        public string MappingsCode => $"{prefix}/mappings/code";
-        public string MappingsWireMockOrg => $"{prefix}mappings/wiremock.org";
-        public string Requests => $"{prefix}/requests";
-        public string Settings => $"{prefix}/settings";
-        public string Scenarios => $"{prefix}/scenarios";
-        public string OpenApi => $"{prefix}/openapi";
-
-        public RegexMatcher MappingsGuidPathMatcher => new($"^{prefixEscaped}\\/mappings\\/([0-9A-Fa-f]{{8}}[-][0-9A-Fa-f]{{4}}[-][0-9A-Fa-f]{{4}}[-][0-9A-Fa-f]{{4}}[-][0-9A-Fa-f]{{12}})$");
-        public RegexMatcher MappingsCodeGuidPathMatcher => new($"^{prefixEscaped}\\/mappings\\/code\\/([0-9A-Fa-f]{{8}}[-][0-9A-Fa-f]{{4}}[-][0-9A-Fa-f]{{4}}[-][0-9A-Fa-f]{{4}}[-][0-9A-Fa-f]{{12}})$");
-        public RegexMatcher RequestsGuidPathMatcher => new($"^{prefixEscaped}\\/requests\\/([0-9A-Fa-f]{{8}}[-][0-9A-Fa-f]{{4}}[-][0-9A-Fa-f]{{4}}[-][0-9A-Fa-f]{{4}}[-][0-9A-Fa-f]{{12}})$");
-        public RegexMatcher ScenariosNameMatcher => new($"^{prefixEscaped}\\/scenarios\\/.+$");
-        public RegexMatcher ScenariosNameWithResetMatcher => new($"^{prefixEscaped}\\/scenarios\\/.+\\/reset$");
-        public RegexMatcher FilesFilenamePathMatcher => new($"^{prefixEscaped}\\/files\\/.+$");
-    }
+    public ValueTask Respond(IResponseMessage response, HttpResponse res)
+        => OwinResponseMapper.MapAsync(options, res, response);
 
     #region InitAdmin
 
     void InitAdmin()
     {
-        adminPaths = new AdminPaths(settings);
+        adminPaths = new AdminPaths(settings.AdminPath);
 
         // __admin/health
-        Given(Request.Create().WithPath(adminPaths.Health).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(HealthGet));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Health).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(HealthGet));
 
         // __admin/settings
-        Given(Request.Create().WithPath(adminPaths.Settings).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(SettingsGet));
-        Given(Request.Create().WithPath(adminPaths.Settings).UsingMethod("PUT", "POST").WithHeader(HttpKnownHeaderNames.ContentType, AdminRequestContentTypeJson)).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(SettingsUpdate));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Settings).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(SettingsGet));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Settings).UsingMethod("PUT", "POST").WithHeader(HttpKnownHeaderNames.ContentType, AdminRequestContentTypeJson)).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(SettingsUpdate));
 
         // __admin/mappings
-        Given(Request.Create().WithPath(adminPaths.Mappings).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsGet));
-        Given(Request.Create().WithPath(adminPaths.Mappings).UsingPost().WithHeader(HttpKnownHeaderNames.ContentType, AdminRequestContentTypeJson)).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsPost));
-        Given(Request.Create().WithPath(adminPaths.Mappings).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsDelete));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Mappings).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsGet));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Mappings).UsingPost().WithHeader(HttpKnownHeaderNames.ContentType, AdminRequestContentTypeJson)).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsPost));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Mappings).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsDelete));
 
         // __admin/mappings/code
-        Given(Request.Create().WithPath(adminPaths.MappingsCode).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsCodeGet));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.MappingsCode).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsCodeGet));
 
         // __admin/mappings/wiremock.org
-        Given(Request.Create().WithPath(adminPaths.MappingsWireMockOrg).UsingPost().WithHeader(HttpKnownHeaderNames.ContentType, AdminRequestContentTypeJson)).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsPostWireMockOrg));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.MappingsWireMockOrg).UsingPost().WithHeader(HttpKnownHeaderNames.ContentType, AdminRequestContentTypeJson)).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsPostWireMockOrg));
 
         // __admin/mappings/reset
-        Given(Request.Create().WithPath(adminPaths.Mappings + "/reset").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsReset));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Mappings + "/reset").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsReset));
 
         // __admin/mappings/{guid}
-        Given(Request.Create().WithPath(adminPaths.MappingsGuidPathMatcher).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingGet));
-        Given(Request.Create().WithPath(adminPaths.MappingsGuidPathMatcher).UsingPut().WithHeader(HttpKnownHeaderNames.ContentType, AdminRequestContentTypeJson)).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingPut));
-        Given(Request.Create().WithPath(adminPaths.MappingsGuidPathMatcher).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingDelete));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.MappingsGuidPathMatcher).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingGet));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.MappingsGuidPathMatcher).UsingPut().WithHeader(HttpKnownHeaderNames.ContentType, AdminRequestContentTypeJson)).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingPut));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.MappingsGuidPathMatcher).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingDelete));
 
         // __admin/mappings/code/{guid}
-        Given(Request.Create().WithPath(adminPaths.MappingsCodeGuidPathMatcher).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingCodeGet));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.MappingsCodeGuidPathMatcher).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingCodeGet));
 
         // __admin/mappings/save
-        Given(Request.Create().WithPath($"{adminPaths.Mappings}/save").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsSave));
+        Given(RequestBuilders.Request.Create().WithPath($"{adminPaths.Mappings}/save").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsSave));
 
         // __admin/mappings/swagger
-        Given(Request.Create().WithPath($"{adminPaths.Mappings}/swagger").UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(SwaggerGet));
+        Given(RequestBuilders.Request.Create().WithPath($"{adminPaths.Mappings}/swagger").UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(SwaggerGet));
 
         // __admin/requests
-        Given(Request.Create().WithPath(adminPaths.Requests).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestsGet));
-        Given(Request.Create().WithPath(adminPaths.Requests).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestsDelete));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Requests).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestsGet));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Requests).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestsDelete));
 
         // __admin/requests/reset
-        Given(Request.Create().WithPath(adminPaths.Requests + "/reset").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestsDelete));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Requests + "/reset").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestsDelete));
 
         // __admin/request/{guid}
-        Given(Request.Create().WithPath(adminPaths.RequestsGuidPathMatcher).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestGet));
-        Given(Request.Create().WithPath(adminPaths.RequestsGuidPathMatcher).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestDelete));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.RequestsGuidPathMatcher).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestGet));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.RequestsGuidPathMatcher).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestDelete));
 
         // __admin/requests/find
-        Given(Request.Create().WithPath(adminPaths.Requests + "/find").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestsFind));
-        Given(Request.Create().WithPath(adminPaths.Requests + "/find").UsingGet().WithParam("mappingGuid", new NotNullOrEmptyMatcher())).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestsFindByMappingGuid));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Requests + "/find").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestsFind));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Requests + "/find").UsingGet().WithParam("mappingGuid", new NotNullOrEmptyMatcher())).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(RequestsFindByMappingGuid));
 
         // __admin/scenarios
-        Given(Request.Create().WithPath(adminPaths.Scenarios).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(ScenariosGet));
-        Given(Request.Create().WithPath(adminPaths.Scenarios).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(ScenariosReset));
-        Given(Request.Create().WithPath(adminPaths.ScenariosNameMatcher).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(ScenarioReset));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Scenarios).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(ScenariosGet));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Scenarios).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(ScenariosReset));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.ScenariosNameMatcher).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(ScenarioReset));
 
         // __admin/scenarios/reset
-        Given(Request.Create().WithPath(adminPaths.Scenarios + "/reset").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(ScenariosReset));
-        Given(Request.Create().WithPath(adminPaths.ScenariosNameWithResetMatcher).UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(ScenarioReset));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Scenarios + "/reset").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(ScenariosReset));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.ScenariosNameWithResetMatcher).UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(ScenarioReset));
 
         // __admin/files/{filename}
-        Given(Request.Create().WithPath(adminPaths.FilesFilenamePathMatcher).UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(FilePost));
-        Given(Request.Create().WithPath(adminPaths.FilesFilenamePathMatcher).UsingPut()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(FilePut));
-        Given(Request.Create().WithPath(adminPaths.FilesFilenamePathMatcher).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(FileGet));
-        Given(Request.Create().WithPath(adminPaths.FilesFilenamePathMatcher).UsingHead()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(FileHead));
-        Given(Request.Create().WithPath(adminPaths.FilesFilenamePathMatcher).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(FileDelete));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.FilesFilenamePathMatcher).UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(FilePost));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.FilesFilenamePathMatcher).UsingPut()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(FilePut));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.FilesFilenamePathMatcher).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(FileGet));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.FilesFilenamePathMatcher).UsingHead()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(FileHead));
+        Given(RequestBuilders.Request.Create().WithPath(adminPaths.FilesFilenamePathMatcher).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(FileDelete));
 
         // __admin/openapi
-        Given(Request.Create().WithPath($"{adminPaths.OpenApi}/convert").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(OpenApiConvertToMappings));
-        Given(Request.Create().WithPath($"{adminPaths.OpenApi}/save").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(OpenApiSaveToMappings));
+        Given(RequestBuilders.Request.Create().WithPath($"{adminPaths.OpenApi}/convert").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(OpenApiConvertToMappings));
+        Given(RequestBuilders.Request.Create().WithPath($"{adminPaths.OpenApi}/save").UsingPost()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(OpenApiSaveToMappings));
     }
     #endregion
 
@@ -236,13 +223,14 @@ public partial class WireMockServer
     static ResponseMessage HealthGet(IRequestMessage requestMessage)
         => new() {
             BodyData = new BodyData {
-                DetectedBodyType = BodyType.String,
+                BodyType = BodyType.String,
+                ContentType = ContentTypes.Text,
                 BodyAsString = "Healthy"
             },
             Timestamp = DateTimeOffset.UtcNow,
             StatusCode = HttpStatusCode.OK,
             Headers = new Dictionary<string, WireMockList<string>>
-                { { HttpKnownHeaderNames.ContentType, new WireMockList<string>(WireMockConstants.ContentTypeTextPlain) } }
+                { { HttpKnownHeaderNames.ContentType, new WireMockList<string>(ContentTypes.Text) } }
         };
 
     #endregion
@@ -255,7 +243,7 @@ public partial class WireMockServer
             AllowOnlyDefinedHttpStatusCodeInResponse = settings.AllowOnlyDefinedHttpStatusCodeInResponse,
             AllowPartialMapping = settings.AllowPartialMapping,
             DisableDeserializeFormUrlEncoded = settings.DisableDeserializeFormUrlEncoded,
-            DisableJsonBodyParsing = settings.DisableJsonBodyParsing,
+            TryJsonDetection = settings.TryJsonDetection,
             DisableRequestBodyDecompressing = settings.DisableRequestBodyDecompressing,
             DoNotSaveDynamicResponseInLogEntry = settings.DoNotSaveDynamicResponseInLogEntry,
             GlobalProcessingDelay = (int?)options.RequestProcessingDelay?.TotalMilliseconds,
@@ -287,7 +275,7 @@ public partial class WireMockServer
         this.settings.AllowOnlyDefinedHttpStatusCodeInResponse = settings.AllowOnlyDefinedHttpStatusCodeInResponse;
         this.settings.AllowPartialMapping = settings.AllowPartialMapping;
         this.settings.DisableDeserializeFormUrlEncoded = settings.DisableDeserializeFormUrlEncoded;
-        this.settings.DisableJsonBodyParsing = settings.DisableJsonBodyParsing;
+        this.settings.TryJsonDetection = settings.TryJsonDetection;
         this.settings.DisableRequestBodyDecompressing = settings.DisableRequestBodyDecompressing;
         this.settings.DoNotSaveDynamicResponseInLogEntry = settings.DoNotSaveDynamicResponseInLogEntry;
         this.settings.HandleRequestsSynchronously = settings.HandleRequestsSynchronously;
@@ -399,12 +387,13 @@ public partial class WireMockServer
         => new() {
             Timestamp = clock.GetUtcNow(),
             BodyData = new BodyData {
-                DetectedBodyType = BodyType.String,
+                BodyType = BodyType.Json,
+                ContentType = ContentTypes.Json,
                 BodyAsString = SwaggerMapper.ToSwagger(this)
             },
             StatusCode = HttpStatusCode.OK,
             Headers = new Dictionary<string, WireMockList<string>>
-                { { HttpKnownHeaderNames.ContentType, new WireMockList<string>(WireMockConstants.ContentTypeJson) } }
+                { { HttpKnownHeaderNames.ContentType, new WireMockList<string>(ContentTypes.Json) } }
         };
 
     ResponseMessage MappingsSave(IRequestMessage requestMessage)
@@ -429,7 +418,7 @@ public partial class WireMockServer
         return ToResponseMessage(code);
     }
 
-    ResponseMessage MappingsPost(IRequestMessage requestMessage)
+    public ResponseMessage MappingsPost(IRequestMessage requestMessage)
     {
         try
         {
@@ -475,7 +464,7 @@ public partial class WireMockServer
         return CreateResponse(HttpStatusCode.OK, "Mappings deleted");
     }
 
-    IEnumerable<Guid>? MappingsDeleteMappingFromBody(IRequestMessage requestMessage)
+    List<Guid>? MappingsDeleteMappingFromBody(IRequestMessage requestMessage)
     {
         var deletedGuids = new List<Guid>();
 
@@ -736,7 +725,8 @@ public partial class WireMockServer
         => new() {
             Timestamp = clock.GetUtcNow(),
             BodyData = new BodyData {
-                DetectedBodyType = BodyType.String,
+                BodyType = BodyType.Json,
+                ContentType = ContentTypes.Json,
                 BodyAsString = JsonConvert.SerializeObject(
                     result,
                     keepNullValues
@@ -745,47 +735,40 @@ public partial class WireMockServer
             },
             StatusCode = statusCode ?? HttpStatusCode.OK,
             Headers = new Dictionary<string, WireMockList<string>>
-                { { HttpKnownHeaderNames.ContentType, new WireMockList<string>(WireMockConstants.ContentTypeJson) } }
+                { { HttpKnownHeaderNames.ContentType, new WireMockList<string>(ContentTypes.Json) } }
         };
 
     ResponseMessage ToResponseMessage(string text)
         => new() {
             Timestamp = clock.GetUtcNow(),
             BodyData = new BodyData {
-                DetectedBodyType = BodyType.String,
+                BodyType = BodyType.String,
+                ContentType = ContentTypes.Text,
                 BodyAsString = text
             },
             StatusCode = HttpStatusCode.OK,
             Headers = new Dictionary<string, WireMockList<string>>
-                { { HttpKnownHeaderNames.ContentType, new WireMockList<string>(WireMockConstants.ContentTypeTextPlain) } }
+                { { HttpKnownHeaderNames.ContentType, new WireMockList<string>(ContentTypes.Text) } }
         };
 
     static T DeserializeObject<T>(IRequestMessage requestMessage) where T : new()
-    {
-        switch (requestMessage.BodyData?.DetectedBodyType)
-        {
-            case BodyType.String:
-            case BodyType.FormUrlEncoded:
-                return JsonUtils.DeserializeObject<T>(requestMessage.BodyData.BodyAsString!);
+        => requestMessage.BodyData?.BodyType switch {
+            BodyType.String or BodyType.FormUrlEncoded => JsonUtils.DeserializeObject<T>(requestMessage.BodyData.BodyAsString!),
+            BodyType.Json when requestMessage.BodyData?.BodyAsJson != null => ((JObject)requestMessage.BodyData.BodyAsJson).ToObject<T>()!,
 
-            case BodyType.Json when requestMessage.BodyData?.BodyAsJson != null:
-                return ((JObject)requestMessage.BodyData.BodyAsJson).ToObject<T>()!;
-
-            default:
-                throw new NotSupportedException();
-        }
-    }
+            _ => throw new NotSupportedException()
+        };
 
     static T[] DeserializeRequestMessageToArray<T>(IRequestMessage requestMessage)
     {
-        if (requestMessage.BodyData?.DetectedBodyType == BodyType.Json && requestMessage.BodyData.BodyAsJson != null)
+        if (requestMessage.BodyData is { BodyType: BodyType.Json})
         {
-            var bodyAsJson = requestMessage.BodyData.BodyAsJson;
+            var bodyAsJson = requestMessage.BodyData.BodyAsJson!;
 
             return DeserializeObjectToArray<T>(bodyAsJson);
         }
 
-        throw new NotSupportedException();
+        throw new NotSupportedException($"Body type: {requestMessage.BodyData?.BodyType} ({requestMessage.BodyData?.ContentType})");
     }
 
     static T[] DeserializeJsonToArray<T>(string value)

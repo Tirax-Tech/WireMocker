@@ -404,7 +404,7 @@ public partial class WireMockServer : IWireMockServer
     /// <inheritdoc cref="IWireMockServer.AddCatchAllMapping" />
     [PublicAPI]
     public void AddCatchAllMapping() {
-        Given(Request.Create().WithPath("/*").UsingAnyMethod())
+        Given(RequestBuilders.Request.Create().WithPath("/*").UsingAnyMethod())
            .WithGuid(Guid.Parse("90008000-0000-4444-a17e-669cd84f1f05"))
            .AtPriority(1000)
            .RespondWith(new DynamicResponseProvider( _ => CreateResponse(HttpStatusCode.NotFound, WireMockConstants.NoMatchingFound)));
