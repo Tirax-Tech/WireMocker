@@ -37,7 +37,9 @@ public interface IWireMockLegacyAdmin
     ValueTask<RequestMessage> Request(HttpRequest req);
     ValueTask                 Respond(IResponseMessage response, HttpResponse res);
 
+    ResponseMessage MappingsGet(IRequestMessage requestMessage);
     ResponseMessage MappingsPost(IRequestMessage requestMessage);
+    ResponseMessage MappingsDelete(IRequestMessage requestMessage);
 }
 
 /// <summary>
@@ -70,11 +72,6 @@ public partial class WireMockServer : IWireMockLegacyAdmin
         // __admin/settings
         Given(RequestBuilders.Request.Create().WithPath(adminPaths.Settings).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(SettingsGet));
         Given(RequestBuilders.Request.Create().WithPath(adminPaths.Settings).UsingMethod("PUT", "POST").WithHeader(HttpKnownHeaderNames.ContentType, AdminRequestContentTypeJson)).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(SettingsUpdate));
-
-        // __admin/mappings
-        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Mappings).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsGet));
-        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Mappings).UsingPost().WithHeader(HttpKnownHeaderNames.ContentType, AdminRequestContentTypeJson)).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsPost));
-        Given(RequestBuilders.Request.Create().WithPath(adminPaths.Mappings).UsingDelete()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsDelete));
 
         // __admin/mappings/code
         Given(RequestBuilders.Request.Create().WithPath(adminPaths.MappingsCode).UsingGet()).AtPriority(WireMockConstants.AdminPriority).RespondWith(new DynamicResponseProvider(MappingsCodeGet));
@@ -403,11 +400,8 @@ public partial class WireMockServer : IWireMockLegacyAdmin
         return CreateResponse(HttpStatusCode.OK, "Mappings saved to disk");
     }
 
-    MappingModel[] ToMappingModels()
-        => mappingBuilder.GetMappings();
-
-    ResponseMessage MappingsGet(IRequestMessage requestMessage)
-        => ToJson(ToMappingModels());
+    public ResponseMessage MappingsGet(IRequestMessage requestMessage)
+        => ToJson(mappingBuilder.GetMappings());
 
     ResponseMessage MappingsCodeGet(IRequestMessage requestMessage)
     {
@@ -445,7 +439,7 @@ public partial class WireMockServer : IWireMockLegacyAdmin
         }
     }
 
-    ResponseMessage MappingsDelete(IRequestMessage requestMessage)
+    public ResponseMessage MappingsDelete(IRequestMessage requestMessage)
     {
         if (!string.IsNullOrEmpty(requestMessage.Body))
         {
@@ -731,7 +725,8 @@ public partial class WireMockServer : IWireMockLegacyAdmin
                     result,
                     keepNullValues
                         ? JsonSerializationConstants.JsonSerializerSettingsIncludeNullValues
-                        : JsonSerializationConstants.JsonSerializerSettingsDefault)
+                        : JsonSerializationConstants.JsonSerializerSettingsDefault),
+                BodyAsJson = result
             },
             StatusCode = statusCode ?? HttpStatusCode.OK,
             Headers = new Dictionary<string, WireMockList<string>>

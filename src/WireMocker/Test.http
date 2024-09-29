@@ -8,6 +8,9 @@ GET {{admin-url}}/system/version
 GET {{mock-url}}/log
 X-Service-Name: auditlog
 
+### Get all mappings
+GET {{admin-url}}/__admin/mappings
+
 ### Post a sample mappings
 POST {{admin-url}}/__admin/mappings
 Content-Type: application/json

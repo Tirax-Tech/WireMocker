@@ -88,7 +88,7 @@ public partial class WireMockServer : IWireMockServer
 
     /// <inheritdoc cref="IWireMockServer.MappingModels" />
     [PublicAPI]
-    public IEnumerable<MappingModel> MappingModels => ToMappingModels();
+    public IEnumerable<MappingModel> MappingModels => mappingBuilder.GetMappings();
 
     /// <summary>
     /// Gets the scenarios.
