@@ -1,9 +1,8 @@
-﻿@using Tirax.Application.WireMocker.Helpers
-@inherits ReactiveComponentBase<EditorViewModel>
+﻿@inherits ReactiveComponentBase<EditorViewModel>
 
 <DualPanel>
     <LeftPanel>
-        <MudForm @ref="form" Validation="EditorViewModel.Validator.ValueValidator()">
+        <MudForm Validation="EditorViewModel.Validator.ValueValidator()">
             <MudStack>
                 <MudTextField T="string" Variant="Variant.Filled" Label="Plan name" />
 
@@ -29,9 +28,3 @@
         </MudForm>
     </LeftPanel>
 </DualPanel>
-
-@code {
-
-    MudForm form = default!;
-
-}

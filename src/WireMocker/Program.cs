@@ -3,17 +3,19 @@ global using static LanguageExt.Prelude;
 global using static RZ.Foundation.Prelude;
 global using RZ.Foundation.Blazor.Helpers;
 global using RZ.Foundation.Extensions;
+global using RZ.Foundation.Blazor.Layout;
+global using RZ.Foundation.Blazor.MVVM;
 global using ReactiveUI.Blazor;
 global using RUnit = System.Reactive.Unit;
 global using HttpStringValues = (string Key, System.Collections.Generic.IReadOnlyList<string> Values);
-using System.Reactive.Concurrency;
+global using Severity = RZ.Foundation.Blazor.Layout.Severity;
 using MudBlazor.Services;
+using RZ.Foundation;
+using RZ.Foundation.Injectable;
 using Tirax.Application.WireMocker.Components;
 using Tirax.Application.WireMocker.Components.Features.Dashboard;
 using Tirax.Application.WireMocker.Components.Features.MockData;
-using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Components.Layout;
-using Tirax.Application.WireMocker.RZ;
 using Tirax.Application.WireMocker.Services;
 using WireMock.Server;
 using WireMock.Settings;
@@ -27,16 +29,12 @@ var server = WireMockServer.Start(settings);
 var builder = WebApplication.CreateBuilder([]);
 
 builder.Services
-       .AddSingleton<IChaotic, Chaotic>()
+       .AddSingleton<IUniqueId, UniqueId>()
        .AddSingleton(TimeProvider.System)
        .AddSingleton<IWireMockServer>(server)
-       .AddSingleton<IViewLocator, ViewLocator>()
        .AddSingleton<IDataStore, InMemoryDataStore>()
-       .AddScoped<IViewModelFactory, ViewModelFactory>()  // Scoped, to be able to inject scoped services
-       .AddScoped<IScheduler>(_ => new SynchronizationContextScheduler(SynchronizationContext.Current!))
+       .AddRzBlazorSettings<AppMainLayoutViewModel>()
 
-       .AddScoped<MainLayoutViewModel>()
-       .AddScoped<ShellViewModel>()
        .AddTransient<XPortViewModel>()
        .AddTransient<DashboardViewModel>();
 
@@ -55,7 +53,6 @@ builder.Services.AddRazorComponents()
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.

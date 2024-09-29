@@ -1,10 +1,8 @@
 ﻿@using System.Diagnostics
-@using global::RZ.Foundation.Types
 
-@inherits AppReactiveComponent<XPortViewModel>
+@inherits ReactiveComponentBase<XPortViewModel>
 
 @inject IJSRuntime JS
-@inject ISnackbar Snackbar
 
 <MudStack>
     <MudText Typo="Typo.h4">Load</MudText>
@@ -26,25 +24,12 @@
     <MudStack>
         <MudTextField T="string" MaxLength="15000"
                       Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="ViewModel!.Mappings" />
-        <MudButton Disabled="!canLoad" Variant="Variant.Filled" Color="Color.Primary"
+        <MudButton Disabled="!ViewModel!.CanLoad" Variant="Variant.Filled" Color="Color.Primary"
                    OnClick="@ViewModel!.LoadMappings.OnExecute()">Load</MudButton>
     </MudStack>
 </MudStack>
 
 @code {
-    readonly MutableRef<bool> canLoad = new();
-
-    public XPort() {
-        this.WhenActivated(disposables => {
-            TrackChanges(disposables,
-                this.WhenAnyValue(x => x.ViewModel!.HasMappings)
-                    .CombineLatest(ViewModel!.LoadMappings.IsExecuting, (hasMappings, isExecuting) => !isExecuting && hasMappings)
-                    .Bind(canLoad).Ignore()
-                );
-
-            ViewModel!.Notifications.Subscribe(notification => Snackbar.Add(notification.Message, notification.Severity));
-        });
-    }
 
     async Task LoadFile(IBrowserFile? file) {
         Debug.Assert(file is not null);
@@ -57,4 +42,5 @@
         using var streamRef = new DotNetStreamReference(content);
         await JS.InvokeVoidAsync("downloadFileFromStream", "wire-mocker.data", streamRef);
     }
+
 }

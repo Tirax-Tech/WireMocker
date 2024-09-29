@@ -1,6 +1,6 @@
 ﻿using ReactiveUI;
+using RZ.Foundation.Injectable;
 using Tirax.Application.WireMocker.Domain;
-using Tirax.Application.WireMocker.RZ;
 
 namespace Tirax.Application.WireMocker.Components.Features.DesignServices.Editor;
 
@@ -8,10 +8,10 @@ public sealed class HeaderViewModel : ViewModel
 {
     string header;
 
-    public HeaderViewModel(IChaotic chaotic, Option<HeaderMatch> headerMatch) {
+    public HeaderViewModel(IUniqueId uniqueId, Option<HeaderMatch> headerMatch) {
         header = headerMatch.ToNullable()?.Header ?? string.Empty;
         Matcher = new(headerMatch.Map(h => h.Value));
-        Id = headerMatch.Map(h => h.Id).IfNone(chaotic.NewGuid());
+        Id = headerMatch.Map(h => h.Id).IfNone(uniqueId.NewGuid());
 
         Remove = ReactiveCommand.Create<Unit, Guid>(_ => Id);
     }

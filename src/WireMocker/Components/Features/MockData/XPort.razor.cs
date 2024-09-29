@@ -1,10 +1,7 @@
 ﻿using System.Reactive.Concurrency;
 using System.Reactive.Linq;
-using System.Reactive.Subjects;
-using MudBlazor;
 using ReactiveUI;
 using RZ.Foundation;
-using Tirax.Application.WireMocker.Components.Features.Shell;
 using Tirax.Application.WireMocker.Services;
 using WireMock.Server;
 
@@ -14,7 +11,7 @@ public sealed class XPortViewModel : ViewModel
 {
     readonly IWireMockServer mockServer;
     readonly ObservableAsPropertyHelper<bool> hasMappings;
-    readonly Subject<(Severity Severity, string Message)> notifications = new();
+    readonly ObservableAsPropertyHelper<bool> canLoad;
 
     string mappings = string.Empty;
     int mappingCount;
@@ -38,10 +35,14 @@ public sealed class XPortViewModel : ViewModel
             );
 
         LoadMappings.Subscribe(outcome => {
-            notifications.OnNext(outcome.IfFail(out var error, out _)
-                                     ? (Severity.Error, error.Message)
-                                     : (Severity.Info, "Mappings loaded successfully"));
+            shell.Notify(outcome.IfFail(out var error, out _)
+                             ? (Severity.Error, error.Message)
+                             : (Severity.Info, "Mappings loaded successfully"));
         });
+
+        canLoad = this.WhenAnyValue(x => x.HasMappings)
+            .CombineLatest(LoadMappings.IsExecuting, (hasMappings, isExecuting) => !isExecuting && hasMappings)
+                      .ToProperty(this, x => x.CanLoad);
 
         LoadData = ReactiveCommand.CreateFromTask<Stream, Outcome<Unit>>(async content => {
             var result = await TryCatch(() => dataStore.LoadFromSnapshot(content));
@@ -52,6 +53,8 @@ public sealed class XPortViewModel : ViewModel
         }, outputScheduler: scheduler);
         SaveData = ReactiveCommand.Create(dataStore.SnapshotData, outputScheduler: scheduler);
     }
+
+    public bool CanLoad => canLoad.Value;
 
     public bool HasMappings => hasMappings.Value;
 
@@ -66,8 +69,6 @@ public sealed class XPortViewModel : ViewModel
         get => mappingCount;
         set => this.RaiseAndSetIfChanged(ref mappingCount, value);
     }
-
-    public IObservable<(Severity Severity, string Message)> Notifications => notifications;
 
     public ReactiveCommand<Stream, Outcome<Unit>> LoadData { get; }
 
