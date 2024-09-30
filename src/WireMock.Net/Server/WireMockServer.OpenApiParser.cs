@@ -10,7 +10,7 @@ namespace WireMock.Server;
 
 public partial class WireMockServer
 {
-    ResponseMessage OpenApiConvertToMappings(IRequestMessage requestMessage)
+    public ResponseMessage OpenApiConvertToMappings(IRequestMessage requestMessage)
     {
         try
         {
@@ -24,7 +24,7 @@ public partial class WireMockServer
         }
     }
 
-    ResponseMessage OpenApiSaveToMappings(IRequestMessage requestMessage)
+    public ResponseMessage OpenApiSaveToMappings(IRequestMessage requestMessage)
     {
         try
         {

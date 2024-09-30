@@ -42,7 +42,7 @@ public partial class WireMockServer
         }
     }
 
-    IResponseMessage MappingsPostWireMockOrg(IRequestMessage requestMessage)
+    public ResponseMessage MappingsPostWireMockOrg(IRequestMessage requestMessage)
     {
         try
         {

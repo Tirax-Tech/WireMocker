@@ -17,7 +17,7 @@ public partial class WireMockServer
 
     #region Files/{filename}
 
-    ResponseMessage FilePost(IRequestMessage requestMessage)
+    public ResponseMessage FilePost(IRequestMessage requestMessage)
     {
         if (requestMessage.BodyAsBytes is null)
             return CreateResponse(HttpStatusCode.BadRequest, "Body is null");
@@ -33,7 +33,7 @@ public partial class WireMockServer
         return CreateResponse(HttpStatusCode.OK, "File created");
     }
 
-    ResponseMessage FilePut(IRequestMessage requestMessage)
+    public ResponseMessage FilePut(IRequestMessage requestMessage)
     {
         if (requestMessage.BodyAsBytes is null)
             return CreateResponse(HttpStatusCode.BadRequest, "Body is null");
@@ -51,7 +51,7 @@ public partial class WireMockServer
         return CreateResponse(HttpStatusCode.OK, "File updated");
     }
 
-    ResponseMessage FileGet(IRequestMessage requestMessage)
+    public ResponseMessage FileGet(IRequestMessage requestMessage)
     {
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
@@ -81,7 +81,7 @@ public partial class WireMockServer
     /// Note: Response is returned with no body as a head request doesn't accept a body, only the status code.
     /// </summary>
     /// <param name="requestMessage">The request message.</param>
-    ResponseMessage FileHead(IRequestMessage requestMessage)
+    public ResponseMessage FileHead(IRequestMessage requestMessage)
     {
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
@@ -94,7 +94,7 @@ public partial class WireMockServer
         return CreateResponse(HttpStatusCode.NoContent);
     }
 
-    ResponseMessage FileDelete(IRequestMessage requestMessage)
+    public ResponseMessage FileDelete(IRequestMessage requestMessage)
     {
         var filename = GetFileNameFromRequestMessage(requestMessage);
 
@@ -108,8 +108,10 @@ public partial class WireMockServer
         return CreateResponse(HttpStatusCode.OK, "File deleted.");
     }
 
-    string GetFileNameFromRequestMessage(IRequestMessage requestMessage)
-        => Path.GetFileName(requestMessage.Path[(adminPaths!.Files.Length + 1)..]);
+    string GetFileNameFromRequestMessage(IRequestMessage requestMessage) {
+        var adminPaths = new AdminPaths(settings.AdminPath);
+        return Path.GetFileName(requestMessage.Path[(adminPaths.Files.Length + 1)..]);
+    }
 
     #endregion
 }

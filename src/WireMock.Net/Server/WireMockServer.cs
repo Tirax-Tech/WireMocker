@@ -22,7 +22,6 @@ using WireMock.Exceptions;
 using WireMock.Http;
 using WireMock.Models;
 using WireMock.Owin;
-using WireMock.RequestBuilders;
 using WireMock.ResponseProviders;
 using WireMock.Serialization;
 using WireMock.Settings;
@@ -613,22 +612,11 @@ public partial class WireMockServer : IWireMockServer
         if (settings.AllowBodyForAllHttpMethods == true)
             this.settings.Logger.Info("AllowBodyForAllHttpMethods is set to True");
 
-        if (settings.AllowOnlyDefinedHttpStatusCodeInResponse == true)
+        if (settings.AllowOnlyDefinedHttpStatusCodeInResponse)
             this.settings.Logger.Info("AllowOnlyDefinedHttpStatusCodeInResponse is set to True");
 
         if (settings.AllowPartialMapping == true)
             AllowPartialMapping();
-
-        if (settings.StartAdminInterface == true)
-        {
-            if (!string.IsNullOrEmpty(settings.AdminUsername) && !string.IsNullOrEmpty(settings.AdminPassword))
-                SetBasicAuthentication(settings.AdminUsername!, settings.AdminPassword!);
-
-            if (!string.IsNullOrEmpty(settings.AdminAzureADTenant) && !string.IsNullOrEmpty(settings.AdminAzureADAudience))
-                SetAzureADAuthentication(settings.AdminAzureADTenant!, settings.AdminAzureADAudience!);
-
-            InitAdmin();
-        }
 
         if (settings.ReadStaticMappings == true)
             ReadStaticMappings();
