@@ -2,22 +2,20 @@
 
 // Modified by Ruxo Zheng, 2024.
 using System.Net;
-#if OPENAPIPARSER
 using System;
 using System.Linq;
 using WireMock.Net.OpenApiParser;
-#endif
 
 namespace WireMock.Server;
 
 public partial class WireMockServer
 {
-    IResponseMessage OpenApiConvertToMappings(IRequestMessage requestMessage)
+    ResponseMessage OpenApiConvertToMappings(IRequestMessage requestMessage)
     {
         try
         {
             var mappingModels = new WireMockOpenApiParser().FromText(requestMessage.Body!, out var diagnostic);
-            return diagnostic.Errors.Any() ? ToJson(diagnostic, false, HttpStatusCode.BadRequest) : ToJson(mappingModels);
+            return diagnostic.Errors.Any() ? ToJson(diagnostic, HttpStatusCode.BadRequest) : ToJson(mappingModels);
         }
         catch (Exception e)
         {
@@ -26,13 +24,13 @@ public partial class WireMockServer
         }
     }
 
-    IResponseMessage OpenApiSaveToMappings(IRequestMessage requestMessage)
+    ResponseMessage OpenApiSaveToMappings(IRequestMessage requestMessage)
     {
         try
         {
             var mappingModels = new WireMockOpenApiParser().FromText(requestMessage.Body!, out var diagnostic);
             if (diagnostic.Errors.Any())
-                return ToJson(diagnostic, false, HttpStatusCode.BadRequest);
+                return ToJson(diagnostic, HttpStatusCode.BadRequest);
 
             ConvertMappingsAndRegisterAsRespondProvider(mappingModels);
 

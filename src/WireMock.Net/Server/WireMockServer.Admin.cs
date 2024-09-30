@@ -10,7 +10,6 @@ using System.Text;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Stef.Validation;
 using WireMock.Admin.Mappings;
@@ -600,7 +599,7 @@ public partial class WireMockServer : IWireMockLegacyAdmin
             Counter = s.Counter
         });
 
-        return ToJson(scenariosStates, true);
+        return ToJson(scenariosStates);
     }
 
     ResponseMessage ScenariosReset(IRequestMessage requestMessage)
@@ -715,20 +714,15 @@ public partial class WireMockServer : IWireMockLegacyAdmin
     static Encoding? ToEncoding(EncodingModel? encodingModel)
         => encodingModel != null ? Encoding.GetEncoding(encodingModel.CodePage) : null;
 
-    ResponseMessage ToJson<T>(T result, bool keepNullValues = false, HttpStatusCode? statusCode = default)
+    ResponseMessage ToJson<T>(T result, HttpStatusCode statusCode = HttpStatusCode.OK)
         => new() {
             Timestamp = clock.GetUtcNow(),
             BodyData = new BodyData {
                 BodyType = BodyType.Json,
                 ContentType = ContentTypes.Json,
-                BodyAsString = JsonConvert.SerializeObject(
-                    result,
-                    keepNullValues
-                        ? JsonSerializationConstants.JsonSerializerSettingsIncludeNullValues
-                        : JsonSerializationConstants.JsonSerializerSettingsDefault),
                 BodyAsJson = result
             },
-            StatusCode = statusCode ?? HttpStatusCode.OK,
+            StatusCode = statusCode,
             Headers = new Dictionary<string, WireMockList<string>>
                 { { HttpKnownHeaderNames.ContentType, new WireMockList<string>(ContentTypes.Json) } }
         };
