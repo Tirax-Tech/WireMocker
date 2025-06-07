@@ -1,21 +1,20 @@
 global using LanguageExt;
-global using static LanguageExt.Prelude;
 global using static RZ.Foundation.Prelude;
-global using RZ.Foundation.Blazor.Helpers;
+global using RZ.Foundation;
 global using RZ.Foundation.Extensions;
-global using RZ.Foundation.Blazor.Layout;
+global using RZ.Foundation.Blazor.Shells;
 global using RZ.Foundation.Blazor.MVVM;
-global using ReactiveUI.Blazor;
+
 global using RUnit = System.Reactive.Unit;
 global using HttpStringValues = (string Key, System.Collections.Generic.IReadOnlyList<string> Values);
-global using Severity = RZ.Foundation.Blazor.Layout.Severity;
+global using Severity = RZ.Foundation.Blazor.MessageSeverity;using Microsoft.AspNetCore.Components.Web;
+
 using MudBlazor.Services;
-using RZ.Foundation;
 using RZ.Foundation.Injectable;
 using Tirax.Application.WireMocker.Components;
 using Tirax.Application.WireMocker.Components.Features.Dashboard;
 using Tirax.Application.WireMocker.Components.Features.MockData;
-using Tirax.Application.WireMocker.Components.Layout;
+using Tirax.Application.WireMocker.Components.Features.RoutePlanPage;
 using Tirax.Application.WireMocker.Services;
 using WireMock.Server;
 using WireMock.Settings;
@@ -33,9 +32,9 @@ builder.Services
        .AddSingleton(TimeProvider.System)
        .AddSingleton<IWireMockServer>(server)
        .AddSingleton<IDataStore, InMemoryDataStore>()
-       .AddRzBlazorSettings<AppMainLayoutViewModel>()
 
        .AddTransient<XPortViewModel>()
+       .AddTransient<PageViewModel>()
        .AddTransient<DashboardViewModel>()
 
        .AddMudServices(config => {
@@ -45,6 +44,7 @@ builder.Services
             snackbar.HideTransitionDuration = 1000 /* ms */;
             snackbar.ShowTransitionDuration = 500 /* ms */;
         })
+       .AddRzMudBlazorSettings()
 
        .AddRazorComponents()
        .AddInteractiveServerComponents();
@@ -70,3 +70,8 @@ app.MapRazorComponents<App>()
 
 app.Run();
 server.Stop();
+
+static partial class Program
+{
+    public static readonly InteractiveServerRenderMode ServerRenderMode = new(prerender: false);
+}

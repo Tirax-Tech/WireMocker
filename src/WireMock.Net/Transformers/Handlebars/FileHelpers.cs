@@ -13,7 +13,7 @@ internal class FileHelpers : BaseHelpers, IHelpers
 {
     private readonly IFileSystemHandler _fileSystemHandler;
 
-    public FileHelpers(IHandlebars context, IFileSystemHandler fileSystemHandler) : base(context)
+    public FileHelpers(IHandlebars context, IFileSystemHandler fileSystemHandler) : base(context, new())
     {
         _fileSystemHandler = Guard.NotNull(fileSystemHandler);
     }
@@ -25,4 +25,6 @@ internal class FileHelpers : BaseHelpers, IHelpers
         string transformed = templateFunc(context.Value);
         return _fileSystemHandler.ReadResponseBodyAsString(transformed);
     }
+
+    public Category Category => Category.Object;
 }

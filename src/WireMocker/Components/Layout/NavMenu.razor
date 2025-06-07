@@ -1,28 +1,5 @@
-﻿@using global::RZ.Foundation
-@inherits ReactiveInjectableComponentBase<MainLayoutViewModel>
-
-<MudDrawer Elevation="0" @bind-Open="ViewModel!.IsDrawerOpen">
-    <MudNavMenu>
-        <MudSwitch ThumbIcon="@Icons.Material.Filled.DarkMode" ThumbIconColor="Color.Tertiary"
-                   LabelPosition="LabelPosition.Start"
-                   @bind-Value="ViewModel!.IsDarkMode">
-            Dark mode
-        </MudSwitch>
-        <MudDivider/>
-        <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Logs</MudNavLink>
-        <MudNavLink Href="/routes" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.AddChart">Route Plan</MudNavLink>
-        <MudNavLink Href="/data" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.DiscFull">Load/Save</MudNavLink>
-    </MudNavMenu>
-
-    <MudSpacer />
-    <MudText Typo="Typo.subtitle2" Style="text-align: right">Version: @AppVersion.Current</MudText>
-</MudDrawer>
-
-@code {
-
-    public NavMenu() {
-        this.WhenActivated(disposables => {
-            ViewModel.WhenAnyValue(x => x.IsDrawerOpen).Subscribe(_ => StateHasChanged()).DisposeWith(disposables);
-        });
-    }
-}
+﻿<ShellNavMenu>
+    <RzNavItem Icon="@Icons.Material.Filled.Home" Href="/">Logs</RzNavItem>
+    <RzNavItem Icon="@Icons.Material.Filled.AddChart" Href="/routes">Route Plan</RzNavItem>
+    <RzNavItem Icon="@Icons.Material.Filled.DiscFull" Href="/data">Load/Save</RzNavItem>
+</ShellNavMenu>

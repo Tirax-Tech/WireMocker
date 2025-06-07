@@ -572,7 +572,7 @@ public partial class WireMockServer : IWireMockLegacyAdmin
         AdminPaths adminPaths = new(settings.AdminPath);
         var name = string.Equals(HttpRequestMethod.DELETE, requestMessage.Method, StringComparison.OrdinalIgnoreCase) ?
             requestMessage.Path[(adminPaths.Scenarios.Length + 1)..] :
-            requestMessage.Path.Split('/').Reverse().Skip(1).First();
+            Seq(requestMessage.Path.Split('/')).Reverse().Skip(1).First();
 
         return ResetScenario(name)
                    ? CreateResponse(HttpStatusCode.OK, "Scenario reset")

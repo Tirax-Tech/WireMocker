@@ -1,24 +1,12 @@
-﻿@inherits ReactiveInjectableComponentBase<MainLayoutViewModel>
-
-<MudAppBar Elevation="1">
-    @switch (ViewModel!.AppMode){
-        case AppMode.Page:
-            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ViewModel!.ToggleDrawer"/>
-            break;
-
-        case AppMode.Modal m:
-            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Inherit" Edge="Edge.Start"
-                           OnClick="@(async () => await m.OnClose.Execute())"/>
-            break;
-    }
-    <SectionOutlet SectionName="appbar-title"/>
-    <MudSpacer/>
-    <MudStack Row="true">
-        <SectionOutlet SectionName="appbar-actions"/>
-    </MudStack>
-</MudAppBar>
+﻿<ShellAppBar>
+    <Title>
+        <MudText Typo="Typo.h5"><SectionOutlet SectionName="appbar-title" /></MudText>
+    </Title>
+    <Actions>
+        <MudAvatar Color="Color.Secondary">JD</MudAvatar>
+    </Actions>
+</ShellAppBar>
 
 <SectionContent SectionName="appbar-title">
     <MudText Typo="Typo.h5">WireMock Log Viewer</MudText>
 </SectionContent>
-

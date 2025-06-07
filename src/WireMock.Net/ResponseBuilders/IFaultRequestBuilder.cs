@@ -1,7 +1,5 @@
 // Copyright © WireMock.Net
 
-using JetBrains.Annotations;
-
 namespace WireMock.ResponseBuilders;
 
 /// <summary>

@@ -27,6 +27,8 @@ public class BodyData : IBodyData
     /// <inheritdoc />
     public required BodyType BodyType { get; init; }
 
+    public string? OriginalContentType { get; init; }
+
     /// <inheritdoc />
     public required string ContentType { get; init; }
 

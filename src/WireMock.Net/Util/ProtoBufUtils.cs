@@ -1,5 +1,6 @@
 // Copyright © WireMock.Net
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using JsonConverter.Abstractions;
@@ -24,11 +25,11 @@ internal static class ProtoBufUtils
 
         var request = new ConvertToProtoBufRequest(protoDefinition, messageType, value, true);
 
-        if (jsonConverter != null)
-        {
-            request = request.WithJsonConverter(jsonConverter);
-            if (options != null)
-                request = request.WithJsonConverterOptions(options);
+        if (jsonConverter != null){
+            throw new NotImplementedException("Broken after libraries upgrade");
+            // request = request.WithJsonConverter(jsonConverter);
+            // if (options != null)
+            //     request = request.WithJsonConverterOptions(options);
         }
 
         return await SingletonFactory<Converter>.GetInstance().ConvertAsync(request, cancellationToken);

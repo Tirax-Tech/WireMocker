@@ -17,7 +17,7 @@ internal static class OpenApiSchemaExtensions
     {
         value = false;
 
-        if (schema.Extensions.TryGetValue("x-nullable", out var e) && e is OpenApiBoolean openApiBoolean)
+        if (schema.Extensions!.TryGetValue("x-nullable", out var e) && e is OpenApiBoolean openApiBoolean)
         {
             value = openApiBoolean.Value;
             return true;

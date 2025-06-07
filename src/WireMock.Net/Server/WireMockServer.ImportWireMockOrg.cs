@@ -10,7 +10,6 @@ using System.Text;
 using JetBrains.Annotations;
 using Newtonsoft.Json.Linq;
 using WireMock.Matchers;
-using WireMock.RequestBuilders;
 using WireMock.ResponseBuilders;
 using WireMock.Util;
 using Stef.Validation;

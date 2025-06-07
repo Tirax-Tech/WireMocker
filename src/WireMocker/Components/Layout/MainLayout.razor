@@ -1,36 +1,12 @@
-﻿@using Severity = global::RZ.Foundation.Blazor.Layout.Severity
-@inherits ReactiveLayoutComponentBase<MainLayoutViewModel>
+﻿@inherits LayoutComponentBase
 
-@inject ISnackbar Snackbar
-@inject MainLayoutViewModel MainVm
-
-<MudThemeProvider Theme="App.Theme" @bind-IsDarkMode="ViewModel!.IsDarkMode" />
-<MudPopoverProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudSettings @rendermode="Program.ServerRenderMode" />
 
 <MudLayout Class="screen-height">
-    <MainAppBar />
-    <NavMenu />
-    <MudMainContent Class="max-height">
+    <MainAppBar @rendermode="Program.ServerRenderMode" />
+    <NavMenu @rendermode="Program.ServerRenderMode" />
+
+    <MudMainContent Class="screen-height">
         @Body
     </MudMainContent>
 </MudLayout>
-
-@code {
-
-    public MainLayout() {
-        this.WhenActivated(disposables => {
-            ViewModel = MainVm;
-            this.WhenAnyObservable(x => x.ViewModel!.Notifications)
-                .Subscribe(m => Snackbar.Add(m.Message, m.Severity.ToMudSeverity(),
-                                             m.Severity is Severity.Error or Severity.Warning ? ErrorTransition : null))
-                .DisposeWith(disposables);
-        });
-    }
-
-    static void ErrorTransition(SnackbarOptions opts) {
-        opts.HideTransitionDuration = 6000;
-    }
-
-}

@@ -1,46 +1,37 @@
-﻿@using System.Diagnostics
+﻿@page "/data"
 
-@inherits ReactiveComponentBase<XPortViewModel>
+@rendermode Program.ServerRenderMode
+@inherits ReactiveInjectableComponentBase<XPortViewModel>
 
-@inject IJSRuntime JS
+<DualPanel>
+    <LeftPanel>
+        <MudStack>
+            <MudText Typo="Typo.h4">Load</MudText>
+            <MudFileUpload T="IBrowserFile" FilesChanged="@LoadFile">
+                <ActivatorContent>
+                    <MudButton Style="width: 100%" StartIcon="@Icons.Material.Filled.Upload" Variant="Variant.Filled" Color="Color.Primary">
+                        Load
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
 
-<MudStack>
-    <MudText Typo="Typo.h4">Load</MudText>
-    <MudFileUpload T="IBrowserFile" FilesChanged="@LoadFile">
-        <ActivatorContent>
-            <MudButton Style="width: 100%" StartIcon="@Icons.Material.Filled.Upload" Variant="Variant.Filled" Color="Color.Primary">
-                Load
-            </MudButton>
-        </ActivatorContent>
-    </MudFileUpload>
+            <MudText Typo="Typo.h4">Save</MudText>
+            <MudButton StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary" OnClick="@Save">Save</MudButton>
 
-    <MudText Typo="Typo.h4">Save</MudText>
-    <MudButton StartIcon="@Icons.Material.Filled.Download" Variant="Variant.Filled" Color="Color.Primary" OnClick="@Save">Save</MudButton>
+            <MudText Typo="Typo.h4">Mappings</MudText>
+            <MudText Typo="Typo.body1">Mapping count = @ViewModel!.MappingCount</MudText>
 
-    <MudText Typo="Typo.h4">Mappings</MudText>
-    <MudText Typo="Typo.body1">Mapping count = @ViewModel!.MappingCount</MudText>
+            <MudText Typo="Typo.h5">Load</MudText>
+            <MudStack>
+                <MudTextField T="string" MaxLength="15000"
+                              Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="ViewModel!.Mappings" />
+                <MudButton Disabled="!ViewModel!.CanLoad" Variant="Variant.Filled" Color="Color.Primary"
+                           OnClick="@ViewModel!.LoadMappings.OnExecute()">Load</MudButton>
+            </MudStack>
+        </MudStack>
+    </LeftPanel>
+    <RightPanel>
+        <MudText Typo="Typo.h3">Example</MudText>
 
-    <MudText Typo="Typo.h5">Load</MudText>
-    <MudStack>
-        <MudTextField T="string" MaxLength="15000"
-                      Label="JSON" Variant="Variant.Outlined" Lines="15" @bind-Value="ViewModel!.Mappings" />
-        <MudButton Disabled="!ViewModel!.CanLoad" Variant="Variant.Filled" Color="Color.Primary"
-                   OnClick="@ViewModel!.LoadMappings.OnExecute()">Load</MudButton>
-    </MudStack>
-</MudStack>
-
-@code {
-
-    async Task LoadFile(IBrowserFile? file) {
-        Debug.Assert(file is not null);
-        await using var stream = file.OpenReadStream();
-        await ViewModel!.LoadData.Execute(stream);
-    }
-
-    async Task Save() {
-        var content = await ViewModel!.SaveData.Execute();
-        using var streamRef = new DotNetStreamReference(content);
-        await JS.InvokeVoidAsync("downloadFileFromStream", "wire-mocker.data", streamRef);
-    }
-
-}
+    </RightPanel>
+</DualPanel>

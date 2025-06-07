@@ -21,7 +21,7 @@ namespace Tirax.Test.WireMocker;
 
 public sealed class IntegrationTests(ITestOutputHelper output)
 {
-    [Fact]
+    [Fact(DisplayName = "Numbers with zero-prefix in text/plain content must not be converted into JSON when using WireMock's proxy")]
     public async Task Test1()
     {
         // Given
@@ -67,8 +67,7 @@ sealed class TestServer(WebApplication app) : IDisposable
         app.MapPatch("/zipcode", async (HttpRequest req) => {
             var memory = new MemoryStream();
             await req.Body.CopyToAsync(memory);
-            var content = Encoding.UTF8.GetString(memory.ToArray());
-            return content;
+            return Encoding.UTF8.GetString(memory.ToArray());
         });
         return new(app);
     }

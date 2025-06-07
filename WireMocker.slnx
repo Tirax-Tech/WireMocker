@@ -1,0 +1,16 @@
+﻿<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+    <File Path="README.md" />
+    <File Path="LICENSE" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src\WireMocker\Tirax.Application.WireMocker.csproj" Type="Classic C#" />
+  </Folder>
+  <Folder Name="/src/WireMock/">
+    <Project Path="src\WireMock.Net.Abstractions\WireMock.Net.Abstractions.csproj" Type="Classic C#" />
+    <Project Path="src\WireMock.Net\WireMock.Net.csproj" Type="Classic C#" />
+    <Project Path="src\WireMock.Org.Abstractions\WireMock.Org.Abstractions.csproj" Type="Classic C#" />
+  </Folder>
+  <Project Path="src\WireMocker.Test\WireMocker.Test.csproj" Type="Classic C#" />
+</Solution>

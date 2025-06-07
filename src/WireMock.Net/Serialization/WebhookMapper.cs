@@ -12,7 +12,7 @@ using WireMock.Util;
 
 namespace WireMock.Serialization;
 
-internal static class WebhookMapper
+static class WebhookMapper
 {
     public static IWebhook Map(WebhookModel model) {
         var webhook = new Webhook {
@@ -50,13 +50,13 @@ internal static class WebhookMapper
         if (model.Request.Body != null)
             webhook.Request.BodyData = new BodyData {
                 BodyAsString = model.Request.Body,
-                BodyType = contentTypeHeader?.FirstOrDefault().BindValue(BodyParser.DetectBodyTypeFromContentType) ?? BodyType.String,
+                BodyType = contentTypeHeader?.FirstOrDefault().BindValue(v => BodyParser.DetectBodyTypeFromContentType(v, encoding: null)) ?? BodyType.String,
                 ContentType = ContentTypes.Text
             };
         else if (model.Request.BodyAsJson != null)
             webhook.Request.BodyData = new BodyData {
                 BodyAsJson = model.Request.BodyAsJson,
-                BodyType = contentTypeHeader?.FirstOrDefault().BindValue(BodyParser.DetectBodyTypeFromContentType) ?? BodyType.Json,
+                BodyType = contentTypeHeader?.FirstOrDefault().BindValue(v => BodyParser.DetectBodyTypeFromContentType(v, encoding: null)) ?? BodyType.Json,
                 ContentType = ContentTypes.Json
             };
 

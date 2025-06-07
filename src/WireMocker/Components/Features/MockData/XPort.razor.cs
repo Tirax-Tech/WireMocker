@@ -1,20 +1,37 @@
-﻿using System.Reactive.Concurrency;
+﻿using System.Diagnostics;
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using JetBrains.Annotations;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.JSInterop;
 using ReactiveUI;
-using RZ.Foundation;
+using RZ.Foundation.Blazor.Helpers;
 using Tirax.Application.WireMocker.Services;
 using WireMock.Server;
 
 namespace Tirax.Application.WireMocker.Components.Features.MockData;
+
+[UsedImplicitly]
+partial class XPort(IJSRuntime js)
+{
+    async Task LoadFile(IBrowserFile? file) {
+        Debug.Assert(file is not null);
+        await using var stream = file.OpenReadStream();
+        await ViewModel!.LoadData.Execute(stream);
+    }
+
+    async Task Save() {
+        var content = await ViewModel!.SaveData.Execute();
+        using var streamRef = new DotNetStreamReference(content);
+        await js.InvokeVoidAsync("downloadFileFromStream", "wire-mocker.data", streamRef);
+    }
+}
 
 public sealed class XPortViewModel : ViewModel
 {
     readonly IWireMockServer mockServer;
     readonly ObservableAsPropertyHelper<bool> hasMappings;
     readonly ObservableAsPropertyHelper<bool> canLoad;
-
-    string mappings = string.Empty;
-    int mappingCount;
 
     public XPortViewModel(IScheduler scheduler, IDataStore dataStore, ShellViewModel shell, IWireMockServer mockServer) {
         this.mockServer = mockServer;
@@ -41,11 +58,11 @@ public sealed class XPortViewModel : ViewModel
         });
 
         canLoad = this.WhenAnyValue(x => x.HasMappings)
-            .CombineLatest(LoadMappings.IsExecuting, (hasMappings, isExecuting) => !isExecuting && hasMappings)
+                      .CombineLatest(LoadMappings.IsExecuting, (hasMappings, isExecuting) => !isExecuting && hasMappings)
                       .ToProperty(this, x => x.CanLoad);
 
         LoadData = ReactiveCommand.CreateFromTask<Stream, Outcome<Unit>>(async content => {
-            var result = await TryCatch(() => dataStore.LoadFromSnapshot(content));
+            var result = await TryCatch(async () => await dataStore.LoadFromSnapshot(content));
             shell.Notify(result.IfSuccess(out _, out var error)
                              ? (Severity.Success, "Loaded")
                              : (Severity.Error, error.ToString()));
@@ -60,14 +77,14 @@ public sealed class XPortViewModel : ViewModel
 
     public string Mappings
     {
-        get => mappings;
-        set => this.RaiseAndSetIfChanged(ref mappings, value);
-    }
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
+    } = string.Empty;
 
     public int MappingCount
     {
-        get => mappingCount;
-        set => this.RaiseAndSetIfChanged(ref mappingCount, value);
+        get;
+        set => this.RaiseAndSetIfChanged(ref field, value);
     }
 
     public ReactiveCommand<Stream, Outcome<Unit>> LoadData { get; }

@@ -11,7 +11,7 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net9.0</TargetFramework>
         <LangVersion>preview</LangVersion>
         <Nullable>enable</Nullable>
         <DefineConstants>$(DefineConstants);NETSTANDARD;USE_ASPNETCORE;OPENAPIPARSER;GRAPHQL;MIMEKIT;PROTOBUF;TRAILINGHEADERS</DefineConstants>
@@ -23,31 +23,31 @@
 
     <ItemGroup>
         <FrameworkReference Include="Microsoft.AspNetCore.App" />
-        <PackageReference Include="Scriban.Signed" Version="5.10.0" />
-        <PackageReference Include="JsonConverter.Abstractions" Version="0.6.0" />
+        <PackageReference Include="Scriban.Signed" Version="6.2.1" />
+        <PackageReference Include="JsonConverter.Abstractions" Version="0.7.1" />
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
         <PackageReference Include="NJsonSchema.Extensions" Version="0.1.0" />
-        <PackageReference Include="NSwag.Core" Version="14.1.0" />
+        <PackageReference Include="NSwag.Core" Version="14.4.0" />
         <PackageReference Include="SimMetrics.Net" Version="1.0.5" />
         <PackageReference Include="JmesPath.Net" Version="1.0.330" />
         <PackageReference Include="System.Reactive" Version="6.0.1" />
         <PackageReference Include="TinyMapper" Version="3.0.3" />
-        <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.1.0" />
-        <PackageReference Include="MimeKitLite" Version="4.7.1" />
-        <PackageReference Include="ProtoBufJsonConverter" Version="0.3.0" />
-        <PackageReference Include="Handlebars.Net.Helpers.DynamicLinq" Version="2.4.5" />
-        <PackageReference Include="Handlebars.Net.Helpers.Humanizer" Version="2.4.5" />
-        <PackageReference Include="Handlebars.Net.Helpers.Json" Version="2.4.5" />
-        <PackageReference Include="Handlebars.Net.Helpers.Random" Version="2.4.5" />
-        <PackageReference Include="Handlebars.Net.Helpers.Xeger" Version="2.4.5" />
-        <PackageReference Include="Handlebars.Net.Helpers.XPath" Version="2.4.5" />
-        <PackageReference Include="Handlebars.Net.Helpers.Xslt" Version="2.4.5" />
+        <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.12.0" />
+        <PackageReference Include="MimeKitLite" Version="4.12.0" />
+        <PackageReference Include="ProtoBufJsonConverter" Version="0.10.0" />
+        <PackageReference Include="Handlebars.Net.Helpers.DynamicLinq" Version="2.5.0" />
+        <PackageReference Include="Handlebars.Net.Helpers.Humanizer" Version="2.5.0" />
+        <PackageReference Include="Handlebars.Net.Helpers.Json" Version="2.5.0" />
+        <PackageReference Include="Handlebars.Net.Helpers.Random" Version="2.5.0" />
+        <PackageReference Include="Handlebars.Net.Helpers.Xeger" Version="2.5.0" />
+        <PackageReference Include="Handlebars.Net.Helpers.XPath" Version="2.5.0" />
+        <PackageReference Include="Handlebars.Net.Helpers.Xslt" Version="2.5.0" />
+        <PackageReference Update="JetBrains.Annotations" Version="2024.3.0" />
     </ItemGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\WireMock.Net.Abstractions\WireMock.Net.Abstractions.csproj" />
         <ProjectReference Include="..\WireMock.Org.Abstractions\WireMock.Org.Abstractions.csproj" />
-        <ProjectReference Include="..\WireMock.Net.OpenApiParser\WireMock.Net.OpenApiParser.csproj" />
     </ItemGroup>
 
     <ItemGroup>

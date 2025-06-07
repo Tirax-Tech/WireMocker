@@ -2,7 +2,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Text;
 
@@ -19,62 +18,30 @@ namespace WireMock.Util;
 /// http://www.unicode.org/versions/corrigendum1.html
 /// http://www.ietf.org/rfc/rfc2279.txt
 /// </summary>
-internal static class BytesEncodingUtils
+static class BytesEncodingUtils
 {
+    public static readonly Encoding DefaultEncoding = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
+
     /// <summary>
     /// Tries the get the Encoding from an array of bytes.
     /// </summary>
     /// <param name="bytes">The bytes.</param>
-    /// <param name="encoding">The output encoding.</param>
-    public static bool TryGetEncoding(byte[] bytes, [NotNullWhen(true)] out Encoding? encoding)
-    {
-        encoding = null;
-        if (bytes.All(b => b < 80))
-        {
-            encoding = Encoding.ASCII;
-            return true;
-        }
+    public static Encoding? TryGetEncoding(byte[] bytes)
+        => StartsWith(bytes, [0xff, 0xfe, 0x00, 0x00]) ? Encoding.UTF32
+           : StartsWith(bytes, [0xfe, 0xff])           ? Encoding.BigEndianUnicode
+           : StartsWith(bytes, [0xff, 0xfe])           ? Encoding.Unicode
+           : StartsWith(bytes, [0xef, 0xbb, 0xbf])     ? Encoding.UTF8
+           : IsUtf8(bytes, bytes.Length)               ? DefaultEncoding
+           : bytes.All(b => b < 80)                    ? Encoding.ASCII
+                                                         : null;
 
-        if (StartsWith(bytes, new byte[] { 0xff, 0xfe, 0x00, 0x00 }))
-        {
-            encoding = Encoding.UTF32;
-            return true;
-        }
-
-        if (StartsWith(bytes, new byte[] { 0xfe, 0xff }))
-        {
-            encoding = Encoding.BigEndianUnicode;
-            return true;
-        }
-
-        if (StartsWith(bytes, new byte[] { 0xff, 0xfe }))
-        {
-            encoding = Encoding.Unicode;
-            return true;
-        }
-
-        if (StartsWith(bytes, new byte[] { 0xef, 0xbb, 0xbf }))
-        {
-            encoding = Encoding.UTF8;
-            return true;
-        }
-
-        if (IsUtf8(bytes, bytes.Length))
-        {
-            encoding = new UTF8Encoding(false);
-            return true;
-        }
-
-        return false;
-    }
-
-    private static bool StartsWith(IEnumerable<byte> data, IReadOnlyCollection<byte> other)
+    static bool StartsWith(IEnumerable<byte> data, IReadOnlyCollection<byte> other)
     {
         byte[] arraySelf = data.Take(other.Count).ToArray();
         return other.SequenceEqual(arraySelf);
     }
 
-    private static bool IsUtf8(IReadOnlyList<byte> buffer, int length)
+    static bool IsUtf8(IReadOnlyList<byte> buffer, int length)
     {
         int position = 0;
         int bytes = 0;
@@ -90,7 +57,7 @@ internal static class BytesEncodingUtils
     }
 
 #pragma warning disable S3776 // Cognitive Complexity of methods should not be too high
-    private static bool IsValid(IReadOnlyList<byte> buffer, int position, int length, ref int bytes)
+    static bool IsValid(IReadOnlyList<byte> buffer, int position, int length, ref int bytes)
     {
         if (length > buffer.Count)
         {

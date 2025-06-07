@@ -62,7 +62,8 @@ public partial class WireMockServer
         }
 
         var bytes = settings.FileSystemHandler.ReadFile(filename);
-        var isText = BytesEncodingUtils.TryGetEncoding(bytes, out var encoding) && FileBodyIsString.Select(x => x.Equals(encoding)).Any();
+        var encoding = BytesEncodingUtils.TryGetEncoding(bytes);
+        var isText = encoding is not null && FileBodyIsString.Select(x => x.Equals(encoding)).Any();
 
         return new ResponseMessage {
             Timestamp = clock.GetUtcNow(),
@@ -71,7 +72,7 @@ public partial class WireMockServer
                 BodyAsBytes = bytes,
                 BodyType = isText ? BodyType.String : BodyType.Bytes,
                 ContentType = isText ? ContentTypes.Text : ContentTypes.OctetStream,
-                BodyAsString = isText ? encoding!.GetString(bytes) : null
+                BodyAsString = isText ? encoding?.GetString(bytes) : null
             }
         };
     }

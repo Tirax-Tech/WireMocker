@@ -1,12 +1,20 @@
 ﻿using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using JetBrains.Annotations;
 using ReactiveUI;
-using RZ.Foundation.Blazor.MVVM;
 using WireMock;
 using WireMock.Logging;
 using WireMock.Server;
 
 namespace Tirax.Application.WireMocker.Components.Features.Dashboard;
+
+[UsedImplicitly]
+partial class Dashboard
+{
+    public Dashboard() {
+        this.WhenActivated(_ => { });
+    }
+}
 
 public sealed class DashboardViewModel : ActivatableViewModel
 {

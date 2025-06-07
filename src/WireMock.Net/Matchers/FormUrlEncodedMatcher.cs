@@ -87,17 +87,13 @@ public class FormUrlEncodedMatcher : IStringMatcher, IIgnoreCaseMatcher
         MatchOperator = matchOperator;
 
         foreach (var pattern in _patterns)
-        {
-            if (QueryStringParser.TryParse(pattern, IgnoreCase, out var nameValueCollection))
-            {
+            if (QueryStringParser.TryParse(pattern, IgnoreCase) is {} nameValueCollection)
                 foreach (var nameValue in nameValueCollection)
                 {
                     var keyMatcher = new WildcardMatcher(MatchBehaviour.AcceptOnMatch, [nameValue.Key], ignoreCase, MatchOperator);
                     var valueMatcher = new WildcardMatcher(MatchBehaviour.AcceptOnMatch, [nameValue.Value], ignoreCase, MatchOperator);
                     _pairs.Add((keyMatcher, valueMatcher));
                 }
-            }
-        }
     }
 
     /// <inheritdoc />
@@ -105,14 +101,10 @@ public class FormUrlEncodedMatcher : IStringMatcher, IIgnoreCaseMatcher
     {
         // Input is null or empty and if no patterns defined, return Perfect match.
         if (string.IsNullOrEmpty(input) && _patterns.Length == 0)
-        {
             return new MatchResult(MatchScores.Perfect);
-        }
 
-        if (!QueryStringParser.TryParse(input, IgnoreCase, out var inputNameValueCollection))
-        {
+        if (input is null || QueryStringParser.TryParse(input, IgnoreCase) is not {} inputNameValueCollection)
             return new MatchResult(MatchScores.Mismatch);
-        }
 
         var matches = GetMatches(inputNameValueCollection);
 

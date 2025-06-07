@@ -18,11 +18,3 @@
 @foreach (var entry in ViewModel!.HttpEntries){
     <HttpTransactionView ViewModel="entry" @key="entry.Id"/>
 }
-
-@code {
-    public Dashboard() {
-        this.WhenActivated(_ => {
-            // for view model activation
-        });
-    }
-}

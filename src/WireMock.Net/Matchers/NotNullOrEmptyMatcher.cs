@@ -5,7 +5,6 @@ using System.Linq;
 using AnyOfTypes;
 using WireMock.Extensions;
 using WireMock.Models;
-using WireMock.Util;
 
 namespace WireMock.Matchers;
 

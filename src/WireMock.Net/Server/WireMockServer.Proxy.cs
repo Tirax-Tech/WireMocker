@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using WireMock.Constants;
 using WireMock.Http;
 using WireMock.Proxy;
-using WireMock.RequestBuilders;
 using WireMock.ResponseProviders;
 using WireMock.Settings;
 
