@@ -32,6 +32,31 @@
     </LeftPanel>
     <RightPanel>
         <MudText Typo="Typo.h3">Example</MudText>
-
+        <MudText>(Ref: <a href="https://github.com/wiremock/WireMock.Net/wiki/Stubbing">WireMock.Net</a>)</MudText>
+        <MudText Class="border" Style="white-space: pre">
+    [
+        {
+            "Guid": "38a2df08-7a3a-4d31-a2a8-17f5613a5a72",
+            "Request": {
+                "Path": {
+                    "Matchers": [
+                        {
+                            "Name": "WildcardMatcher",
+                            "Pattern": "/some/thing"
+                        }
+                    ]
+                },
+                "Methods": [ "GET" ]
+            },
+            "Response": {
+                "StatusCode": 200,
+                "Body": "Hello world!",
+                "Headers": {
+                    "Content-Type": "text/plain"
+                }
+            }
+        }
+    ]
+        </MudText>
     </RightPanel>
 </DualPanel>

@@ -19,11 +19,15 @@ using Tirax.Application.WireMocker.Services;
 using WireMock.Server;
 using WireMock.Settings;
 
+const int Port = 9091;
+
 var settings = new WireMockServerSettings {
-    Port = 9091,
+    Port = Port,
     StartAdminInterface = true
 };
 var server = WireMockServer.Start(settings);
+
+Console.WriteLine($"WireMock Server running on http://localhost:{Port}/");
 
 var builder = WebApplication.CreateBuilder([]);
 

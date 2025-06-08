@@ -1,5 +1,4 @@
-﻿@using System.Reflection
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -36,56 +35,3 @@
 </body>
 
 </html>
-
-@code {
-
-    public static readonly MudTheme Theme = new() {
-        PaletteLight = new PaletteLight {
-            Primary = "#fd7d43",
-            Secondary = "#0096ef",
-            Tertiary = "#eee100",
-
-            Background = "#fff8f6",
-            Surface = "#fae4dc",
-
-            AppbarBackground = "#fd7d43",
-
-            // color for text field's border
-            LinesInputs = "#4f2c7e",
-            LinesDefault = "#f00",
-
-            Divider = "#0d0",
-            DividerLight = "#0f0",
-
-            // used for hovering
-            ActionDefault = "#cd59ff"
-        },
-        PaletteDark = new PaletteDark {
-            // inverse colors of the palette light above
-            Primary = "#b34100",
-            Secondary = "#0282bc",
-            Tertiary = "#e6e600",
-
-            Background = "#1a0600",
-            Surface = "#351f17",
-
-            AppbarBackground = "#e34a02",
-
-            // color for text field's border
-            LinesInputs = "#7742bd",
-            LinesDefault = "#f00",
-
-            Divider = "#0d0",
-            DividerLight = "#0f0",
-
-            // used for hovering
-            ActionDefault = "#cd59ff"
-        }
-    };
-
-    public static readonly string VersionHash =
-        ((AssemblyInformationalVersionAttribute?)typeof(Program).Assembly
-                                                                .GetCustomAttribute(typeof(AssemblyInformationalVersionAttribute)))!
-       .InformationalVersion.GetHashCode().ToString();
-
-}
